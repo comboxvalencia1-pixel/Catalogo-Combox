@@ -1,72 +1,103 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>COMBOX | Catálogo Exclusivo</title>
-  
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  
   <style>
     :root { 
       --primary: #e31b23; 
-      --secondary: #1a1a1a; 
+      --primary-dark: #b01017;
+      --primary-light: #ff6b6b;
+      --secondary: #1a1a1a;
+      --text-dark: #2d2d2d;
+      --text-light: #767676;
+      --gray-light: #f8f9fa;
       --gray-border: #eaeef2;
+      --shadow-sm: 0 5px 20px rgba(0, 0, 0, 0.02);
+      --shadow-md: 0 15px 30px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 20px 40px rgba(227, 27, 35, 0.15);
+      --black: #000000;
+      --black-light: #333333;
+      --black-dark: #1a1a1a;
     }
-    body { background-color: #ffffff; font-family: 'Inter', sans-serif; }
+    
+    body { background-color: #ffffff; font-family: 'Inter', sans-serif; margin: 0; color: var(--text-dark); }
 
-    /* Barra de Tasa BCV */
+    /* Badge BCV */
     .bcv-badge {
-      background: #f8f9fa;
-      color: #767676; font-size: 10px; text-align: center; padding: 8px 0;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      color: var(--text-light); font-size: 10px; text-align: center; padding: 8px 0;
       letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--gray-border);
     }
 
-    /* Encabezado */
-    .header-main { padding: 40px 0 30px; text-align: center; }
-    .logo { font-size: 4rem; font-weight: 900; color: var(--primary); letter-spacing: -2px; margin-bottom: 20px; }
+    .header-main { background: #ffffff; padding: 20px 0 30px; text-align: center; }
+    .subtitle { font-size: 0.7rem; font-weight: 600; color: var(--text-light); letter-spacing: 8px; text-transform: uppercase; margin-bottom: 5px; opacity: 0.4; }
 
-    /* Botones de Contacto */
-    .contact-nav { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .logo { 
+      font-size: 5rem; font-weight: 900; letter-spacing: -3px; color: var(--primary);
+      animation: float-logo 4s ease-in-out infinite;
+    }
+    @keyframes float-logo { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+
+    .contact-nav { margin-top: 25px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+    
     .btn-contact {
-      color: #2d2d2d; text-decoration: none; font-size: 12px; font-weight: 700;
-      padding: 10px 20px; border-radius: 50px; border: 1.5px solid var(--gray-border);
-      display: flex; align-items: center; gap: 8px; transition: 0.3s;
+      color: var(--text-dark); text-decoration: none; font-size: 11px; font-weight: 700;
+      padding: 10px 22px; border-radius: 50px; background: #ffffff; border: 1.5px solid var(--gray-border);
+      display: flex; align-items: center; gap: 10px; transition: 0.3s; box-shadow: var(--shadow-sm);
     }
-    .btn-contact:hover { background: var(--primary); color: #fff; border-color: var(--primary); transform: translateY(-3px); }
+    
+    .btn-contact i { font-size: 14px; color: var(--primary); }
+    .btn-contact:hover { background: var(--primary); color: #fff; transform: translateY(-3px); border-color: var(--primary); }
+    .btn-contact:hover i { color: #fff; }
 
-    /* Filtros */
     .filter-bar { 
-      display: flex; gap: 10px; overflow-x: auto; padding: 15px; position: sticky; top: 0; 
-      background: white; z-index: 1000; border-bottom: 1px solid var(--gray-border);
+      display: flex; gap: 10px; overflow-x: auto; padding: 25px 20px; position: sticky; top: 0; 
+      background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); z-index: 1000; border-bottom: 1px solid rgba(234, 238, 242, 0.5);
     }
+    
     .btn-filter { 
-      background: #f1f1f1; border: none; border-radius: 50px; padding: 8px 20px; 
-      font-weight: 700; font-size: 12px; white-space: nowrap;
+      background: transparent; color: var(--text-light); border: 2px solid transparent; 
+      border-radius: 50px; padding: 8px 22px; font-weight: 700; font-size: 12px; white-space: nowrap;
     }
-    .btn-filter.active { background: var(--primary); color: white; }
 
-    /* Tarjetas de Producto */
-    .card { border: 1px solid var(--gray-border); border-radius: 20px; transition: 0.3s; height: 100%; overflow: hidden; }
-    .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-    .img-box { height: 200px; padding: 20px; display: flex; align-items: center; justify-content: center; }
-    .img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .product-name { font-weight: 700; font-size: 14px; text-align: center; padding: 0 10px; min-height: 40px; }
+    .btn-filter.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 8px 20px rgba(227, 27, 35, 0.25); }
+
+    .card { 
+      border: 1px solid var(--gray-border); border-radius: 24px; transition: 0.4s; height: 100%; overflow: hidden;
+    }
+    .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-md); }
+    
+    .img-box { height: 180px; padding: 20px; display: flex; align-items: center; justify-content: center; }
+    .img-box img { max-width: 100%; max-height: 100%; object-fit: contain; transition: 0.5s; }
+    .card:hover .img-box img { transform: scale(1.08); }
+    
+    .product-name { font-weight: 700; font-size: 13px; text-align: center; margin: 15px 20px 10px; min-height: 40px; }
     
     .btn-pedir {
-      display: block; background: #000; color: white; text-align: center;
-      text-decoration: none; font-weight: 700; padding: 12px; margin: 15px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: linear-gradient(135deg, var(--black), var(--black-light));
+      color: white; font-weight: 700; font-size: 12px; text-transform: uppercase;
+      text-decoration: none; padding: 14px 20px; margin: 5px 20px 20px; border-radius: 50px;
+      transition: 0.3s; border: none;
     }
-    #loader { text-align: center; padding: 100px; }
+    .btn-pedir:hover { transform: translateY(-3px); background: var(--black-dark); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35); }
+
+    #loader { text-align: center; padding: 80px; color: var(--primary); }
   </style>
 </head>
 <body>
 
-  <div class="bcv-badge"><i class="fas fa-bolt"></i> Precios Tasa BCV Oficial <i class="fas fa-bolt"></i></div>
+  <div class="bcv-badge">
+    <i class="fas fa-bolt"></i> Precios sujetos a la tasa BCV oficial <i class="fas fa-bolt"></i>
+  </div>
 
   <div class="header-main">
+    <div class="subtitle">Catálogo exclusivo</div>
     <h1 class="logo">COMBOX</h1>
     <div class="contact-nav">
       <a href="https://wa.me/584244701273" target="_blank" class="btn-contact">
@@ -75,7 +106,7 @@
       <a href="https://www.instagram.com/combox.valencia/" target="_blank" class="btn-contact">
         <i class="fab fa-instagram"></i> Instagram
       </a>
-      <a href="https://maps.app.goo.gl/J8ZJq68xdKAGYZEz8?g_st=ic" target="_blank" class="btn-contact">
+      <a href="https://maps.app.goo.gl/TU_LINK_DE_MAPS" target="_blank" class="btn-contact">
         <i class="fas fa-map-marker-alt"></i> Ubicación
       </a>
     </div>
@@ -89,48 +120,46 @@
     <div id="grid" class="row g-4"></div>
     <div id="loader">
       <div class="spinner-border text-danger"></div>
-      <p class="mt-2">Cargando licores...</p>
+      <p class="mt-3">Cargando licores...</p>
     </div>
   </div>
 
   <script>
-    // TU LINK MAESTRO CON EL "APELLIDO" PARA PRODUCTOS
+    // URL DE TU API EN GOOGLE APPS SCRIPT
     const API_URL = "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts";
-    const TEL_WHATSAPP = "584244701273";
+    const TEL = "584244701273"; 
+    let baseTotal = [];
 
-    let productosBase = [];
-
-    async function cargarCatalogo() {
+    async function cargar() {
       try {
         const res = await fetch(API_URL);
-        productosBase = await res.json();
+        const productos = await res.json();
+        baseTotal = productos;
         
         document.getElementById('loader').style.display = 'none';
         document.getElementById('filter-bar').classList.remove('d-none');
         
-        generarFiltros();
-        renderizar(productosBase);
-      } catch (err) {
-        document.getElementById('loader').innerHTML = "Error al cargar productos. Revisa tu script.";
+        // Generar filtros dinámicos
+        const categorias = [...new Set(productos.map(p => p.categoria))].filter(Boolean).sort();
+        const fBar = document.getElementById('filter-bar');
+        categorias.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-filter';
+          btn.innerText = cat;
+          btn.onclick = (e) => cambiarFiltro(cat, e.target);
+          fBar.appendChild(btn);
+        });
+        
+        renderizar(productos);
+      } catch (e) {
+        document.getElementById('loader').innerHTML = "Error al conectar con el inventario.";
       }
-    }
-
-    function generarFiltros() {
-      const categorias = [...new Set(productosBase.map(p => p.categoria))].sort();
-      const fBar = document.getElementById('filter-bar');
-      categorias.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'btn-filter';
-        btn.innerText = cat;
-        btn.onclick = (e) => cambiarFiltro(cat, e.target);
-        fBar.appendChild(btn);
-      });
     }
 
     function cambiarFiltro(cat, el) {
       document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
       el.classList.add('active');
-      const filtrados = cat === 'Todas' ? productosBase : productosBase.filter(p => p.categoria === cat);
+      const filtrados = cat === 'Todas' ? baseTotal : baseTotal.filter(p => p.categoria === cat);
       renderizar(filtrados);
     }
 
@@ -140,20 +169,18 @@
       lista.forEach(p => {
         grid.innerHTML += `
           <div class="col-6 col-md-4 col-lg-3">
-            <div class="card">
-              <div class="img-box">
-                <img src="${p.imagen || 'https://via.placeholder.com/200'}" alt="${p.nombre}">
-              </div>
+            <div class="card p-0">
+              <div class="img-box"><img src="${p.imagen}" loading="lazy"></div>
               <div class="product-name">${p.nombre}</div>
-              <a href="https://wa.me/${TEL_WHATSAPP}?text=Hola! Me interesa: ${encodeURIComponent(p.nombre)}" target="_blank" class="btn-pedir">
-                PEDIR <i class="fab fa-whatsapp"></i>
+              <a href="https://wa.me/${TEL}?text=Hola! Me interesa: ${encodeURIComponent(p.nombre)}" class="btn-pedir">
+                <i class="fas fa-shopping-cart"></i> COMPRAR <i class="fas fa-arrow-right"></i>
               </a>
             </div>
           </div>`;
       });
     }
 
-    window.onload = cargarCatalogo;
+    window.onload = cargar;
   </script>
 </body>
 </html>

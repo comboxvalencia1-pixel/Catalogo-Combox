@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <title>COMBOX | Catálogo Exclusivo</title>
   <base target="_top">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
@@ -26,59 +26,43 @@
       --black-dark: #1a1a1a;
     }
     
+    /* Bloquear zoom en toda la aplicación */
+    * {
+      touch-action: pan-y pinch-zoom; /* Permite solo desplazamiento vertical */
+    }
+    
     body { 
       background-color: #ffffff; 
       font-family: 'Inter', sans-serif; 
       margin: 0; 
       -webkit-font-smoothing: antialiased;
       color: var(--text-dark);
+      /* Evitar overscroll y rebotes */
+      overscroll-behavior-y: none;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
     }
 
     /* Badge BCV */
     .bcv-badge {
       background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-      color: var(--text-light);
-      font-size: 10px;
-      text-align: center;
-      padding: 8px 0;
-      letter-spacing: 1.5px;
-      font-weight: 600;
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--gray-border);
-      position: relative;
-      overflow: hidden;
+      color: var(--text-light); font-size: 10px; text-align: center; padding: 8px 0;
+      letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--gray-border);
+      position: relative; overflow: hidden;
     }
 
     .bcv-badge::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
       animation: shine 8s infinite;
     }
-
     @keyframes shine { to { left: 100%; } }
 
-    .header-main {
-      background: #ffffff;
-      padding: 20px 0 30px;
-      text-align: center;
-      position: relative;
-    }
-
-    .subtitle {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--text-light);
-      letter-spacing: 8px;
-      text-transform: uppercase;
-      margin-bottom: 5px;
-      opacity: 0.4;
-      transition: opacity 0.3s ease;
-    }
+    .header-main { background: #ffffff; padding: 20px 0 30px; text-align: center; position: relative; }
+    .subtitle { font-size: 0.7rem; font-weight: 600; color: var(--text-light); letter-spacing: 8px; text-transform: uppercase; margin-bottom: 5px; opacity: 0.4; }
 
     @keyframes float-logo {
       0%, 100% { transform: translateY(0px); text-shadow: 0 5px 20px rgba(227, 27, 35, 0.2); }
@@ -86,54 +70,26 @@
     }
 
     .logo { 
-      font-size: 5rem; 
-      font-weight: 900; 
-      letter-spacing: -3px; 
-      margin: 0; 
-      line-height: 0.9;
-      color: var(--primary);
-      animation: float-logo 4s ease-in-out infinite;
-      transition: all 0.3s ease;
-      display: inline-block;
+      font-size: 5rem; font-weight: 900; letter-spacing: -3px; margin: 0; line-height: 0.9;
+      color: var(--primary); animation: float-logo 4s ease-in-out infinite; display: inline-block;
+      /* Mejorar rendimiento en dispositivos móviles */
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     /* Barra de contacto */
-    .contact-nav { 
-      margin-top: 25px; 
-      display: flex; 
-      justify-content: center; 
-      gap: 15px; 
-      flex-wrap: wrap;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      padding: 0 15px;
-    }
+    .contact-nav { margin-top: 25px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; padding: 0 15px; }
     
     .btn-contact {
-      color: var(--text-dark);
-      text-decoration: none;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 10px 22px; 
-      border-radius: 50px;
-      background: #ffffff;
-      border: 1.5px solid var(--gray-border);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: var(--shadow-sm);
-      cursor: pointer;
+      color: var(--text-dark); text-decoration: none; font-size: 11px; font-weight: 700; padding: 10px 22px; 
+      border-radius: 50px; background: #ffffff; border: 1.5px solid var(--gray-border);
+      display: flex; align-items: center; gap: 10px; transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+      text-transform: uppercase; letter-spacing: 0.5px; box-shadow: var(--shadow-sm); cursor: pointer;
+      /* Mejorar respuesta táctil */
+      -webkit-tap-highlight-color: transparent;
     }
     
-    .btn-contact i {
-      font-size: 14px;
-      color: var(--primary);
-      transition: all 0.3s ease;
-    }
+    .btn-contact i { font-size: 14px; color: var(--primary); transition: color 0.3s ease; }
 
     .btn-contact:hover { 
       background: var(--primary); 
@@ -142,195 +98,82 @@
       border-color: var(--primary);
       box-shadow: var(--shadow-lg);
     }
-
-    .btn-contact:hover i {
-      color: #ffffff !important;
-    }
+    .btn-contact:hover i { color: #ffffff !important; }
 
     /* Filtros */
     .filter-bar { 
-      display: flex; 
-      gap: 10px; 
-      overflow-x: auto; 
-      padding: 25px 20px; 
-      position: sticky; 
-      top: 0; 
-      background: rgba(255, 255, 255, 0.85); 
-      backdrop-filter: blur(20px);
-      z-index: 1000; 
-      scrollbar-width: none;
-      border-bottom: 1px solid rgba(234, 238, 242, 0.5);
+      display: flex; gap: 10px; overflow-x: auto; padding: 25px 20px; position: sticky; top: 0; 
+      background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); z-index: 1000; 
+      scrollbar-width: none; border-bottom: 1px solid rgba(234, 238, 242, 0.5);
+      /* Mejorar scroll horizontal */
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
     }
-    
     .filter-bar::-webkit-scrollbar { display: none; }
     
     .btn-filter { 
-      background: transparent; 
-      color: var(--text-light); 
-      border: 2px solid transparent; 
-      border-radius: 50px; 
-      padding: 8px 22px; 
-      font-weight: 700; 
-      font-size: 12px;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-      cursor: pointer;
+      background: transparent; color: var(--text-light); border: 2px solid transparent; 
+      border-radius: 50px; padding: 8px 22px; font-weight: 700; font-size: 12px;
+      transition: all 0.3s ease; white-space: nowrap; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    .btn-filter:hover {
-      border-color: var(--primary-light);
-      color: var(--primary);
-    }
-
     .btn-filter.active { 
-      background: var(--primary); 
-      color: #fff; 
-      border-color: var(--primary);
+      background: var(--primary); color: #fff; border-color: var(--primary);
       box-shadow: 0 8px 20px rgba(227, 27, 35, 0.25); 
     }
 
-    /* Cards optimizadas */
-    .product-grid {
-      margin-top: 10px;
-      opacity: 1;
-      transition: opacity 0.3s ease;
-    }
-
-    .product-grid.loading {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-
+    /* Cards */
     .card { 
-      border: 1px solid var(--gray-border); 
-      border-radius: 24px; 
-      background: #fff;
-      transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-      contain: content;
+      border: 1px solid var(--gray-border); border-radius: 24px; background: #fff;
+      transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); height: 100%;
+      display: flex; flex-direction: column; overflow: hidden; contain: content;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    .card:hover { 
-      transform: translateY(-8px); 
-      box-shadow: var(--shadow-md);
-    }
+    .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-md); }
     
-    .img-box { 
-      height: 180px; 
-      padding: 20px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      background: transparent;
-      position: relative;
-    }
-
-    .img-box img { 
-      max-width: 100%; 
-      max-height: 100%; 
-      object-fit: contain;
-      transition: transform 0.5s ease;
-      will-change: transform;
-    }
-
+    .img-box { height: 180px; padding: 20px; display: flex; align-items: center; justify-content: center; background: transparent; }
+    .img-box img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.5s ease; will-change: transform; }
     .card:hover .img-box img { transform: scale(1.08); }
     
-    .product-name { 
-      font-weight: 700; 
-      font-size: 13px; 
-      text-align: center; 
-      margin: 15px 20px 10px; 
-      color: var(--text-dark); 
-      min-height: 40px;
-      line-height: 1.4;
-    }
+    .product-name { font-weight: 700; font-size: 13px; text-align: center; margin: 15px 20px 10px; color: var(--text-dark); min-height: 40px; line-height: 1.4; }
     
     .btn-pedir {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
       background: linear-gradient(135deg, var(--black), var(--black-light));
-      color: white;
-      font-weight: 700;
-      font-size: 12px;
-      text-transform: uppercase;
-      text-decoration: none;
-      padding: 14px 20px;
-      margin: 5px 20px 20px;
-      border-radius: 50px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
+      color: white; font-weight: 700; font-size: 12px; text-transform: uppercase;
+      padding: 14px 20px; margin: 5px 20px 20px; border-radius: 50px; text-decoration: none;
+      transition: all 0.3s ease; position: relative; overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
     }
-
     .btn-pedir::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
       transition: left 0.6s ease;
     }
-
-    .btn-pedir:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
-      background: linear-gradient(135deg, var(--black-dark), var(--black));
-    }
-
+    .btn-pedir:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35); background: linear-gradient(135deg, var(--black-dark), var(--black)); }
     .btn-pedir:hover::before { left: 100%; }
 
-    /* Loader y estados */
-    #loader { 
-      text-align: center; 
-      padding: 100px 0; 
-      color: var(--primary);
-      transition: opacity 0.3s ease;
+    /* Infinite scroll trigger */
+    #infinite-trigger {
+      text-align: center; padding: 20px; display: none;
     }
 
-    .spinner-border { 
-      width: 3rem; 
-      height: 3rem; 
-      border-width: 0.2em;
-    }
-
-    #infinite-scroll-trigger {
-      height: 20px;
-      margin: 20px 0;
-      text-align: center;
-      display: none;
-    }
+    #loader { text-align: center; padding: 100px 0; color: var(--primary); }
+    .spinner-border { width: 3rem; height: 3rem; }
 
     .error-message {
-      text-align: center;
-      padding: 50px;
-      color: var(--primary);
+      text-align: center; padding: 50px; color: var(--primary);
     }
-
     .error-message button {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 30px;
-      border-radius: 50px;
-      margin-top: 20px;
-      cursor: pointer;
+      background: var(--primary); color: white; border: none; padding: 10px 30px;
+      border-radius: 50px; margin-top: 20px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .no-products {
-      text-align: center;
-      padding: 50px;
-      color: var(--text-light);
-      width: 100%;
+    /* Evitar selección de texto para parecer app */
+    .btn-contact, .btn-filter, .btn-pedir, .product-name {
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     @media (max-width: 768px) {
@@ -340,44 +183,43 @@
       .btn-pedir i:last-child { display: none; }
     }
 
-    @media (max-width: 480px) {
-      .btn-pedir i:first-child { font-size: 14px; }
+    /* Prevenir zoom en inputs si los hubiera */
+    input, textarea, select {
+      font-size: 16px; /* Previene zoom automático en iOS */
     }
   </style>
 </head>
 <body>
 
   <div class="bcv-badge">
-    <i class="fas fa-bolt" style="color: var(--primary);"></i>
-    Precios sujetos a la tasa BCV oficial
-    <i class="fas fa-bolt" style="color: var(--primary);"></i>
+    <i class="fas fa-bolt" style="color: var(--primary);"></i> Precios BCV oficial <i class="fas fa-bolt" style="color: var(--primary);"></i>
   </div>
 
   <div class="header-main">
     <div class="subtitle">Catálogo exclusivo</div>
     <h1 class="logo">COMBOX</h1>
     <div class="contact-nav">
-      <a href="https://wa.me/584244701273" target="_blank" class="btn-contact" data-sound="true">
+      <a href="https://wa.me/584244701273" target="_blank" class="btn-contact" id="btn-whatsapp">
         <i class="fab fa-whatsapp"></i> <span>WhatsApp</span>
       </a>
-      <a href="https://www.instagram.com/combox.valencia/" target="_blank" class="btn-contact" data-sound="true">
+      <a href="https://www.instagram.com/combox.valencia/" target="_blank" class="btn-contact" id="btn-instagram">
         <i class="fab fa-instagram"></i> <span>Instagram</span>
       </a>
-      <a href="javascript:void(0)" class="btn-contact" data-sound="true">
+      <a href="javascript:void(0)" class="btn-contact" id="btn-ubicacion">
         <i class="fas fa-map-marker-alt"></i> <span>Ubicación</span>
       </a>
     </div>
   </div>
 
   <div id="filter-bar" class="filter-bar d-none">
-    <button class="btn-filter active" id="filter-todas" data-filter="Todas">Todas</button>
+    <button class="btn-filter active" id="filter-todas">Todas</button>
   </div>
 
   <div class="container py-4">
-    <div id="grid" class="row g-4 product-grid"></div>
-    <div id="infinite-scroll-trigger">
+    <div id="grid" class="row g-4"></div>
+    <div id="infinite-trigger">
       <div class="spinner-border spinner-border-sm text-danger"></div>
-      <span style="margin-left: 10px; color: var(--text-light);">Cargando más productos...</span>
+      <span style="margin-left: 10px; color: var(--text-light);">Cargando más...</span>
     </div>
     <div id="loader">
       <div class="spinner-border text-danger"></div>
@@ -390,191 +232,162 @@
     const CONFIG = {
       API_URL: "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts",
       TEL: "584244701273",
-      PRODUCTS_PER_PAGE: 24,
-      CACHE_KEY: 'combox_products_cache',
-      CACHE_DURATION: 5 * 60 * 1000 // 5 minutos
+      CACHE_KEY: 'combox_cache_v2',
+      CACHE_DURATION: 10 * 60 * 1000, // 10 minutos
+      ITEMS_PER_PAGE: 24
     };
 
-    // Estado de la aplicación
+    // Estado
     const state = {
       allProducts: [],
       filteredProducts: [],
       currentPage: 0,
+      currentFilter: 'Todas',
       isLoading: false,
       hasMore: true,
-      currentFilter: 'Todas',
       audioContext: null,
       imageCache: new Map()
     };
 
-    // Elementos del DOM
-    const elements = {
+    // Elementos DOM
+    const dom = {
       loader: document.getElementById('loader'),
       filterBar: document.getElementById('filter-bar'),
       grid: document.getElementById('grid'),
-      infiniteTrigger: document.getElementById('infinite-scroll-trigger'),
+      infiniteTrigger: document.getElementById('infinite-trigger'),
       filterTodas: document.getElementById('filter-todas')
     };
 
-    // Inicialización del audio
-    function initAudio() {
-      if (state.audioContext) return;
+    // ========== AUDIO ==========
+    async function initAudio() {
+      if (state.audioContext) return state.audioContext;
       try {
         state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        return state.audioContext;
       } catch (e) {
         console.log('Audio no soportado');
+        return null;
       }
     }
 
-    // Reproducir sonido
     async function playClickSound() {
-      if (!state.audioContext) {
-        initAudio();
-      }
-      
       try {
-        if (state.audioContext.state === 'suspended') {
-          await state.audioContext.resume();
-        }
+        const ctx = await initAudio();
+        if (!ctx || ctx.state !== 'running') return;
         
-        if (state.audioContext.state !== 'running') return;
-
-        const now = state.audioContext.currentTime;
-        const osc = state.audioContext.createOscillator();
-        const gain = state.audioContext.createGain();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
         
         osc.type = 'sine';
         osc.frequency.value = 800;
         
-        gain.gain.setValueAtTime(0.02, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+        gain.gain.setValueAtTime(0.02, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
         
         osc.connect(gain);
-        gain.connect(state.audioContext.destination);
+        gain.connect(ctx.destination);
         
-        osc.start(now);
-        osc.stop(now + 0.03);
-      } catch(e) {
-        console.log('Error reproduciendo sonido:', e);
-      }
+        osc.start();
+        osc.stop(ctx.currentTime + 0.03);
+      } catch(e) {}
     }
 
-    // Asignar eventos de sonido
-    function attachSoundEvents() {
-      document.querySelectorAll('[data-sound="true"], button, .btn-pedir, .btn-contact, .btn-filter').forEach(el => {
-        if (!el.hasAttribute('data-sound-initialized')) {
-          el.setAttribute('data-sound-initialized', 'true');
-          el.addEventListener('click', (e) => {
-            e.stopPropagation();
-            playClickSound();
-          });
-        }
-      });
-    }
+    // Activar audio en primer click
+    document.addEventListener('click', async function initAudioOnClick() {
+      await initAudio();
+      document.removeEventListener('click', initAudioOnClick);
+    }, { once: true });
 
-    // Cargar productos con caché
+    // ========== DATOS ==========
     async function loadProducts() {
-      try {
-        // Intentar caché
-        const cached = localStorage.getItem(CONFIG.CACHE_KEY);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < CONFIG.CACHE_DURATION) {
-            return data;
-          }
+      // Intentar caché
+      const cached = localStorage.getItem(CONFIG.CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CONFIG.CACHE_DURATION) {
+          return data;
         }
-
-        // Cargar de API
-        const response = await fetch(CONFIG.API_URL, {
-          method: 'GET',
-          mode: 'cors',
-          headers: { 'Accept': 'application/json' }
-        });
-        
-        if (!response.ok) throw new Error('Error en la red');
-        
-        const data = await response.json();
-        
-        // Guardar en caché
-        localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
-          data,
-          timestamp: Date.now()
-        }));
-        
-        return data;
-      } catch (error) {
-        console.error('Error cargando productos:', error);
-        throw error;
       }
+
+      // Cargar de API
+      const response = await fetch(CONFIG.API_URL);
+      if (!response.ok) throw new Error('Error de red');
+      
+      const data = await response.json();
+      
+      // Guardar en caché
+      localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+      
+      return data;
     }
 
-    // Precargar imágenes
+    // ========== RENDERIZADO ==========
     function preloadImage(src) {
-      return new Promise((resolve, reject) => {
+      return new Promise(resolve => {
         if (state.imageCache.has(src)) {
           resolve(state.imageCache.get(src));
           return;
         }
-
         const img = new Image();
         img.onload = () => {
           state.imageCache.set(src, img);
           resolve(img);
         };
-        img.onerror = () => {
-          console.warn(`Error cargando imagen: ${src}`);
-          resolve(null);
-        };
+        img.onerror = () => resolve(null);
         img.src = src;
       });
     }
 
-    // Renderizar productos
-    async function renderProducts(products, append = false) {
+    async function renderProducts(append = false) {
+      if (state.isLoading) return;
+      
+      const products = state.filteredProducts;
+      if (!products || products.length === 0) {
+        dom.grid.innerHTML = '<div class="col-12 text-center p-5">No hay productos</div>';
+        return;
+      }
+
       if (!append) {
-        elements.grid.innerHTML = '';
+        dom.grid.innerHTML = '';
         state.currentPage = 0;
         state.hasMore = true;
       }
 
-      if (!products || products.length === 0) {
-        if (!append) {
-          elements.grid.innerHTML = '<div class="no-products"><i class="fas fa-box-open" style="font-size: 48px; opacity: 0.5;"></i><p>No hay productos disponibles</p></div>';
-        }
-        return;
-      }
+      const start = state.currentPage * CONFIG.ITEMS_PER_PAGE;
+      const end = start + CONFIG.ITEMS_PER_PAGE;
+      const batch = products.slice(start, end);
 
-      const start = state.currentPage * CONFIG.PRODUCTS_PER_PAGE;
-      const end = start + CONFIG.PRODUCTS_PER_PAGE;
-      const productsToShow = products.slice(start, end);
-
-      if (productsToShow.length === 0) {
+      if (batch.length === 0) {
         state.hasMore = false;
-        elements.infiniteTrigger.style.display = 'none';
+        dom.infiniteTrigger.style.display = 'none';
         return;
       }
 
-      elements.grid.classList.add('loading');
-      
+      state.isLoading = true;
+      if (!append) dom.infiniteTrigger.style.display = 'block';
+
       const fragment = document.createDocumentFragment();
       
-      productsToShow.forEach(product => {
+      batch.forEach(product => {
         const col = document.createElement('div');
         col.className = 'col-6 col-md-4 col-lg-3';
         
-        const imgSrc = product.imagen || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'300\' viewBox=\'0 0 300 300\'%3E%3Crect width=\'300\' height=\'300\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Inter\' font-size=\'24\'%3ECOMBOX%3C/text%3E%3C/svg%3E';
+        const placeholder = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"%3E%3Crect width="300" height="300" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-family="Inter" font-size="24"%3ECOMBOX%3C/text%3E%3C/svg%3E';
         
         col.innerHTML = `
           <div class="card p-0">
             <div class="img-box">
-              <img src="${imgSrc}" 
+              <img src="${placeholder}" 
                    alt="${product.nombre.replace(/["']/g, '')}" 
                    loading="lazy"
                    data-src="${product.imagen || ''}">
             </div>
             <div class="product-name">${product.nombre}</div>
             <a href="https://wa.me/${CONFIG.TEL}?text=Hola! Me interesa: ${encodeURIComponent(product.nombre)}" 
-               target="_blank" class="btn-pedir" data-sound="true">
+               target="_blank" class="btn-pedir">
                 <i class="fas fa-shopping-cart"></i>
                 <span>COMPRAR</span>
                 <i class="fas fa-arrow-right"></i>
@@ -584,164 +397,121 @@
         fragment.appendChild(col);
       });
 
-      elements.grid.appendChild(fragment);
+      dom.grid.appendChild(fragment);
       
-      // Precargar imágenes reales
-      productsToShow.forEach(product => {
-        if (product.imagen && product.imagen !== '') {
+      // Precargar imágenes
+      batch.forEach(product => {
+        if (product.imagen) {
           preloadImage(product.imagen).then(img => {
             if (img) {
-              const imgElement = elements.grid.querySelector(`img[data-src="${product.imagen}"]`);
-              if (imgElement) {
-                imgElement.src = product.imagen;
-                imgElement.removeAttribute('data-src');
-              }
+              const imgEl = dom.grid.querySelector(`img[data-src="${product.imagen}"]`);
+              if (imgEl) imgEl.src = product.imagen;
             }
           });
         }
       });
 
-      elements.grid.classList.remove('loading');
-      
       state.currentPage++;
       state.hasMore = end < products.length;
+      state.isLoading = false;
       
-      if (state.hasMore) {
-        elements.infiniteTrigger.style.display = 'block';
-      } else {
-        elements.infiniteTrigger.style.display = 'none';
-      }
-
-      attachSoundEvents();
+      if (!state.hasMore) dom.infiniteTrigger.style.display = 'none';
     }
 
-    // Cambiar filtro - CORREGIDO
+    // ========== FILTROS ==========
     function changeFilter(filter, element) {
       if (state.isLoading) return;
       
-      // Quitar clase active de todos los filtros
       document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-      
-      // Activar el filtro seleccionado
       element.classList.add('active');
       
-      // Actualizar estado
       state.currentFilter = filter;
-      
-      // Filtrar productos
       state.filteredProducts = filter === 'Todas' 
         ? [...state.allProducts] 
         : state.allProducts.filter(p => p.categoria === filter);
       
-      // Resetear paginación
-      state.currentPage = 0;
-      state.hasMore = true;
-      
-      // Renderizar
-      renderProducts(state.filteredProducts, false);
+      renderProducts(false);
     }
 
-    // Manejar scroll infinito
+    // ========== SCROLL INFINITO ==========
     let scrollTimeout;
     function handleScroll() {
       if (scrollTimeout) return;
       
       scrollTimeout = setTimeout(() => {
         if (!state.isLoading && state.hasMore) {
-          const trigger = elements.infiniteTrigger;
-          const rect = trigger.getBoundingClientRect();
-          
+          const rect = dom.infiniteTrigger.getBoundingClientRect();
           if (rect.top < window.innerHeight + 100) {
-            state.isLoading = true;
-            renderProducts(state.filteredProducts, true).finally(() => {
-              state.isLoading = false;
-            });
+            renderProducts(true);
           }
         }
         scrollTimeout = null;
       }, 100);
     }
 
-    // Mostrar error
-    function showError(message) {
-      elements.loader.innerHTML = `
-        <div class="error-message">
-          <i class="fas fa-exclamation-circle" style="font-size: 48px;"></i>
-          <p>${message}</p>
-          <button onclick="window.location.reload()">Reintentar</button>
-        </div>
-      `;
-    }
-
-    // Inicializar
+    // ========== INICIALIZACIÓN ==========
     async function init() {
       try {
+        // Cargar productos
         const products = await loadProducts();
         
         if (!products || products.length === 0) {
-          showError('No se encontraron productos');
+          dom.loader.innerHTML = '<div class="error-message">No hay productos disponibles</div>';
           return;
         }
 
         state.allProducts = products;
         state.filteredProducts = [...products];
 
-        elements.loader.style.display = 'none';
-        elements.filterBar.classList.remove('d-none');
+        // Ocultar loader, mostrar filtros
+        dom.loader.style.display = 'none';
+        dom.filterBar.classList.remove('d-none');
 
-        // Asignar evento al botón "Todas" - CORREGIDO
-        if (elements.filterTodas) {
-          elements.filterTodas.onclick = function(e) {
+        // Configurar botón "Todas"
+        if (dom.filterTodas) {
+          dom.filterTodas.onclick = (e) => {
+            playClickSound();
             changeFilter('Todas', e.target);
           };
         }
 
-        // Crear botones de filtro para categorías
+        // Crear filtros de categorías
         const categorias = [...new Set(products.map(p => p.categoria))].filter(Boolean).sort();
         
         categorias.forEach(cat => {
           const btn = document.createElement('button');
           btn.className = 'btn-filter';
           btn.textContent = cat;
-          btn.setAttribute('data-filter', cat);
-          btn.onclick = function(e) {
+          btn.onclick = (e) => {
+            playClickSound();
             changeFilter(cat, e.target);
           };
-          elements.filterBar.appendChild(btn);
+          dom.filterBar.appendChild(btn);
         });
 
         // Renderizar primeros productos
-        await renderProducts(state.filteredProducts, false);
+        await renderProducts(false);
         
-        // Asignar eventos de sonido
-        attachSoundEvents();
-        
-        // Configurar scroll infinito
+        // Eventos de sonido para botones
+        document.querySelectorAll('.btn-contact, .btn-pedir').forEach(btn => {
+          btn.addEventListener('click', playClickSound);
+        });
+
+        // Scroll infinito
         window.addEventListener('scroll', handleScroll, { passive: true });
-        
-        // Precargar más imágenes
-        setTimeout(() => {
-          if (state.filteredProducts.length > CONFIG.PRODUCTS_PER_PAGE) {
-            const nextBatch = state.filteredProducts.slice(CONFIG.PRODUCTS_PER_PAGE, CONFIG.PRODUCTS_PER_PAGE * 2);
-            nextBatch.forEach(p => {
-              if (p.imagen) preloadImage(p.imagen);
-            });
-          }
-        }, 1000);
 
       } catch (error) {
-        console.error('Error en inicialización:', error);
-        showError('Error al conectar con el servidor');
+        console.error(error);
+        dom.loader.innerHTML = `
+          <div class="error-message">
+            <i class="fas fa-exclamation-circle" style="font-size: 48px;"></i>
+            <p>Error al cargar. Verifica tu conexión.</p>
+            <button onclick="window.location.reload()">Reintentar</button>
+          </div>
+        `;
       }
     }
 
-    // Inicializar audio en primera interacción
-    document.addEventListener('click', function initAudioOnFirstClick() {
-      initAudio();
-      document.removeEventListener('click', initAudioOnFirstClick);
-    }, { once: true });
-
-    // Arrancar
     window.onload = init;
   </script>
 </body>

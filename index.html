@@ -26,24 +26,18 @@
       --black-dark: #1a1a1a;
     }
     
-    /* Bloquear zoom en toda la aplicación */
-    * {
-      touch-action: pan-y pinch-zoom; /* Permite solo desplazamiento vertical */
-    }
-    
+    /* PERMITIR SCROLL PERO BLOQUEAR ZOOM */
     body { 
       background-color: #ffffff; 
       font-family: 'Inter', sans-serif; 
       margin: 0; 
       -webkit-font-smoothing: antialiased;
       color: var(--text-dark);
-      /* Evitar overscroll y rebotes */
-      overscroll-behavior-y: none;
-      position: fixed;
-      width: 100%;
-      height: 100%;
       overflow-y: auto;
-      -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+      -webkit-overflow-scrolling: touch;
+      height: 100%;
+      position: relative;
+      touch-action: pan-y !important; /* PERMITE SCROLL VERTICAL */
     }
 
     /* Badge BCV */
@@ -72,7 +66,6 @@
     .logo { 
       font-size: 5rem; font-weight: 900; letter-spacing: -3px; margin: 0; line-height: 0.9;
       color: var(--primary); animation: float-logo 4s ease-in-out infinite; display: inline-block;
-      /* Mejorar rendimiento en dispositivos móviles */
       -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
     }
@@ -85,7 +78,6 @@
       border-radius: 50px; background: #ffffff; border: 1.5px solid var(--gray-border);
       display: flex; align-items: center; gap: 10px; transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
       text-transform: uppercase; letter-spacing: 0.5px; box-shadow: var(--shadow-sm); cursor: pointer;
-      /* Mejorar respuesta táctil */
       -webkit-tap-highlight-color: transparent;
     }
     
@@ -105,9 +97,7 @@
       display: flex; gap: 10px; overflow-x: auto; padding: 25px 20px; position: sticky; top: 0; 
       background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); z-index: 1000; 
       scrollbar-width: none; border-bottom: 1px solid rgba(234, 238, 242, 0.5);
-      /* Mejorar scroll horizontal */
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-x: contain;
     }
     .filter-bar::-webkit-scrollbar { display: none; }
     
@@ -170,7 +160,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Evitar selección de texto para parecer app */
     .btn-contact, .btn-filter, .btn-pedir, .product-name {
       user-select: none;
       -webkit-user-select: none;
@@ -183,9 +172,8 @@
       .btn-pedir i:last-child { display: none; }
     }
 
-    /* Prevenir zoom en inputs si los hubiera */
     input, textarea, select {
-      font-size: 16px; /* Previene zoom automático en iOS */
+      font-size: 16px;
     }
   </style>
 </head>
@@ -233,7 +221,7 @@
       API_URL: "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts",
       TEL: "584244701273",
       CACHE_KEY: 'combox_cache_v2',
-      CACHE_DURATION: 10 * 60 * 1000, // 10 minutos
+      CACHE_DURATION: 10 * 60 * 1000,
       ITEMS_PER_PAGE: 24
     };
 
@@ -300,7 +288,6 @@
 
     // ========== DATOS ==========
     async function loadProducts() {
-      // Intentar caché
       const cached = localStorage.getItem(CONFIG.CACHE_KEY);
       if (cached) {
         const { data, timestamp } = JSON.parse(cached);
@@ -309,13 +296,11 @@
         }
       }
 
-      // Cargar de API
       const response = await fetch(CONFIG.API_URL);
       if (!response.ok) throw new Error('Error de red');
       
       const data = await response.json();
       
-      // Guardar en caché
       localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
         data,
         timestamp: Date.now()
@@ -399,7 +384,6 @@
 
       dom.grid.appendChild(fragment);
       
-      // Precargar imágenes
       batch.forEach(product => {
         if (product.imagen) {
           preloadImage(product.imagen).then(img => {
@@ -452,7 +436,6 @@
     // ========== INICIALIZACIÓN ==========
     async function init() {
       try {
-        // Cargar productos
         const products = await loadProducts();
         
         if (!products || products.length === 0) {
@@ -463,11 +446,9 @@
         state.allProducts = products;
         state.filteredProducts = [...products];
 
-        // Ocultar loader, mostrar filtros
         dom.loader.style.display = 'none';
         dom.filterBar.classList.remove('d-none');
 
-        // Configurar botón "Todas"
         if (dom.filterTodas) {
           dom.filterTodas.onclick = (e) => {
             playClickSound();
@@ -475,7 +456,6 @@
           };
         }
 
-        // Crear filtros de categorías
         const categorias = [...new Set(products.map(p => p.categoria))].filter(Boolean).sort();
         
         categorias.forEach(cat => {
@@ -489,15 +469,12 @@
           dom.filterBar.appendChild(btn);
         });
 
-        // Renderizar primeros productos
         await renderProducts(false);
         
-        // Eventos de sonido para botones
         document.querySelectorAll('.btn-contact, .btn-pedir').forEach(btn => {
           btn.addEventListener('click', playClickSound);
         });
 
-        // Scroll infinito
         window.addEventListener('scroll', handleScroll, { passive: true });
 
       } catch (error) {

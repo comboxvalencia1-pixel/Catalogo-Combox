@@ -11,7 +11,8 @@
     
     <style>
         :root {
-            --primary-neon: #e60303ff; /* Rojo Vibrante Neón */
+            --primary-neon: #e60303ff;
+            --delivery-blue: #007AFF;
             --neon-green: #00FF66;
             --bg-base: #eeeeeeff;
             --grey-glass: rgba(255, 255, 255, 0.64);
@@ -31,15 +32,7 @@
         }
         header.hidden { transform: translateY(-100%); }
         
-        .ghost-text {
-            color: rgba(255, 255, 255, 0.64); /* Más claro */
-            font-size: 0.6rem;
-            font-weight: 800;
-            letter-spacing: 7px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
+        .ghost-text { color: rgba(255, 255, 255, 0.64); font-size: 0.6rem; font-weight: 800; letter-spacing: 7px; text-transform: uppercase; margin-bottom: 5px; }
         .logo-main { color: white; font-size: 3.5rem; font-weight: 900; letter-spacing: -4px; line-height: 1; margin-bottom: 12px; }
         
         .contact-bar { display: flex; gap: 15px; }
@@ -47,89 +40,73 @@
             text-decoration: none; color: white; width: 45px; height: 45px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             background: rgba(255, 65, 65, 0.79); backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2); transition: 0.3s;
         }
 
-        /* --- ISLA DINÁMICA GRIS TRASLÚCIDA --- */
+        /* --- ISLA DINÁMICA --- */
         .islands-wrapper { 
-            position: fixed; 
-            top: 189px; /* Más arriba */
-            left: 50%; transform: translateX(-50%); 
+            position: fixed; top: 189px; left: 50%; transform: translateX(-50%); 
             z-index: 4000; display: flex; flex-direction: column; align-items: center; gap: 15px; 
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); width: 100%;
         }
         .islands-wrapper.sticky { top: 20px; }
-
         .island-master { 
             background: var(--grey-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             height: 60px; border-radius: 30px; padding: 5px;
             display: flex; align-items: center; gap: 20px; 
             border: 1px solid rgba(255, 255, 255, 0.54); 
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); /* Sombra exterior suave */
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); 
             min-width: 220px; transition: 0.4s; 
         }
-        .island-master.searching { min-width: 340px; background: rgba(255, 255, 255, 0.9); }
 
-        /* --- CATEGORÍAS HACIA ABAJO --- */
-        #catIsland { 
-            display: flex; gap: 8px; overflow-x: auto; padding: 5px 20px; max-width: 100vw; 
-            scrollbar-width: none; opacity: 0; transform: translateY(-20px); transition: 0.4s; 
-            pointer-events: none; order: 2; /* Aparece debajo de la isla */
-        }
-        #catIsland.active { opacity: 1; transform: translateY(0); pointer-events: all; }
-        .pill-cat { 
-            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); 
-            padding: 10px 20px; border-radius: 20px; font-size: 0.75rem; 
-            font-weight: 800; white-space: nowrap; border: 1px solid rgba(255,255,255,1);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
-        }
-        .pill-cat.active { background: var(--primary-neon); color: white; border-color: var(--primary-neon); }
-
-        /* --- UI SWITCH --- */
-.mode-switch { display: flex; background: rgba(0, 0, 0, 0.07); border-radius: 28px; padding: 3px; position: relative; width: 170px; height: 50px; }
-.mode-opt { flex: 1; z-index: 2; text-align: center; line-height: 44px; font-weight: 800; font-size: 0.7rem; color: rgba(0, 0, 0, 0.4); transition: 0.3s; }
-.mode-opt.active { color: white; }
-.mode-slider { position: absolute; width: calc(50% - 3px); height: calc(100% - 6px); background: var(--primary-neon); border-radius: 25px; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-
-        .action-circle { width: 50px; height: 50px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 10px rgba(0,0,0,0.05); color: #000; }
+        .action-circle { width: 50px; height: 50px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000; }
 
         /* --- GRID --- */
         main { padding: 250px 18px 140px; max-width: 1000px; margin: 0 auto; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-        .card { background: white; border-radius: 35px; padding: 15px; border: 1px solid #ffffffff; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.02); }
-        .img-box { width: 100%; aspect-ratio: 1; background: #ffffffff; border-radius: 25px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
-        .img-box img { max-width: 80%; max-height: 80%; object-fit: contain; }
+        .card { 
+            background: white; border-radius: 35px; padding: 15px; border: 1px solid #ffffffff; 
+            display: flex; flex-direction: column; align-items: center; text-align: center; 
+            animation: fadeInCard 0.6s ease-out forwards;
+        }
+
         .p-name { font-size: 0.85rem; font-weight: 700; height: 40px; margin-bottom: 8px; color: #000000ff; }
         .p-price { color: var(--primary-neon); font-weight: 900; font-size: 1.5rem; margin-bottom: 12px; }
-        .btn-add { width: 100%; background: #000000ff; color: white; border: none; padding: 16px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; }
+        
+        .btn-add { 
+            width: 100%; background: #000; color: white; border: none; padding: 16px; 
+            border-radius: 20px; font-weight: 800; font-size: 0.75rem; position: relative;
+        }
+        .btn-add.added { background: var(--neon-green); color: rgba(0, 0, 0, 0.7); }
 
-        /* --- CARRITO (GLASS OSCURO) --- */
+        /* --- DELIVERY (SIN MAPA) --- */
+        .btn-delivery {
+            width: 100%; background: var(--delivery-blue); color: white; border: none; 
+            padding: 18px; border-radius: 22px; font-weight: 800; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            margin: 10px 0; transition: 0.3s;
+        }
+        .btn-delivery.active { background: #333; }
+        .location-status { font-size: 0.65rem; color: #666; text-align: center; margin-bottom: 15px; font-weight: 700; display: none; }
+
+        /* --- CARRITO --- */
         .cart-floating {
             position: fixed; bottom: 30px; left: 20px; right: 20px;
             background: rgba(48, 45, 45, 0.5); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
             color: #fff; border-radius: 35px; padding: 15px 25px; 
             display: flex; align-items: center; justify-content: space-between; 
-            z-index: 4500; border: 1px solid rgba(255,255,255,0.1);
-            transform: translateY(180px); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 4500; transform: translateY(180px); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .cart-floating.visible { transform: translateY(0); }
-        .btn-view-cart { 
-            background: var(--neon-green); color: #000000ff; border: none; border-radius: 25px; 
-            padding: 12px 25px; font-weight: 900; font-size: 0.8rem;
-            box-shadow: 0 0 15px rgba(0, 255, 102, 0.5);
-        }
+        .btn-view-cart { background: var(--neon-green); color: rgba(0, 0, 0, 0.6); border: none; border-radius: 25px; padding: 12px 25px; font-weight: 900; }
 
         .cart-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 5000; display: none; align-items: flex-end; }
         .cart-modal.show { display: flex; }
         .cart-modal-content { background: #fff; width: 100%; border-radius: 40px 40px 0 0; max-height: 85vh; overflow-y: auto; }
-        .btn-checkout { 
-            width: 100%; background: var(--neon-green); color: #000; border: none; 
-            padding: 20px; border-radius: 25px; font-weight: 900; font-size: 1.1rem;
-            box-shadow: 0 10px 30px rgba(0, 255, 102, 0.3);
-        }
+        .btn-checkout { width: 100%; background: var(--neon-green); color: #000; border: none; padding: 20px; border-radius: 25px; font-weight: 900; }
         
-        #search-box input { width: 100%; border: none; background: transparent; outline: none; font-weight: 700; color: #000; font-size: 1rem; }
+        #splash { position: fixed; inset: 0; background: var(--primary-neon); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.8s; }
+        .splash-logo { color: white; font-size: 4rem; font-weight: 900; }
     </style>
 </head>
 <body>
@@ -140,9 +117,8 @@
         <div class="ghost-text">catálogo exclusivo</div>
         <h1 class="logo-main">COMBOX</h1>
         <div class="contact-bar">
-            <a href="https://wa.me/584244701273" target="_blank" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
-            <a href="https://instagram.com/combox.valencia" target="_blank" class="btn-contact"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="btn-contact"><i class="fas fa-location-dot"></i></a>
+            <a href="https://wa.me/584244701273" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
+            <a href="https://instagram.com/combox.valencia" class="btn-contact"><i class="fab fa-instagram"></i></a>
         </div>
     </header>
 
@@ -152,10 +128,10 @@
 
     <div class="islands-wrapper" id="islandsWrapper">
         <div class="island-master" id="islandMaster">
-            <div class="action-circle" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
+            <div class="action-circle" onclick="toggleSearch(true);"><i class="fa fa-search"></i></div>
             <div id="search-box" style="display:none; flex:1; padding:0 15px;">
-                <input type="text" id="searchInput" placeholder="Buscar producto...">
-                <i class="fa fa-times" onclick="toggleSearch(false)" style="opacity:0.3"></i>
+                <input type="text" id="searchInput" placeholder="Buscar..." style="width:100%; border:none; outline:none; background:transparent; font-weight:700;">
+                <i class="fa fa-times" onclick="toggleSearch(false);" style="opacity:0.3"></i>
             </div>
             <div class="mode-switch">
                 <div class="mode-slider" id="modeSlider"></div>
@@ -163,13 +139,12 @@
                 <div class="mode-opt" onclick="setMode('combos', this)">Combos</div>
             </div>
         </div>
-        <div id="catIsland"></div>
     </div>
 
     <div class="cart-floating" id="cartFloating">
         <div>
             <span id="floatTotal" style="font-weight:900; font-size:1.2rem; display:block;">$0.00</span>
-            <span id="floatCount" style="font-size:0.6rem; font-weight:800; opacity:0.6; text-transform:uppercase;">0 Items</span>
+            <span id="floatCount" style="font-size:0.6rem; font-weight:800; opacity:0.6;">0 Items</span>
         </div>
         <button class="btn-view-cart" onclick="toggleModal(true)">VER CARRITO</button>
     </div>
@@ -182,80 +157,108 @@
             </div>
             <div id="cartItems" style="padding:0 20px;"></div>
             <div style="padding:30px;">
+                
+                <button id="btnDelivery" class="btn-delivery" onclick="handleDelivery()">
+                    <i class="fas fa-motorcycle"></i> AÑADIR MI UBICACIÓN (DELIVERY)
+                </button>
+                <p id="locationStatus" class="location-status"></p>
+
                 <div style="display:flex; justify-content:space-between; margin-bottom:25px;">
                     <span style="font-weight:700; opacity:0.5;">Total:</span>
                     <span id="modalTotal" style="font-size:2rem; font-weight:900; color:var(--primary-neon);">$0.00</span>
                 </div>
                 <button class="btn-checkout" onclick="sendWhatsApp()">ENVIAR PEDIDO</button>
-                <button style="width:100%; background:none; border:none; margin-top:20px; color:#999; font-weight:700;" onclick="clearCart()">Vaciar Carrito</button>
             </div>
         </div>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts";
-        let allProducts = [], cart = [], mode = 'individual', category = 'Todas';
+        let allProducts = [], cart = [], mode = 'individual', deliveryActive = false;
+        let coords = null;
 
         async function loadData() {
             try {
                 const res = await fetch(API_URL);
                 allProducts = await res.json();
-                render(); renderCats();
+                render();
                 setTimeout(() => document.getElementById('splash').style.transform = 'translateY(-100%)', 1000);
             } catch (e) { console.error(e); }
         }
 
+        function handleDelivery() {
+            const btn = document.getElementById('btnDelivery');
+            const status = document.getElementById('locationStatus');
+            
+            if (!deliveryActive) {
+                status.style.display = 'block';
+                status.innerText = "Obteniendo coordenadas...";
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            coords = `${pos.coords.latitude},${pos.coords.longitude}`;
+                            deliveryActive = true;
+                            btn.classList.add('active');
+                            btn.innerHTML = `<i class="fas fa-check"></i> UBICACIÓN FIJADA`;
+                            status.innerText = "✓ Coordenadas listas para el envío";
+                            status.style.color = "#00FF66";
+                        },
+                        (err) => {
+                            status.innerText = "⚠️ Error: Activa el GPS de tu móvil";
+                            status.style.color = "red";
+                        }
+                    );
+                }
+            } else {
+                deliveryActive = false;
+                coords = null;
+                btn.classList.remove('active');
+                btn.innerHTML = `<i class="fas fa-motorcycle"></i> AÑADIR MI UBICACIÓN (DELIVERY)`;
+                status.style.display = 'none';
+            }
+        }
+
+        function sendWhatsApp() {
+            if (cart.length === 0) return alert("Carrito vacío");
+            const list = cart.map(i => `• ${i.qty}x ${i.nombre}`).join('%0A');
+            const total = document.getElementById('modalTotal').textContent;
+            
+            let deliveryText = deliveryActive && coords 
+                ? `%0A%0A*ENTREGA:* DELIVERY%0A*UBICACIÓN:* maps.google.com/q=lat,lng${coords}` 
+                : `%0A%0A*ENTREGA:* RETIRO EN TIENDA`;
+
+            const finalMsg = `*NUEVO PEDIDO COMBOX*%0A${list}${deliveryText}%0A%0A*TOTAL: ${total}*`;
+            window.open(`https://wa.me/584244701273?text=${finalMsg}`);
+        }
+
+        // --- FUNCIONES BASE ---
         function render() {
             const grid = document.getElementById('productGrid');
-            const search = document.getElementById('searchInput').value.toLowerCase();
             const filtered = allProducts.filter(p => {
-                const isCombo = p.nombre.toLowerCase().includes('combo') || p.categoria.toLowerCase().includes('combo');
-                return ((mode === 'combos') ? isCombo : !isCombo) && 
-                       (category === 'Todas' || p.categoria === category) &&
-                       (p.nombre.toLowerCase().includes(search));
+                const isCombo = p.nombre.toLowerCase().includes('combo');
+                return (mode === 'combos') ? isCombo : !isCombo;
             });
-            grid.innerHTML = filtered.map(p => `
-                <div class="card">
-                    <div class="img-box"><img src="${p.imagen}"></div>
+            grid.innerHTML = filtered.map(p => {
+                const cartItem = cart.find(i => i.nombre === p.nombre);
+                const count = cartItem ? cartItem.qty : 0;
+                return `<div class="card">
+                    <div style="width:100%; aspect-ratio:1; background:#f9f9f9; border-radius:25px; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                        <img src="${p.imagen}" style="max-width:80%;">
+                    </div>
                     <div class="p-name">${p.nombre}</div>
-                    <div class="p-price">$${(p.precio || 15).toFixed(2)}</div>
-                    <button class="btn-add" onclick="addToCart('${p.nombre.replace(/'/g, "")}', ${p.precio || 15}, this)">AGREGAR</button>
-                </div>
-            `).join('');
+                    <div class="p-price">$${(p.precio || 0).toFixed(2)}</div>
+                    <button class="btn-add ${count > 0 ? 'added' : ''}" onclick="addToCart('${p.nombre.replace(/'/g, "")}', ${p.precio})">
+                        ${count > 0 ? `<i class="fa fa-check"></i> Agregado <span class="item-counter">${count}</span>` : `<i class="fa fa-cart-plus"></i> AGREGAR`}
+                    </button>
+                </div>`;
+            }).join('');
         }
 
-        function renderCats() {
-            const cats = ['Todas', ...new Set(allProducts.map(p => p.categoria))];
-            document.getElementById('catIsland').innerHTML = cats.map(c => `
-                <div class="pill-cat ${c === category ? 'active' : ''}" onclick="setCat('${c}')">${c}</div>
-            `).join('');
-        }
-
-        window.addEventListener('scroll', () => {
-            const header = document.getElementById('mainHeader');
-            const islands = document.getElementById('islandsWrapper');
-            if (window.scrollY > 80) {
-                header.classList.add('hidden');
-                islands.classList.add('sticky');
-            } else {
-                header.classList.remove('hidden');
-                islands.classList.remove('sticky');
-            }
-        });
-
-        function toggleSearch(s) { 
-            document.getElementById('islandMaster').classList.toggle('searching', s);
-            document.getElementById('catIsland').classList.toggle('active', s);
-            document.getElementById('search-box').style.display = s ? 'flex' : 'none';
-            document.querySelector('.mode-switch').style.display = s ? 'none' : 'flex';
-        }
-
-        function addToCart(name, price, btn) {
+        function addToCart(name, price) {
             const item = cart.find(i => i.nombre === name);
             if(item) item.qty++; else cart.push({nombre:name, precio:price, qty:1});
-            updateUI();
-            btn.style.background = "#00FF66"; btn.style.color = "#000"; btn.textContent = "LISTO";
-            setTimeout(() => { btn.style.background = "#000"; btn.style.color = "#fff"; btn.textContent = "AGREGAR"; }, 800);
+            updateUI(); render();
         }
 
         function updateUI() {
@@ -269,8 +272,7 @@
         }
 
         function renderItems() {
-            const cont = document.getElementById('cartItems');
-            cont.innerHTML = cart.map((item, idx) => `
+            document.getElementById('cartItems').innerHTML = cart.map((item, idx) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid #eee;">
                     <div><div style="font-weight:700;">${item.nombre}</div><div style="color:var(--primary-neon); font-weight:800;">$${item.precio}</div></div>
                     <div style="display:flex; align-items:center; background:#f0f0f0; border-radius:30px; padding:5px;">
@@ -278,24 +280,12 @@
                         <span style="margin:0 15px; font-weight:800;">${item.qty}</span>
                         <button class="action-circle" style="width:30px; height:30px;" onclick="changeQty(${idx}, 1)">+</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        window.changeQty = (idx, d) => { cart[idx].qty += d; if(cart[idx].qty <= 0) cart.splice(idx, 1); updateUI(); };
-        function setMode(m, el) { 
-            mode = m; document.querySelectorAll('.mode-opt').forEach(o => o.classList.remove('active'));
-            el.classList.add('active'); document.getElementById('modeSlider').style.transform = m === 'combos' ? 'translateX(100%)' : 'translateX(0)';
-            render(); 
-        }
-        function setCat(c) { category = c; renderCats(); render(); }
+        window.changeQty = (idx, d) => { cart[idx].qty += d; if(cart[idx].qty <= 0) cart.splice(idx, 1); updateUI(); render(); };
+        function setMode(m, el) { mode = m; document.querySelectorAll('.mode-opt').forEach(o => o.classList.remove('active')); el.classList.add('active'); document.getElementById('modeSlider').style.transform = m === 'combos' ? 'translateX(100%)' : 'translateX(0)'; render(); }
         function toggleModal(s) { document.getElementById('cartModal').classList.toggle('show', s); }
-        function clearCart() { cart = []; updateUI(); toggleModal(false); }
-        function sendWhatsApp() {
-            const list = cart.map(i => `• ${i.qty}x ${i.nombre}`).join('%0A');
-            window.open(`https://wa.me/584244701273?text=*NUEVO PEDIDO COMBOX*%0A${list}%0A%0A*TOTAL: ${document.getElementById('modalTotal').textContent}*`);
-        }
-        document.getElementById('searchInput').oninput = render;
         window.onload = loadData;
     </script>
 </body>

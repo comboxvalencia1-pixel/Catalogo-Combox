@@ -1,10 +1,9 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts";
 let allProducts = [], cart = [], mode = 'individual', category = 'Todas', deliveryMethod = 'Tienda';
 
-// SISTEMA DE SONIDO Y VIBRACIÓN (Sincronizados)
+// SONIDO Y VIBRACIÓN SINCRONIZADOS
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playTap() {
-    // 1. Sonido
     const osc = audioCtx.createOscillator(); 
     const gain = audioCtx.createGain();
     osc.type = 'sine'; 
@@ -14,37 +13,33 @@ function playTap() {
     gain.connect(audioCtx.destination);
     osc.start(); 
     osc.stop(audioCtx.currentTime + 0.05);
-    
-    // 2. Vibración (Solo si el dispositivo lo soporta)
-    if (navigator.vibrate) {
-        navigator.vibrate(20); 
-    }
+    if (navigator.vibrate) navigator.vibrate(25); 
 }
 
 async function loadData() {
+    document.body.style.overflow = 'hidden'; // Bloquea scroll durante el splash
     try {
         const saved = localStorage.getItem('combox_cart');
         if (saved) cart = JSON.parse(saved);
-
         const res = await fetch(API_URL);
         allProducts = await res.json();
         render(); 
         renderCats();
         updateUI(false); 
 
-        // SALIDA SEGURA DEL SPLASH PARA iOS
+        // SALIDA ELEGANTE A LOS 3 SEGUNDOS
         setTimeout(() => {
             const splash = document.getElementById('splash');
             if(splash) {
                 splash.style.transform = 'translateY(-100%)';
                 splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 800);
+                document.body.style.overflow = 'auto'; // Habilita scroll
+                setTimeout(() => splash.style.display = 'none', 1200);
             }
-        }, 1200);
-
+        }, 3000);
     } catch (e) { 
-        console.error(e);
         document.getElementById('splash').style.display = 'none';
+        document.body.style.overflow = 'auto';
     }
 }
 
@@ -81,12 +76,18 @@ function render() {
         </div>`).join('');
 }
 
+// ACTUALIZACIÓN DE BOTÓN INDIVIDUAL (SIN PARPADEO)
 function addToCart(name, price, btnID) {
-    // AQUÍ ES EL ÚNICO LUGAR DONDE VIBRA Y SUENA
     playTap();
     let item = cart.find(i => i.nombre === name);
     if (item) item.qty++; else cart.push({ nombre: name, precio: price, qty: 1 });
-    updateUI(true); 
+    
+    updateUI(false); 
+    const btn = document.getElementById(btnID);
+    if (btn) {
+        btn.classList.add('added');
+        btn.innerHTML = `<i class="fa fa-check"></i> AGREGADO <span class="item-counter">${item ? item.qty : 1}</span>`;
+    }
 }
 
 function updateUI(shouldRender = true) {
@@ -113,7 +114,6 @@ function renderCartItems() {
 
 function changeQty(idx, d) { cart[idx].qty += d; if (cart[idx].qty <= 0) cart.splice(idx, 1); updateUI(true); }
 function clearCart() { cart = []; updateUI(true); toggleModal(false); }
-
 function setMode(m, idx) { mode = m; document.querySelectorAll('.mode-opt').forEach(opt => opt.classList.remove('active')); document.querySelectorAll('.mode-opt')[idx].classList.add('active'); document.getElementById('modeSlider').style.transform = `translateX(${idx * 100}%)`; render(); }
 function renderCats() { const cats = ['Todas', ...new Set(allProducts.map(p => p.categoria).filter(Boolean))]; document.getElementById('catIsland').innerHTML = cats.map(c => `<div class="pill-cat ${c === category ? 'active' : ''}" onclick="setCat('${c}')">${c}</div>`).join(''); }
 function setCat(c) { category = c; renderCats(); render(); }
@@ -122,15 +122,7 @@ function toggleModal(s) { document.getElementById('cartModal').style.display = s
 function closeModalExterno(e) { if(e.target.id === 'cartModal') toggleModal(false); }
 function showStep(s) { document.getElementById('step-cart').style.display = s === 'cart' ? 'block' : 'none'; document.getElementById('step-delivery').style.display = s === 'delivery' ? 'block' : 'none'; }
 function setDelivery(m) { deliveryMethod = m; document.getElementById('opt-tienda').classList.toggle('active', m === 'Tienda'); document.getElementById('opt-delivery').classList.toggle('active', m === 'Delivery'); document.getElementById('delivery-fields').style.display = m === 'Delivery' ? 'block' : 'none'; }
-
-function getLocation() { 
-    if (navigator.geolocation) { 
-        navigator.geolocation.getCurrentPosition(pos => { 
-            document.getElementById('deliveryLink').value = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; 
-        }); 
-    } 
-}
-
+function getLocation() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { document.getElementById('deliveryLink').value = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; }); } }
 function sendWhatsApp() {
     const total = cart.reduce((acc, i) => acc + (i.precio * i.qty), 0).toFixed(2);
     let msg = `*NUEVO PEDIDO COMBOX*%0A%0A`;
@@ -140,18 +132,10 @@ function sendWhatsApp() {
     if(link) msg += `%0A*UBICACIÓN:* ${link}`;
     window.open(`https://wa.me/584244701273?text=${msg}`);
 }
-
 window.addEventListener('scroll', () => {
     const h = document.getElementById('mainHeader'), isl = document.getElementById('islandsWrapper');
     if (window.scrollY > 80) { h.classList.add('hidden'); isl.classList.add('sticky'); }
     else { h.classList.remove('hidden'); isl.classList.remove('sticky'); }
 });
-
 document.getElementById('searchInput').oninput = render;
 window.onload = loadData;
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js');
-    });
-}

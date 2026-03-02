@@ -1,59 +1,54 @@
-:root {
-    --primary-neon: #e60303;
-    --neon-green: #00FF66;
-    --bg-base: #eeeeee;
-    --grey-glass: rgba(255, 255, 255, 0.85);
-    --black-glass: rgba(15, 15, 15, 0.8);
+/* ... (Toda tu base CSS estable aquí arriba) ... */
+
+/* FIX PARA EL HEADER: Ocultamiento total */
+header {
+    /* ... tus estilos de header ... */
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: none; /* Quitamos sombra para que no deje línea al subir */
+}
+header.hidden {
+    transform: translateY(-100.5%); /* Subimos un poco más para asegurar ocultamiento total */
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-
-/* FIX iOS: Fondo rojo para evitar franjas blancas al deslizar */
-html { background-color: var(--primary-neon); }
-body { background: var(--bg-base); color: #000; overflow-x: hidden; min-height: 100vh; }
-
-/* SPLASH - EFECTO HOJA DE LIBRO */
-#splash { 
-    position: fixed; inset: 0; background: var(--primary-neon); z-index: 10000; 
-    display: flex; align-items: center; justify-content: center;
-    perspective: 1200px; transform-origin: left;
-    transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.8s ease;
+/* ANIMACIÓN DE LIBRO PARA EL SPLASH */
+#splash {
+    position: fixed;
+    inset: 0;
+    background: var(--primary-neon);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transform-origin: left; /* Clave para el efecto libro */
+    transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1);
 }
-#splash.hide { transform: rotateY(-90deg); opacity: 0; pointer-events: none; }
-
-.splash-logo { color: white; font-size: 2.2rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 15px; }
-.loader-container { width: 80px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; }
-.loader-bar { width: 100%; height: 100%; background: #fff; transform: translateX(-100%); animation: load 1.5s infinite; }
-@keyframes load { 100% { transform: translateX(100%); } }
-
-/* HEADER - DESAPARECE TOTALMENTE */
-header { position: fixed; top: 0; width: 100%; height: 220px; background: var(--primary-neon); z-index: 3000; display: flex; flex-direction: column; align-items: center; padding-top: 40px; transition: 0.5s ease-in-out; }
-header.hidden { transform: translateY(-100%); }
-.logo-main { color: white; font-size: 3.5rem; font-weight: 900; letter-spacing: -4px; }
-.exclusive-tag { font-size: 0.6rem; color: #fff; letter-spacing: 5px; margin-bottom: 5px; opacity: 0.8; font-weight: 800; }
-
-/* BOTÓN AGREGAR - TRANSICIÓN ELEGANTE */
-.btn-add { 
-    width: 100%; background: #000; color: white; border: none; padding: 16px; border-radius: 20px; 
-    font-weight: 800; font-size: 0.75rem; position: relative; 
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+#splash.exit {
+    transform: rotateY(-90deg); /* Se abre como una portada */
 }
-.btn-add.added { background: var(--neon-green); color: #000; transform: scale(1.05); box-shadow: 0 0 20px rgba(0,255,102,0.4); }
-
-/* BOTONES DE CARRITO - DISEÑO RECUPERADO */
-.btn-step-action { 
-    width: 100%; background: var(--neon-green); color: #000; border: none; 
-    padding: 22px; border-radius: 25px; font-weight: 900; font-size: 1.1rem; 
-    box-shadow: 0 10px 25px rgba(0,255,102,0.3); transition: 0.3s;
-    text-transform: uppercase; margin-top: 10px;
+.splash-logo {
+    color: white;
+    font-size: 2.8rem; /* Un poco más pequeño y elegante */
+    font-weight: 900;
+    letter-spacing: -3px;
 }
-.btn-whatsapp { background: #25D366; color: #fff; box-shadow: 0 10px 25px rgba(37,211,102,0.3); }
-
-.delivery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-.delivery-opt { padding: 20px; border-radius: 20px; border: 2px solid #eee; text-align: center; font-weight: 800; transition: 0.3s; }
-.delivery-opt.active { border-color: var(--neon-green); background: #f0fff6; }
-
-/* OTROS */
-.modal-header-box { padding: 30px; display: flex; justify-content: space-between; align-items: center; }
-.combox-input { width:100%; padding:18px; border-radius:15px; border:1.5px solid #eee; outline:none; font-weight:600; font-size: 1rem; }
-.btn-clear-cart { width:100%; background:none; border:none; margin-top:20px; color:#999; font-weight:800; }
+.loader-pwa {
+    width: 40px;
+    height: 3px;
+    background: rgba(255,255,255,0.3);
+    margin-top: 20px;
+    position: relative;
+    overflow: hidden;
+}
+.loader-pwa::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    animation: loading 1.5s infinite;
+}
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}

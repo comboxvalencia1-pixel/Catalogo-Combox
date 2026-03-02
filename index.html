@@ -1,63 +1,296 @@
-<div id="pwa-blocker" style="display:none; position:fixed; inset:0; background:#000; z-index:10000; color:#fff; padding:40px; text-align:center; flex-direction:column; align-items:center; justify-content:center;">
-    <div class="splash-logo" style="margin-bottom:20px;">COMBOX</div>
-    <h2 style="font-weight:900; font-size:1.5rem; margin-bottom:15px; color:#e60303;">EXPERIENCIA EXCLUSIVA</h2>
-    <p style="opacity:0.7; font-size:0.9rem; line-height:1.6; max-width:280px; margin-bottom:40px;">
-        Para realizar pedidos y ver nuestro catálogo premium, instala la aplicación en tu dispositivo.
-    </p>
-
-    <div id="guide-ios" style="display:none; background:rgba(255,255,255,0.05); padding:25px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); width:100%; max-width:320px;">
-        <p style="font-weight:800; margin-bottom:20px; font-size:0.85rem;">PASOS PARA INSTALAR EN IPHONE/IPAD:</p>
-        <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; text-align:left;">
-            <div style="background:#fff; color:#000; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; flex-shrink:0;">1</div>
-            <p style="font-size:0.8rem;">Toca el botón **Compartir** <i class="fa-regular fa-square-plus" style="color:#007AFF; font-size:1.2rem; margin-left:5px;"></i> abajo en Safari.</p>
-        </div>
-        <div style="display:flex; align-items:center; gap:15px; text-align:left;">
-            <div style="background:#fff; color:#000; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; flex-shrink:0;">2</div>
-            <p style="font-size:0.8rem;">Busca y toca en **"Agregar al inicio"**.</p>
-        </div>
-        <div style="margin-top:25px; animation: bounce 2s infinite;">
-            <i class="fa-solid fa-arrow-down" style="font-size:1.5rem; color:#e60303;"></i>
-        </div>
-    </div>
-
-    <div id="guide-android" style="display:none; background:rgba(255,255,255,0.05); padding:25px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); width:100%; max-width:320px;">
-        <p style="font-weight:800; margin-bottom:20px; font-size:0.85rem;">INSTALAR EN ANDROID:</p>
-        <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; text-align:left;">
-            <div style="background:#fff; color:#000; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; flex-shrink:0;">1</div>
-            <p style="font-size:0.8rem;">Toca los **3 puntos** <i class="fa-solid fa-ellipsis-vertical" style="margin-left:5px;"></i> en la esquina superior.</p>
-        </div>
-        <div style="display:flex; align-items:center; gap:15px; text-align:left;">
-            <div style="background:#fff; color:#000; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; flex-shrink:0;">2</div>
-            <p style="font-size:0.8rem;">Toca en **"Instalar aplicación"** o **"Agregar a la pantalla"**.</p>
-        </div>
-    </div>
-</div>
-
-<style>
-    @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-10px);} 60% {transform: translateY(-5px);} }
-</style>
-
-<script>
-    // Lógica de Bloqueo y Detección
-    function checkPWA() {
-        // Detectar si ya está abierta como APP
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        
-        if (!isStandalone) {
-            const blocker = document.getElementById('pwa-blocker');
-            blocker.style.display = 'flex';
-            
-            // Detectar Sistema Operativo
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            
-            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-                document.getElementById('guide-ios').style.display = 'block';
-            } else {
-                document.getElementById('guide-android').style.display = 'block';
-            }
-        }
-    }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f70202">
+    <title>COMBOX | Exclusive Experience</title>
     
-    // Ejecutar al cargar
-    window.addEventListener('DOMContentLoaded', checkPWA);
-</script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-neon: #e60303;
+            --neon-green: #00FF66;
+            --bg-base: #eeeeee;
+            --grey-glass: rgba(255, 255, 255, 0.8);
+            --black-glass: rgba(15, 15, 15, 0.75);
+            --neon-shadow: 0 0 15px rgba(0, 255, 102, 0.6);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-base); color: #000; overflow-x: hidden; }
+
+        #splash { position: fixed; inset: 0; background: var(--primary-neon); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.8s ease-in-out; }
+        .splash-logo { color: white; font-size: 4rem; font-weight: 900; letter-spacing: -5px; }
+
+        header { position: fixed; top: 0; width: 100%; height: 220px; background: var(--primary-neon); z-index: 3000; display: flex; flex-direction: column; align-items: center; padding-top: 33px; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+        header.hidden { transform: translateY(-100%); }
+        .logo-main { color: white; font-size: 3.5rem; font-weight: 900; letter-spacing: -4px; margin-bottom: 12px; }
+        
+        .contact-bar { display: flex; gap: 15px; }
+        .btn-contact { text-decoration: none; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 65, 65, 0.79); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); transition: 0.3s; }
+
+        .islands-wrapper { position: fixed; top: 189px; left: 50%; transform: translateX(-50%); z-index: 4000; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; }
+        .islands-wrapper.sticky { top: 20px; }
+        .island-master { background: var(--grey-glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); height: 60px; border-radius: 30px; padding: 5px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); min-width: 280px; }
+
+        .mode-switch { display: flex; background: rgba(0,0,0,0.05); border-radius: 25px; padding: 3px; width: 250px; position: relative; height: 50px; }
+        .mode-opt { flex: 1; text-align: center; font-size: 0.65rem; font-weight: 900; z-index: 2; cursor: pointer; line-height: 44px; color: #777; transition: 0.3s; text-transform: uppercase; }
+        .mode-opt.active { color: #fff; }
+        .mode-slider { position: absolute; left: 3px; top: 3px; width: calc(33.33% - 3px); height: calc(100% - 6px); background: var(--primary-neon); border-radius: 20px; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1; }
+
+        #catIsland { display: flex; gap: 8px; overflow-x: auto; padding: 5px 20px; max-width: 100vw; scrollbar-width: none; opacity: 0; height: 0; transition: 0.4s; }
+        #catIsland.active { opacity: 1; height: 50px; margin-top: 5px; }
+        .pill-cat { background: white; padding: 10px 18px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .pill-cat.active { background: var(--primary-neon); color: white; }
+
+        main { padding: 250px 18px 140px; max-width: 1000px; margin: 0 auto; }
+        .category-section { margin-bottom: 40px; }
+        .category-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 15px; padding-left: 12px; color: #333; text-transform: uppercase; border-left: 4px solid var(--primary-neon); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .card { background: white; border-radius: 35px; padding: 15px; display: flex; flex-direction: column; align-items: center; border: 1px solid #fff; }
+        .img-box { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .img-box img { max-width: 90%; max-height: 90%; object-fit: contain; }
+
+        /* ANIMACIÓN FLUIDA Y ELEGANTE */
+        .btn-add { 
+            width: 100%; background: #000; color: white; border: none; padding: 16px; border-radius: 20px; 
+            font-weight: 800; font-size: 0.75rem; position: relative; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(1);
+        }
+        .btn-add.added { background: var(--neon-green); color: #000; box-shadow: var(--neon-shadow); }
+        .btn-add:active { transform: scale(0.92); }
+        
+        .item-counter { 
+            position: absolute; top: -6px; right: -6px; background: #000; color: #fff; 
+            width: 24px; height: 24px; border-radius: 50%; font-size: 0.75rem; 
+            display: flex; align-items: center; justify-content: center; border: 2.5px solid #fff; 
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+        }
+        @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .cart-floating { position: fixed; bottom: 30px; left: 20px; right: 20px; background: var(--black-glass); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); color: #fff; border-radius: 35px; padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; z-index: 4500; transform: translateY(150px); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(255,255,255,0.1); }
+        .cart-floating.visible { transform: translateY(0); }
+        .btn-view-cart { background: var(--neon-green); color: #000; border: none; border-radius: 25px; padding: 12px 25px; font-weight: 900; font-size: 0.8rem; box-shadow: var(--neon-shadow); cursor: pointer; }
+
+        .cart-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px); z-index: 5000; display: none; align-items: flex-end; }
+        .cart-modal-content { background: #fff; width: 100%; border-radius: 40px 40px 0 0; max-height: 90vh; overflow-y: auto; padding-bottom: 40px; position: relative; }
+        .close-circle { width: 40px; height: 40px; background: #f0f0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-confirm-step { width: 100%; background: var(--neon-green); color: #000; border: none; padding: 20px; border-radius: 25px; font-weight: 900; font-size: 1.1rem; box-shadow: var(--neon-shadow); cursor: pointer; }
+
+        .delivery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .delivery-opt { padding: 20px; border-radius: 20px; border: 2px solid #eee; text-align: center; font-weight: 800; font-size: 0.8rem; transition: 0.3s; cursor: pointer; }
+        .delivery-opt i { display: block; font-size: 1.6rem; margin-bottom: 12px; }
+        .delivery-opt.active { border-color: var(--neon-green); background: #f0fff6; }
+    </style>
+</head>
+<body>
+
+    <div id="splash"><h1 class="splash-logo">COMBOX</h1></div>
+
+    <header id="mainHeader">
+        <div style="font-size: 0.6rem; color: #fff; letter-spacing: 5px; margin-bottom: 5px; opacity: 0.8;">CATÁLOGO EXCLUSIVO</div>
+        <h1 class="logo-main">COMBOX</h1>
+        <div class="contact-bar">
+            <a href="https://wa.me/584244701273" target="_blank" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
+            <a href="https://instagram.com/combox.valencia" target="_blank" class="btn-contact"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="btn-contact"><i class="fas fa-location-dot"></i></a>
+        </div>
+    </header>
+
+    <main id="mainContent"></main>
+
+    <div class="islands-wrapper" id="islandsWrapper">
+        <div class="island-master" id="islandMaster">
+            <div style="width: 45px; height: 45px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
+            <div id="search-box" style="display:none; flex:1; padding:0 10px;">
+                <input type="text" id="searchInput" placeholder="Buscar producto..." style="width:100%; border:none; background:transparent; outline:none; font-weight:700;">
+                <i class="fa fa-times" onclick="toggleSearch(false)" style="opacity:0.3"></i>
+            </div>
+            <div class="mode-switch" id="modeContainer">
+                <div class="mode-slider" id="modeSlider"></div>
+                <div class="mode-opt active" onclick="setMode('individual', 0)">Individual</div>
+                <div class="mode-opt" onclick="setMode('combos', 1)">Combos</div>
+                <div class="mode-opt" onclick="setMode('servicios', 2)">Servicios</div>
+            </div>
+        </div>
+        <div id="catIsland"></div>
+    </div>
+
+    <div class="cart-floating" id="cartFloating">
+        <div>
+            <span id="floatTotal" style="font-weight:900; font-size:1.2rem; display:block;">$0.00</span>
+            <span id="floatCount" style="font-size:0.6rem; opacity:0.7; font-weight:900;">0 PRODUCTOS</span>
+        </div>
+        <button class="btn-view-cart" onclick="toggleModal(true)">VER CARRITO</button>
+    </div>
+
+    <div class="cart-modal" id="cartModal" onclick="closeModalExterno(event)">
+        <div class="cart-modal-content" onclick="event.stopPropagation()">
+            <div id="step-cart">
+                <div style="padding: 30px; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="font-weight: 900;">Tu Pedido</h2>
+                    <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
+                </div>
+                <div id="cartItems" style="padding: 0 20px;"></div>
+                <div style="padding: 30px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+                        <span style="font-weight: 700; opacity: 0.5;">Subtotal:</span>
+                        <span id="modalTotal" style="font-size: 2rem; font-weight: 900; color: var(--primary-neon);">$0.00</span>
+                    </div>
+                    <button class="btn-confirm-step" onclick="showStep('delivery')">CONFIRMAR PRODUCTOS</button>
+                    <button onclick="clearCart()" style="width:100%; background:none; border:none; margin-top:20px; color:#999; font-weight:800; cursor:pointer;">Vaciar carrito</button>
+                </div>
+            </div>
+
+            <div id="step-delivery" style="display: none; padding: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:30px;">
+                    <div style="display:flex; align-items:center; gap:15px;"><i class="fa fa-arrow-left" onclick="showStep('cart')"></i><h2 style="font-weight: 900;">Entrega</h2></div>
+                    <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
+                </div>
+                <div class="delivery-grid">
+                    <div class="delivery-opt active" id="opt-tienda" onclick="setDelivery('Tienda')"><i class="fa fa-shop"></i>Recoger en Tienda</div>
+                    <div class="delivery-opt" id="opt-delivery" onclick="setDelivery('Delivery')"><i class="fa fa-motorcycle"></i>Delivery</div>
+                </div>
+                <div id="delivery-fields" style="display: none; position:relative; margin-bottom:20px;">
+                    <input type="text" id="deliveryLink" placeholder="Link de Google Maps" style="width:100%; padding:18px; border-radius:15px; border:1.5px solid #eee; outline:none; font-weight:600;">
+                    <button onclick="getLocation()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:#000; color:#fff; border:none; padding:8px 15px; border-radius:10px; font-weight:800; font-size:0.7rem;">Aquí</button>
+                </div>
+                <button class="btn-confirm-step" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts";
+        let allProducts = [], cart = [], mode = 'individual', category = 'Todas', deliveryMethod = 'Tienda';
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTap() {
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            if (navigator.vibrate) navigator.vibrate(12);
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch(API_URL);
+                allProducts = await res.json();
+                render(); renderCats();
+                setTimeout(() => document.getElementById('splash').style.transform = 'translateY(-100%)', 1000);
+            } catch (e) { console.error(e); }
+        }
+
+        function render() {
+            const container = document.getElementById('mainContent');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allProducts.filter(p => {
+                const isCombo = p.nombre.toLowerCase().includes('combo') || (p.categoria && p.categoria.toLowerCase().includes('combo'));
+                const isServicio = p.categoria && p.categoria.toLowerCase().includes('servicio');
+                let matchesMode = (mode === 'combos' ? isCombo : mode === 'servicios' ? isServicio : !isCombo && !isServicio);
+                return matchesMode && (category === 'Todas' || p.categoria === category) && p.nombre.toLowerCase().includes(search);
+            });
+            const groups = filtered.reduce((acc, p) => { (acc[p.categoria] = acc[p.categoria] || []).push(p); return acc; }, {});
+            container.innerHTML = Object.keys(groups).map(catName => `
+                <div class="category-section">
+                    <h2 class="category-title">${catName}</h2>
+                    <div class="grid">
+                        ${groups[catName].map(p => {
+                            const item = cart.find(i => i.nombre === p.nombre);
+                            const qty = item ? item.qty : 0;
+                            const btnID = `btn-${p.nombre.replace(/\s+/g, '')}`;
+                            return `
+                            <div class="card">
+                                <div class="img-box"><img src="${p.imagen || ''}"></div>
+                                <div style="font-size:0.8rem; font-weight:700; height:35px; text-align:center;">${p.nombre}</div>
+                                <div style="color:var(--primary-neon); font-weight:900; font-size:1.3rem; margin:10px 0;">$${(parseFloat(p.precio) || 0).toFixed(2)}</div>
+                                <button id="${btnID}" class="btn-add ${qty > 0 ? 'added' : ''}" onclick="addToCart('${p.nombre.replace(/'/g, "\\'")}', ${parseFloat(p.precio) || 0}, '${btnID}')">
+                                    ${qty > 0 ? `<i class="fa fa-check"></i> AGREGADO` : `<i class="fa fa-plus"></i> AGREGAR`}
+                                    ${qty > 0 ? `<span class="item-counter">${qty}</span>` : ''}
+                                </button>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`).join('');
+        }
+
+        // LÓGICA DE AGREGAR MEJORADA (SOLO AFECTA AL BOTÓN TOCADO)
+        function addToCart(name, price, btnID) {
+            playTap();
+            const btn = document.getElementById(btnID);
+            
+            // Lógica de datos
+            let item = cart.find(i => i.nombre === name);
+            if (item) item.qty++; else cart.push({ nombre: name, precio: price, qty: 1 });
+            
+            // Actualizar solo el botón actual sin renderizar todo
+            const newQty = cart.find(i => i.nombre === name).qty;
+            btn.classList.add('added');
+            btn.innerHTML = `<i class="fa fa-check"></i> AGREGADO <span class="item-counter">${newQty}</span>`;
+            
+            // Actualizar total e isla inferior
+            updateUI(false); 
+        }
+
+        function updateUI(shouldRender = true) {
+            const total = cart.reduce((acc, i) => acc + (i.precio * i.qty), 0);
+            const count = cart.reduce((acc, i) => acc + i.qty, 0);
+            document.getElementById('floatTotal').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('modalTotal').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('floatCount').textContent = `${count} PRODUCTOS`;
+            document.getElementById('cartFloating').classList.toggle('visible', count > 0);
+            renderCartItems();
+            if(shouldRender) render();
+        }
+
+        function renderCartItems() {
+            document.getElementById('cartItems').innerHTML = cart.map((item, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid #eee;">
+                    <div><div style="font-weight:800;">${item.nombre}</div><div style="color:var(--primary-neon); font-weight:800;">$${item.precio.toFixed(2)}</div></div>
+                    <div style="display:flex; align-items:center; gap:15px; background:#f5f5f5; padding:8px 15px; border-radius:20px; font-weight:900;">
+                        <span onclick="changeQty(${idx}, -1)">-</span><span>${item.qty}</span><span onclick="changeQty(${idx}, 1)">+</span>
+                    </div>
+                </div>`).join('');
+        }
+
+        function changeQty(idx, d) { playTap(); cart[idx].qty += d; if (cart[idx].qty <= 0) cart.splice(idx, 1); updateUI(true); }
+        function clearCart() { playTap(); cart = []; updateUI(true); toggleModal(false); }
+
+        function setMode(m, idx) { playTap(); mode = m; document.querySelectorAll('.mode-opt').forEach(opt => opt.classList.remove('active')); document.querySelectorAll('.mode-opt')[idx].classList.add('active'); document.getElementById('modeSlider').style.transform = `translateX(${idx * 100}%)`; render(); }
+        function renderCats() { const cats = ['Todas', ...new Set(allProducts.map(p => p.categoria).filter(Boolean))]; document.getElementById('catIsland').innerHTML = cats.map(c => `<div class="pill-cat ${c === category ? 'active' : ''}" onclick="setCat('${c}')">${c}</div>`).join(''); }
+        function setCat(c) { playTap(); category = c; renderCats(); render(); }
+        function toggleSearch(s) { playTap(); document.getElementById('search-box').style.display = s ? 'flex' : 'none'; document.getElementById('modeContainer').style.display = s ? 'none' : 'flex'; document.getElementById('catIsland').classList.toggle('active', s); }
+        function toggleModal(s) { playTap(); document.getElementById('cartModal').style.display = s ? 'flex' : 'none'; if(s) showStep('cart'); }
+        function closeModalExterno(e) { if(e.target.id === 'cartModal') toggleModal(false); }
+        function showStep(s) { playTap(); document.getElementById('step-cart').style.display = s === 'cart' ? 'block' : 'none'; document.getElementById('step-delivery').style.display = s === 'delivery' ? 'block' : 'none'; }
+        function setDelivery(m) { playTap(); deliveryMethod = m; document.getElementById('opt-tienda').classList.toggle('active', m === 'Tienda'); document.getElementById('opt-delivery').classList.toggle('active', m === 'Delivery'); document.getElementById('delivery-fields').style.display = m === 'Delivery' ? 'block' : 'none'; }
+        function getLocation() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { document.getElementById('deliveryLink').value = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; }); } }
+
+        function sendWhatsApp() {
+            const total = cart.reduce((acc, i) => acc + (i.precio * i.qty), 0).toFixed(2);
+            let msg = `*NUEVO PEDIDO COMBOX*%0A%0A`;
+            cart.forEach(i => msg += `• ${i.qty}x ${i.nombre} ($${(i.precio * i.qty).toFixed(2)})%0A`);
+            msg += `%0A*TOTAL: $${total}*%0A*ENTREGA:* ${deliveryMethod}`;
+            const link = document.getElementById('deliveryLink').value;
+            if(link) msg += `%0A*UBICACIÓN:* ${link}`;
+            window.open(`https://wa.me/584244701273?text=${msg}`);
+        }
+
+        window.addEventListener('scroll', () => {
+            const h = document.getElementById('mainHeader'), isl = document.getElementById('islandsWrapper');
+            if (window.scrollY > 80) { h.classList.add('hidden'); isl.classList.add('sticky'); }
+            else { h.classList.remove('hidden'); isl.classList.remove('sticky'); }
+        });
+
+        document.getElementById('searchInput').oninput = render;
+        window.onload = loadData;
+    </script>
+</body>
+</html>

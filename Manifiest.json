@@ -1,0 +1,22 @@
+{
+  "name": "COMBOX Exclusive",
+  "short_name": "COMBOX",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f70202",
+  "theme_color": "#f70202",
+  "description": "Catálogo de combos de comida crudos en Naguanagua.",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192.png?text=Combox",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512.png?text=Combox",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+

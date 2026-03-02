@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#e60303">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>COMBOXv4</title>
+    <title>COMBOX</title>
     
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -16,14 +16,16 @@
 <body>
 
     <div id="splash">
-        <div class="splash-content">
+        <div class="splash-inner">
             <h1 class="splash-logo">COMBOX</h1>
-            <div class="loader-line"></div>
+            <div class="loader-container">
+                <div class="loader-bar"></div>
+            </div>
         </div>
     </div>
 
     <header id="mainHeader">
-        <div class="exclusive-label">CATÁLOGO EXCLUSIVO</div>
+        <div class="exclusive-tag">CATÁLOGO EXCLUSIVO</div>
         <h1 class="logo-main">COMBOX</h1>
         <div class="contact-bar">
             <a href="https://wa.me/584244701273" target="_blank" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
@@ -62,7 +64,7 @@
     <div class="cart-modal" id="cartModal" onclick="closeModalExterno(event)">
         <div class="cart-modal-content" onclick="event.stopPropagation()">
             <div id="step-cart">
-                <div class="modal-header">
+                <div class="modal-header-box">
                     <h2 style="font-weight: 900;">Tu Pedido</h2>
                     <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
                 </div>
@@ -72,25 +74,25 @@
                         <span style="font-weight: 700; opacity: 0.5;">Subtotal:</span>
                         <span id="modalTotal" style="font-size: 2rem; font-weight: 900; color: var(--primary-neon);">$0.00</span>
                     </div>
-                    <button class="btn-confirm-step" onclick="showStep('delivery')">CONFIRMAR PRODUCTOS</button>
-                    <button onclick="clearCart()" class="btn-clear">Vaciar carrito</button>
+                    <button class="btn-step-action" onclick="showStep('delivery')">CONFIRMAR PRODUCTOS</button>
+                    <button onclick="clearCart()" class="btn-clear-cart">Vaciar carrito</button>
                 </div>
             </div>
 
             <div id="step-delivery" style="display: none; padding: 30px;">
-                <div class="modal-header" style="margin-bottom:30px;">
+                <div class="modal-header-box" style="margin-bottom:30px;">
                     <div style="display:flex; align-items:center; gap:15px;"><i class="fa fa-arrow-left" onclick="showStep('cart')"></i><h2 style="font-weight: 900;">Entrega</h2></div>
                     <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
                 </div>
                 <div class="delivery-grid">
-                    <div class="delivery-opt active" id="opt-tienda" onclick="setDelivery('Tienda')"><i class="fa fa-shop"></i>Tienda</div>
+                    <div class="delivery-opt active" id="opt-tienda" onclick="setDelivery('Tienda')"><i class="fa fa-shop"></i>En Tienda</div>
                     <div class="delivery-opt" id="opt-delivery" onclick="setDelivery('Delivery')"><i class="fa fa-motorcycle"></i>Delivery</div>
                 </div>
                 <div id="delivery-fields" style="display: none; position:relative; margin-bottom:20px;">
-                    <input type="text" id="deliveryLink" placeholder="Link de Google Maps" class="input-combox">
-                    <button onclick="getLocation()" class="btn-here">Aquí</button>
+                    <input type="text" id="deliveryLink" placeholder="Link de Google Maps" class="combox-input">
+                    <button onclick="getLocation()" class="btn-geo">Aquí</button>
                 </div>
-                <button class="btn-confirm-step neon-confirm" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
+                <button class="btn-step-action btn-whatsapp" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
             </div>
         </div>
     </div>

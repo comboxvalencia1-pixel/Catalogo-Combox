@@ -6,24 +6,22 @@
     <meta name="theme-color" content="#e60303">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>COMBOXv4</title>
+    <title>COMBOXv5 | Exclusive Experience</title>
     
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-
-    <div id="splash">
+<body style="background-color: #e60303;"> <div id="splash">
         <div class="splash-content">
             <h1 class="splash-logo">COMBOX</h1>
-            <div class="loader-line"></div>
+            <div class="loader-pwa"></div>
         </div>
     </div>
 
     <header id="mainHeader">
-        <div class="exclusive-label">CATÁLOGO EXCLUSIVO</div>
+        <div style="font-size: 0.6rem; color: #fff; letter-spacing: 5px; margin-bottom: 5px; opacity: 0.8; font-weight: 800;">CATÁLOGO EXCLUSIVO</div>
         <h1 class="logo-main">COMBOX</h1>
         <div class="contact-bar">
             <a href="https://wa.me/584244701273" target="_blank" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
@@ -33,67 +31,6 @@
     </header>
 
     <main id="mainContent"></main>
-
-    <div class="islands-wrapper" id="islandsWrapper">
-        <div class="island-master">
-            <div class="search-trigger" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
-            <div id="search-box" style="display:none; flex:1; padding:0 10px;">
-                <input type="text" id="searchInput" placeholder="Buscar producto..." style="width:100%; border:none; background:transparent; outline:none; font-weight:700;">
-                <i class="fa fa-times" onclick="toggleSearch(false)" style="opacity:0.3"></i>
-            </div>
-            <div class="mode-switch" id="modeContainer">
-                <div class="mode-slider" id="modeSlider"></div>
-                <div class="mode-opt active" onclick="setMode('individual', 0)">Individual</div>
-                <div class="mode-opt" onclick="setMode('combos', 1)">Combos</div>
-                <div class="mode-opt" onclick="setMode('servicios', 2)">Servicios</div>
-            </div>
-        </div>
-        <div id="catIsland"></div>
-    </div>
-
-    <div class="cart-floating" id="cartFloating">
-        <div>
-            <span id="floatTotal" style="font-weight:900; font-size:1.2rem; display:block;">$0.00</span>
-            <span id="floatCount" style="font-size:0.6rem; opacity:0.7; font-weight:900;">0 PRODUCTOS</span>
-        </div>
-        <button class="btn-view-cart" onclick="toggleModal(true)">VER CARRITO</button>
-    </div>
-
-    <div class="cart-modal" id="cartModal" onclick="closeModalExterno(event)">
-        <div class="cart-modal-content" onclick="event.stopPropagation()">
-            <div id="step-cart">
-                <div class="modal-header">
-                    <h2 style="font-weight: 900;">Tu Pedido</h2>
-                    <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
-                </div>
-                <div id="cartItems" style="padding: 0 20px;"></div>
-                <div style="padding: 30px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
-                        <span style="font-weight: 700; opacity: 0.5;">Subtotal:</span>
-                        <span id="modalTotal" style="font-size: 2rem; font-weight: 900; color: var(--primary-neon);">$0.00</span>
-                    </div>
-                    <button class="btn-confirm-step" onclick="showStep('delivery')">CONFIRMAR PRODUCTOS</button>
-                    <button onclick="clearCart()" class="btn-clear">Vaciar carrito</button>
-                </div>
-            </div>
-
-            <div id="step-delivery" style="display: none; padding: 30px;">
-                <div class="modal-header" style="margin-bottom:30px;">
-                    <div style="display:flex; align-items:center; gap:15px;"><i class="fa fa-arrow-left" onclick="showStep('cart')"></i><h2 style="font-weight: 900;">Entrega</h2></div>
-                    <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
-                </div>
-                <div class="delivery-grid">
-                    <div class="delivery-opt active" id="opt-tienda" onclick="setDelivery('Tienda')"><i class="fa fa-shop"></i>Tienda</div>
-                    <div class="delivery-opt" id="opt-delivery" onclick="setDelivery('Delivery')"><i class="fa fa-motorcycle"></i>Delivery</div>
-                </div>
-                <div id="delivery-fields" style="display: none; position:relative; margin-bottom:20px;">
-                    <input type="text" id="deliveryLink" placeholder="Link de Google Maps" class="input-combox">
-                    <button onclick="getLocation()" class="btn-here">Aquí</button>
-                </div>
-                <button class="btn-confirm-step neon-confirm" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
-            </div>
-        </div>
-    </div>
 
     <script src="script.js"></script>
 </body>

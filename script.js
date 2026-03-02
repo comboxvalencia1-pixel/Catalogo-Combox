@@ -1,6 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts";
 let allProducts = [], cart = [], mode = 'individual', category = 'Todas', deliveryMethod = 'Tienda';
 
+// SONIDO Y VIBRACIÓN SINCRONIZADOS
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playTap() {
     const osc = audioCtx.createOscillator(); 
@@ -16,8 +17,7 @@ function playTap() {
 }
 
 async function loadData() {
-    // Bloquear scroll al inicio
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden'; // Bloquea scroll durante el splash
     try {
         const saved = localStorage.getItem('combox_cart');
         if (saved) cart = JSON.parse(saved);
@@ -33,7 +33,7 @@ async function loadData() {
             if(splash) {
                 splash.style.transform = 'translateY(-100%)';
                 splash.style.opacity = '0';
-                document.body.style.overflow = 'auto'; // Habilitar scroll
+                document.body.style.overflow = 'auto'; // Habilita scroll
                 setTimeout(() => splash.style.display = 'none', 1200);
             }
         }, 3000);
@@ -76,21 +76,17 @@ function render() {
         </div>`).join('');
 }
 
+// ACTUALIZACIÓN DE BOTÓN INDIVIDUAL (SIN PARPADEO)
 function addToCart(name, price, btnID) {
     playTap();
     let item = cart.find(i => i.nombre === name);
     if (item) item.qty++; else cart.push({ nombre: name, precio: price, qty: 1 });
     
-    updateUI(false); // Actualiza total sin re-renderizar todo el grid
-    updateSingleButton(name, btnID); // Solo actualiza este botón
-}
-
-function updateSingleButton(name, btnID) {
+    updateUI(false); 
     const btn = document.getElementById(btnID);
-    const item = cart.find(i => i.nombre === name);
-    if (btn && item) {
+    if (btn) {
         btn.classList.add('added');
-        btn.innerHTML = `<i class="fa fa-check"></i> AGREGADO <span class="item-counter">${item.qty}</span>`;
+        btn.innerHTML = `<i class="fa fa-check"></i> AGREGADO <span class="item-counter">${item ? item.qty : 1}</span>`;
     }
 }
 
@@ -106,7 +102,6 @@ function updateUI(shouldRender = true) {
     if(shouldRender) render();
 }
 
-// ... Resto de funciones (renderCartItems, changeQty, etc.) se mantienen igual que tu versión anterior ...
 function renderCartItems() {
     document.getElementById('cartItems').innerHTML = cart.map((item, idx) => `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid #eee;">
@@ -116,6 +111,7 @@ function renderCartItems() {
             </div>
         </div>`).join('');
 }
+
 function changeQty(idx, d) { cart[idx].qty += d; if (cart[idx].qty <= 0) cart.splice(idx, 1); updateUI(true); }
 function clearCart() { cart = []; updateUI(true); toggleModal(false); }
 function setMode(m, idx) { mode = m; document.querySelectorAll('.mode-opt').forEach(opt => opt.classList.remove('active')); document.querySelectorAll('.mode-opt')[idx].classList.add('active'); document.getElementById('modeSlider').style.transform = `translateX(${idx * 100}%)`; render(); }

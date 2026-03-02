@@ -6,15 +6,13 @@
     <meta name="theme-color" content="#f70202">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>COMBOXv2</title>
-    
+    <title>COMBOXv3</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="splash"><h1 class="splash-logo">COMBOX</h1></div>
 
     <header id="mainHeader">
@@ -30,7 +28,7 @@
     <main id="mainContent"></main>
 
     <div class="islands-wrapper" id="islandsWrapper">
-        <div class="island-master" id="islandMaster">
+        <div class="island-master">
             <div class="search-trigger" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
             <div id="search-box" style="display:none; flex:1; padding:0 10px;">
                 <input type="text" id="searchInput" placeholder="Buscar producto..." style="width:100%; border:none; background:transparent; outline:none; font-weight:700;">
@@ -71,7 +69,6 @@
                     <button onclick="clearCart()" style="width:100%; background:none; border:none; margin-top:20px; color:#999; font-weight:800; cursor:pointer;">Vaciar carrito</button>
                 </div>
             </div>
-
             <div id="step-delivery" style="display: none; padding: 30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:30px;">
                     <div style="display:flex; align-items:center; gap:15px;"><i class="fa fa-arrow-left" onclick="showStep('cart')"></i><h2 style="font-weight: 900;">Entrega</h2></div>
@@ -89,7 +86,6 @@
             </div>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

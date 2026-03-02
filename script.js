@@ -1,14 +1,24 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts";
 let allProducts = [], cart = [], mode = 'individual', category = 'Todas', deliveryMethod = 'Tienda';
 
+// SISTEMA DE SONIDO Y VIBRACIÓN (Sincronizados)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playTap() {
-    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-    osc.type = 'sine'; osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+    // 1. Sonido
+    const osc = audioCtx.createOscillator(); 
+    const gain = audioCtx.createGain();
+    osc.type = 'sine'; 
+    osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
     gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-    if (navigator.vibrate) navigator.vibrate(12);
+    osc.connect(gain); 
+    gain.connect(audioCtx.destination);
+    osc.start(); 
+    osc.stop(audioCtx.currentTime + 0.05);
+    
+    // 2. Vibración (Solo si el dispositivo lo soporta)
+    if (navigator.vibrate) {
+        navigator.vibrate(20); 
+    }
 }
 
 async function loadData() {
@@ -22,15 +32,20 @@ async function loadData() {
         renderCats();
         updateUI(false); 
 
-        // CORRECCIÓN SPLASH PARA iOS
+        // SALIDA SEGURA DEL SPLASH PARA iOS
         setTimeout(() => {
             const splash = document.getElementById('splash');
-            splash.style.opacity = '0';
-            splash.style.pointerEvents = 'none';
-            setTimeout(() => splash.style.display = 'none', 800);
-        }, 1000);
+            if(splash) {
+                splash.style.transform = 'translateY(-100%)';
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 800);
+            }
+        }, 1200);
 
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error(e);
+        document.getElementById('splash').style.display = 'none';
+    }
 }
 
 function render() {
@@ -67,6 +82,7 @@ function render() {
 }
 
 function addToCart(name, price, btnID) {
+    // AQUÍ ES EL ÚNICO LUGAR DONDE VIBRA Y SUENA
     playTap();
     let item = cart.find(i => i.nombre === name);
     if (item) item.qty++; else cart.push({ nombre: name, precio: price, qty: 1 });
@@ -95,22 +111,21 @@ function renderCartItems() {
         </div>`).join('');
 }
 
-function changeQty(idx, d) { playTap(); cart[idx].qty += d; if (cart[idx].qty <= 0) cart.splice(idx, 1); updateUI(true); }
-function clearCart() { playTap(); cart = []; updateUI(true); toggleModal(false); }
+function changeQty(idx, d) { cart[idx].qty += d; if (cart[idx].qty <= 0) cart.splice(idx, 1); updateUI(true); }
+function clearCart() { cart = []; updateUI(true); toggleModal(false); }
 
-function setMode(m, idx) { playTap(); mode = m; document.querySelectorAll('.mode-opt').forEach(opt => opt.classList.remove('active')); document.querySelectorAll('.mode-opt')[idx].classList.add('active'); document.getElementById('modeSlider').style.transform = `translateX(${idx * 100}%)`; render(); }
+function setMode(m, idx) { mode = m; document.querySelectorAll('.mode-opt').forEach(opt => opt.classList.remove('active')); document.querySelectorAll('.mode-opt')[idx].classList.add('active'); document.getElementById('modeSlider').style.transform = `translateX(${idx * 100}%)`; render(); }
 function renderCats() { const cats = ['Todas', ...new Set(allProducts.map(p => p.categoria).filter(Boolean))]; document.getElementById('catIsland').innerHTML = cats.map(c => `<div class="pill-cat ${c === category ? 'active' : ''}" onclick="setCat('${c}')">${c}</div>`).join(''); }
-function setCat(c) { playTap(); category = c; renderCats(); render(); }
-function toggleSearch(s) { playTap(); document.getElementById('search-box').style.display = s ? 'flex' : 'none'; document.getElementById('modeContainer').style.display = s ? 'none' : 'flex'; document.getElementById('catIsland').classList.toggle('active', s); }
-function toggleModal(s) { playTap(); document.getElementById('cartModal').style.display = s ? 'flex' : 'none'; if(s) showStep('cart'); }
+function setCat(c) { category = c; renderCats(); render(); }
+function toggleSearch(s) { document.getElementById('search-box').style.display = s ? 'flex' : 'none'; document.getElementById('modeContainer').style.display = s ? 'none' : 'flex'; document.getElementById('catIsland').classList.toggle('active', s); }
+function toggleModal(s) { document.getElementById('cartModal').style.display = s ? 'flex' : 'none'; if(s) showStep('cart'); }
 function closeModalExterno(e) { if(e.target.id === 'cartModal') toggleModal(false); }
-function showStep(s) { playTap(); document.getElementById('step-cart').style.display = s === 'cart' ? 'block' : 'none'; document.getElementById('step-delivery').style.display = s === 'delivery' ? 'block' : 'none'; }
-function setDelivery(m) { playTap(); deliveryMethod = m; document.getElementById('opt-tienda').classList.toggle('active', m === 'Tienda'); document.getElementById('opt-delivery').classList.toggle('active', m === 'Delivery'); document.getElementById('delivery-fields').style.display = m === 'Delivery' ? 'block' : 'none'; }
+function showStep(s) { document.getElementById('step-cart').style.display = s === 'cart' ? 'block' : 'none'; document.getElementById('step-delivery').style.display = s === 'delivery' ? 'block' : 'none'; }
+function setDelivery(m) { deliveryMethod = m; document.getElementById('opt-tienda').classList.toggle('active', m === 'Tienda'); document.getElementById('opt-delivery').classList.toggle('active', m === 'Delivery'); document.getElementById('delivery-fields').style.display = m === 'Delivery' ? 'block' : 'none'; }
 
 function getLocation() { 
     if (navigator.geolocation) { 
         navigator.geolocation.getCurrentPosition(pos => { 
-            // CORRECCIÓN ENLACE MAPAS
             document.getElementById('deliveryLink').value = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; 
         }); 
     } 
@@ -137,8 +152,6 @@ window.onload = loadData;
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('PWA de Combox Activa'))
-            .catch(err => console.log('PWA Error', err));
+        navigator.serviceWorker.register('./sw.js');
     });
 }

@@ -1,54 +1,68 @@
-/* ... (Toda tu base CSS estable aquí arriba) ... */
-
-/* FIX PARA EL HEADER: Ocultamiento total */
-header {
-    /* ... tus estilos de header ... */
-    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: none; /* Quitamos sombra para que no deje línea al subir */
-}
-header.hidden {
-    transform: translateY(-100.5%); /* Subimos un poco más para asegurar ocultamiento total */
+:root {
+    --primary-neon: #e60303;
+    --neon-green: #00FF66;
+    --bg-base: #eeeeee;
+    --neon-shadow: 0 0 15px rgba(0, 255, 102, 0.6);
 }
 
-/* ANIMACIÓN DE LIBRO PARA EL SPLASH */
-#splash {
-    position: fixed;
-    inset: 0;
-    background: var(--primary-neon);
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transform-origin: left; /* Clave para el efecto libro */
-    transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1);
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg-base); color: #000; overflow-x: hidden; }
+
+/* SPLASH MEJORADO (Elimina el solapamiento de tu foto) */
+#splash { 
+    position: fixed; inset: 0; background: var(--primary-neon); z-index: 10000; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transform-origin: left; transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1);
 }
-#splash.exit {
-    transform: rotateY(-90deg); /* Se abre como una portada */
+#splash.exit { transform: rotateY(-100deg); pointer-events: none; }
+.splash-logo { color: white; font-size: 3.5rem; font-weight: 900; letter-spacing: -3px; }
+.loader-pwa { width: 50px; height: 3px; background: rgba(255,255,255,0.2); margin-top: 20px; position: relative; overflow: hidden; }
+.loader-pwa::after { content: ''; position: absolute; width: 100%; height: 100%; background: #fff; animation: load 1.5s infinite; }
+@keyframes load { 0% { left: -100%; } 100% { left: 100%; } }
+
+/* HEADER Y BOTONES DE CONTACTO (Arreglo de color azul) */
+header { position: fixed; top: 0; width: 100%; height: 220px; background: var(--primary-neon); z-index: 3000; display: flex; flex-direction: column; align-items: center; padding-top: 33px; transition: 0.5s ease-in-out; }
+header.hidden { transform: translateY(-100%); }
+.header-tag { font-size: 0.6rem; color: #fff; letter-spacing: 5px; margin-bottom: 5px; opacity: 0.8; font-weight: 800; }
+.logo-main { color: white; font-size: 3.5rem; font-weight: 900; letter-spacing: -4px; margin-bottom: 15px; }
+
+.contact-bar { display: flex; gap: 15px; }
+.btn-contact { 
+    text-decoration: none; color: white !important; /* Arreglo iconos azules */
+    width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+    background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); 
 }
-.splash-logo {
-    color: white;
-    font-size: 2.8rem; /* Un poco más pequeño y elegante */
-    font-weight: 900;
-    letter-spacing: -3px;
+
+/* CARDS Y GRIDS (Diseño Estable) */
+main { padding: 250px 18px 140px; max-width: 1000px; margin: 0 auto; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.card { background: white; border-radius: 35px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+.img-box { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.img-box img { max-width: 90%; max-height: 90%; object-fit: contain; }
+
+.btn-add { 
+    width: 100%; background: #000; color: white; border: none; padding: 16px; border-radius: 20px; 
+    font-weight: 800; font-size: 0.75rem; position: relative; transition: 0.3s;
 }
-.loader-pwa {
-    width: 40px;
-    height: 3px;
-    background: rgba(255,255,255,0.3);
-    margin-top: 20px;
-    position: relative;
-    overflow: hidden;
-}
-.loader-pwa::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #fff;
-    animation: loading 1.5s infinite;
-}
-@keyframes loading {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
+.btn-add.added { background: var(--neon-green); color: #000; box-shadow: var(--neon-shadow); }
+
+/* ISLANDS (Navegación) */
+.islands-wrapper { position: fixed; top: 189px; left: 50%; transform: translateX(-50%); z-index: 4000; display: flex; flex-direction: column; align-items: center; width: 100%; transition: 0.5s; }
+.islands-wrapper.sticky { top: 20px; }
+.island-master { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); height: 60px; border-radius: 30px; padding: 5px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-width: 300px; }
+
+.mode-switch { display: flex; background: rgba(0,0,0,0.05); border-radius: 25px; width: 250px; position: relative; height: 50px; }
+.mode-opt { flex: 1; text-align: center; font-size: 0.65rem; font-weight: 900; z-index: 2; line-height: 50px; color: #777; text-transform: uppercase; cursor: pointer; }
+.mode-opt.active { color: #fff; }
+.mode-slider { position: absolute; left: 3px; top: 3px; width: calc(33.33% - 3px); height: calc(100% - 6px); background: var(--primary-neon); border-radius: 20px; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1; }
+
+/* CARRITO FLOTANTE */
+.cart-floating { position: fixed; bottom: 30px; left: 20px; right: 20px; background: rgba(15,15,15,0.8); backdrop-filter: blur(20px); color: #fff; border-radius: 35px; padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; z-index: 4500; transform: translateY(150px); transition: 0.5s; }
+.cart-floating.visible { transform: translateY(0); }
+.btn-view-cart { background: var(--neon-green); color: #000; border: none; border-radius: 25px; padding: 12px 25px; font-weight: 900; font-size: 0.8rem; box-shadow: var(--neon-shadow); }
+
+/* ELEMENTOS MODAL */
+.cart-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px); z-index: 5000; display: none; align-items: flex-end; }
+.cart-modal-content { background: #fff; width: 100%; border-radius: 40px 40px 0 0; max-height: 90vh; overflow-y: auto; padding-bottom: 40px; }
+.modal-header { padding: 30px; display: flex; justify-content: space-between; align-items: center; }
+.btn-confirm-step { width: 100%; background: var(--neon-green); color: #000; border: none; padding: 20px; border-radius: 25px; font-weight: 900; font-size: 1.1rem; box-shadow: var(--neon-shadow); }

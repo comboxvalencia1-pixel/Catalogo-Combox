@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts";
+}const API_URL = "https://script.google.com/macros/s/AKfycbwBSKJ8SJCZKLaDC15TLOwo5yq3a8lzkW_VIiCojWTsCCvCz4N_HfDKHDIENibTA6BT/exec?action=getProducts";
 let allProducts = [], cart = [], mode = 'individual', category = 'Todas', deliveryMethod = 'Tienda';
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -11,10 +11,8 @@ function playTap() {
     if (navigator.vibrate) navigator.vibrate(12);
 }
 
-// CARGA DE DATOS CON RECUPERACIÓN DE CARRITO
 async function loadData() {
     try {
-        // Recuperar carrito de la memoria del teléfono
         const saved = localStorage.getItem('combox_cart');
         if (saved) cart = JSON.parse(saved);
 
@@ -24,7 +22,14 @@ async function loadData() {
         renderCats();
         updateUI(false); 
 
-        setTimeout(() => document.getElementById('splash').style.transform = 'translateY(-100%)', 1000);
+        // CORRECCIÓN SPLASH PARA iOS
+        setTimeout(() => {
+            const splash = document.getElementById('splash');
+            splash.style.opacity = '0';
+            splash.style.pointerEvents = 'none';
+            setTimeout(() => splash.style.display = 'none', 800);
+        }, 1000);
+
     } catch (e) { console.error(e); }
 }
 
@@ -71,10 +76,7 @@ function addToCart(name, price, btnID) {
 function updateUI(shouldRender = true) {
     const total = cart.reduce((acc, i) => acc + (i.precio * i.qty), 0);
     const count = cart.reduce((acc, i) => acc + i.qty, 0);
-    
-    // GUARDAR CAMBIOS EN LA MEMORIA
     localStorage.setItem('combox_cart', JSON.stringify(cart));
-
     document.getElementById('floatTotal').textContent = `$${total.toFixed(2)}`;
     document.getElementById('modalTotal').textContent = `$${total.toFixed(2)}`;
     document.getElementById('floatCount').textContent = `${count} PRODUCTOS`;
@@ -104,7 +106,15 @@ function toggleModal(s) { playTap(); document.getElementById('cartModal').style.
 function closeModalExterno(e) { if(e.target.id === 'cartModal') toggleModal(false); }
 function showStep(s) { playTap(); document.getElementById('step-cart').style.display = s === 'cart' ? 'block' : 'none'; document.getElementById('step-delivery').style.display = s === 'delivery' ? 'block' : 'none'; }
 function setDelivery(m) { playTap(); deliveryMethod = m; document.getElementById('opt-tienda').classList.toggle('active', m === 'Tienda'); document.getElementById('opt-delivery').classList.toggle('active', m === 'Delivery'); document.getElementById('delivery-fields').style.display = m === 'Delivery' ? 'block' : 'none'; }
-function getLocation() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { document.getElementById('deliveryLink').value = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; }); } }
+
+function getLocation() { 
+    if (navigator.geolocation) { 
+        navigator.geolocation.getCurrentPosition(pos => { 
+            // CORRECCIÓN ENLACE MAPAS
+            document.getElementById('deliveryLink').value = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; 
+        }); 
+    } 
+}
 
 function sendWhatsApp() {
     const total = cart.reduce((acc, i) => acc + (i.precio * i.qty), 0).toFixed(2);
@@ -125,7 +135,6 @@ window.addEventListener('scroll', () => {
 document.getElementById('searchInput').oninput = render;
 window.onload = loadData;
 
-// REGISTRO DEL SERVICE WORKER PARA PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -133,3 +142,4 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.log('PWA Error', err));
     });
 }
+

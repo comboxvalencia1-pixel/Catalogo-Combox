@@ -2,49 +2,95 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>COMBOX | Catálogo V2 Beta</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e60303">
+    <title>COMBOX | V-MAX ELITE 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div id="splash" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index:9999; display:flex; align-items:center; justify-content:center; transition:0.8s cubic-bezier(0.8,0,0.2,1);">
-        <img src="logo.png" style="width:120px; filter:brightness(0) invert(1);">
+
+<div id="splash"><h1 class="splash-logo">COMBOX</h1></div>
+
+<header id="mainHeader">
+    <div class="header-tag">EXCLUSIVE EXPERIENCE • 2026</div>
+    <h1 class="logo-main">COMBOX</h1>
+    <div class="contact-bar">
+        <a href="https://wa.me/584244701273" target="_blank" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
+        <a href="https://instagram.com/combox.valencia" target="_blank" class="btn-contact"><i class="fab fa-instagram"></i></a>
     </div>
+</header>
 
-    <header id="mainHeader">
-        </header>
+<main id="mainContent"></main>
 
-    <div id="islandsWrapper" class="islands-wrapper">
-        <div class="island-master">
-            <div id="search-box" class="search-container">
-                <i class="fa fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="handleSearch()">
-                <i class="fa fa-times" onclick="toggleSearch(false)"></i>
+<div class="islands-wrapper" id="islandsWrapper">
+    <div class="island-master">
+        <div class="search-trigger" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
+        <div id="search-box" class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="handleSearch()">
+            <i class="fa fa-times" onclick="toggleSearch(false)"></i>
+        </div>
+        <div class="mode-switch" id="modeContainer">
+            <div class="mode-slider" id="modeSlider"></div>
+            <div class="mode-opt active" onclick="setMode('individual', 0)">Individual</div>
+            <div class="mode-opt" onclick="setMode('combos', 1)">Combos</div>
+            <div class="mode-opt" onclick="setMode('servicios', 2)">Servicios</div>
+        </div>
+    </div>
+</div>
+
+<div class="cart-floating" id="cartFloating">
+    <div class="cart-info">
+        <span id="floatTotal">$0.00</span>
+        <span id="floatCount">0 PRODUCTOS</span>
+    </div>
+    <button class="btn-view-cart" onclick="toggleModal(true)">VER PEDIDO</button>
+</div>
+
+<div class="cart-modal" id="cartModal" onclick="closeModalExterno(event)">
+    <div class="cart-modal-content">
+        <div id="step-cart">
+            <div class="modal-header">
+                <h2>Tu Pedido</h2>
+                <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
             </div>
-            <div id="modeContainer" style="display:flex; width:100%; align-items:center;">
-                <div class="search-trigger" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
+            <div id="cartItems"></div>
+            <div class="modal-footer">
+                <div class="total-row-main">
+                    <span>TOTAL:</span>
+                    <span id="modalTotal">$0.00</span>
                 </div>
-        </div>
-    </div>
-
-    <main id="mainContent" class="container"></main>
-
-    <div id="cartFloating" class="cart-floating" onclick="toggleModal(true)">
-        <div style="display:flex; align-items:center; gap:15px;">
-            <div class="cart-badge"><i class="fa fa-shopping-basket"></i></div>
-            <div>
-                <div id="floatCount" style="font-size:0.7rem; font-weight:800; opacity:0.8;">0 PRODUCTOS</div>
-                <div id="floatTotal" style="font-size:1.2rem; font-weight:900;">$0.00</div>
+                <button class="btn-confirm-step" onclick="showStep('delivery')">CONFIRMAR PEDIDO</button>
+                <button class="btn-clear" onclick="clearCart()">Vaciar Carrito</button>
             </div>
         </div>
-        <i class="fa fa-arrow-right"></i>
-    </div>
 
-    <div id="cartModal" class="modal-overlay" onclick="closeModalExterno(event)">
+        <div id="step-delivery" style="display:none;">
+            <div class="modal-header">
+                <i class="fa fa-arrow-left" onclick="showStep('cart')"></i>
+                <h2>Entrega</h2>
+                <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
+            </div>
+            <div class="delivery-grid">
+                <div class="delivery-opt active" id="opt-tienda" onclick="setDelivery('Tienda')">
+                    <i class="fa fa-shop"></i> TIENDA
+                </div>
+                <div class="delivery-opt" id="opt-delivery" onclick="setDelivery('Delivery')">
+                    <i class="fa fa-motorcycle"></i> DELIVERY
+                </div>
+            </div>
+            <div id="delivery-fields" style="display:none;">
+                <div class="gps-input-group">
+                    <input type="text" id="deliveryLink" placeholder="Link de Google Maps">
+                    <button onclick="getLocation()" class="btn-gps-fix">GPS</button>
+                </div>
+            </div>
+            <button class="btn-confirm-step neon" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
         </div>
+    </div>
+</div>
 
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>

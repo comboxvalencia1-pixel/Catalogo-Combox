@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body oncontextmenu="return false;">
 
 <div id="splash"><h1 class="splash-logo">COMBOX</h1></div>
 
@@ -19,6 +19,7 @@
     <div class="contact-bar">
         <a href="https://wa.me/584244701273" target="_blank" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
         <a href="https://instagram.com/combox.valencia" target="_blank" class="btn-contact"><i class="fab fa-instagram"></i></a>
+        <a href="https://maps.app.goo.gl/FKeRV8Prh935tVYX7?g_st=ic" target="_blank" class="btn-contact"><i class="fas fa-location-dot"></i></a>
     </div>
 </header>
 
@@ -28,8 +29,8 @@
     <div class="island-master">
         <div class="search-trigger" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
         <div id="search-box" class="search-container">
-            <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="handleSearch()">
-            <i class="fa fa-times" onclick="toggleSearch(false)"></i>
+            <input type="text" id="searchInput" placeholder="Buscar..." oninput="handleSearch()">
+            <div class="close-search" onclick="toggleSearch(false)"><i class="fa fa-times"></i></div>
         </div>
         <div class="mode-switch" id="modeContainer">
             <div class="mode-slider" id="modeSlider"></div>
@@ -45,7 +46,7 @@
         <span id="floatTotal">$0.00</span>
         <span id="floatCount">0 PRODUCTOS</span>
     </div>
-    <button class="btn-view-cart" onclick="toggleModal(true)">VER PEDIDO</button>
+    <button class="btn-view-cart neon-btn" onclick="toggleModal(true)">VER PEDIDO</button>
 </div>
 
 <div class="cart-modal" id="cartModal" onclick="closeModalExterno(event)">
@@ -61,14 +62,14 @@
                     <span>TOTAL:</span>
                     <span id="modalTotal">$0.00</span>
                 </div>
-                <button class="btn-confirm-step" onclick="showStep('delivery')">CONFIRMAR PEDIDO</button>
+                <button class="btn-confirm-step neon-btn" onclick="showStep('delivery')">CONFIRMAR PEDIDO</button>
                 <button class="btn-clear" onclick="clearCart()">Vaciar Carrito</button>
             </div>
         </div>
 
         <div id="step-delivery" style="display:none;">
             <div class="modal-header">
-                <i class="fa fa-arrow-left" onclick="showStep('cart')"></i>
+                <div class="back-btn" onclick="showStep('cart')"><i class="fa fa-arrow-left"></i></div>
                 <h2>Entrega</h2>
                 <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
             </div>
@@ -86,7 +87,7 @@
                     <button onclick="getLocation()" class="btn-gps-fix">GPS</button>
                 </div>
             </div>
-            <button class="btn-confirm-step neon" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
+            <button class="btn-confirm-step neon-btn" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
         </div>
     </div>
 </div>

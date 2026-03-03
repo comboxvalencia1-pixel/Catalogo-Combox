@@ -1,7 +1,7 @@
 {
   "name": "COMBOX | Exclusive Experience",
   "short_name": "Combox",
-  "description": "Catálogo premium de productos y combos para preparar. Calidad vanguardista en Valencia.",
+  "description": "Catálogo premium de productos y combos para preparar en Naguanagua.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#e60303",
@@ -9,32 +9,12 @@
   "orientation": "portrait",
   "categories": ["food", "shopping"],
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "screenshots": [
-    {
-      "src": "screenshot-mobile.png",
-      "sizes": "1170x2532",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Catálogo Pro Combox"
-    }
+    { "src": "screenshot-mobile.png", "sizes": "1170x2532", "type": "image/png", "form_factor": "narrow" },
+    { "src": "screenshot-tablet.png", "sizes": "2048x2732", "type": "image/png", "form_factor": "wide" }
   ]
 }

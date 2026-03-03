@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e60303">
+    <title>COMBOX | V-MAX ELITE 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body oncontextmenu="return false;">
 
+<div id="splash"><h1 class="splash-logo">COMBOX</h1></div>
+
+<header id="mainHeader">
+    <div class="header-tag">EXCLUSIVE EXPERIENCE • 2026</div>
+    <h1 class="logo-main">COMBOX</h1>
+    <div class="contact-bar">
+        <a href="https://wa.me/584244701273" target="_blank" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
+        <a href="https://instagram.com/combox.valencia" target="_blank" class="btn-contact"><i class="fab fa-instagram"></i></a>
+        <a href="https://maps.app.goo.gl/FKeRV8Prh935tVYX7?g_st=ic" target="_blank" class="btn-contact"><i class="fas fa-location-dot"></i></a>
+    </div>
+</header>
+
+<main id="mainContent"></main>
+
+<div class="islands-wrapper" id="islandsWrapper">
+    <div class="island-master">
+        <div class="search-trigger" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
+        <div id="search-box" class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar..." oninput="handleSearch()">
+            <div class="close-search" onclick="toggleSearch(false)"><i class="fa fa-times"></i></div>
+        </div>
+        <div class="mode-switch" id="modeContainer">
+            <div class="mode-slider" id="modeSlider"></div>
+            <div class="mode-opt active" onclick="setMode('individual', 0)">Individual</div>
+            <div class="mode-opt" onclick="setMode('combos', 1)">Combos</div>
+            <div class="mode-opt" onclick="setMode('servicios', 2)">Servicios</div>
+        </div>
+    </div>
+</div>
+
+<div class="cart-floating" id="cartFloating">
+    <div class="cart-info">
+        <span id="floatTotal">$0.00</span>
+        <span id="floatCount">0 PRODUCTOS</span>
+    </div>
+    <button class="btn-view-cart neon-btn" onclick="toggleModal(true)">VER PEDIDO</button>
+</div>
+
+<div class="cart-modal" id="cartModal" onclick="closeModalExterno(event)">
+    <div class="cart-modal-content">
+        <div id="step-cart">
+            <div class="modal-header">
+                <h2>Tu Pedido</h2>
+                <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
+            </div>
+            <div id="cartItems"></div>
+            <div class="modal-footer">
+                <div class="total-row-main">
+                    <span>TOTAL:</span>
+                    <span id="modalTotal">$0.00</span>
+                </div>
+                <button class="btn-confirm-step neon-btn" onclick="showStep('delivery')">CONFIRMAR PEDIDO</button>
+                <button class="btn-clear" onclick="clearCart()">Vaciar Carrito</button>
+            </div>
+        </div>
+
+        <div id="step-delivery" style="display:none;">
+            <div class="modal-header">
+                <div class="back-btn" onclick="showStep('cart')"><i class="fa fa-arrow-left"></i></div>
+                <h2>Entrega</h2>
+                <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
+            </div>
+            <div class="delivery-grid">
+                <div class="delivery-opt active" id="opt-tienda" onclick="setDelivery('Tienda')">
+                    <i class="fa fa-shop"></i> TIENDA
+                </div>
+                <div class="delivery-opt" id="opt-delivery" onclick="setDelivery('Delivery')">
+                    <i class="fa fa-motorcycle"></i> DELIVERY
+                </div>
+            </div>
+            <div id="delivery-fields" style="display:none;">
+                <div class="gps-input-group">
+                    <input type="text" id="deliveryLink" placeholder="Link de Google Maps">
+                    <button onclick="getLocation()" class="btn-gps-fix">GPS</button>
+                </div>
+            </div>
+            <button class="btn-confirm-step neon-btn" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

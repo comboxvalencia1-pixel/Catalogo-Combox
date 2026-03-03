@@ -4,13 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#e60303">
-    <title>COMBOX | Catálogo Pro</title>
+    <title>COMBOX | V-MAX ULTRA 2026</title>
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Combox">
-    <link rel="apple-touch-icon" href="icon-512.png">
-
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -21,25 +16,23 @@
 <div id="splash"><h1 class="splash-logo">COMBOX</h1></div>
 
 <header id="mainHeader">
-    <div class="header-tag">PRODUCTOS PARA PREPARAR</div>
+    <div class="header-tag">EXCLUSIVE EXPERIENCE • 2026</div>
     <h1 class="logo-main">COMBOX</h1>
     <div class="contact-bar">
         <a href="https://wa.me/584244701273" target="_blank" class="btn-contact"><i class="fab fa-whatsapp"></i></a>
         <a href="https://instagram.com/combox.valencia" target="_blank" class="btn-contact"><i class="fab fa-instagram"></i></a>
-        <a href="#" class="btn-contact"><i class="fas fa-location-dot"></i></a>
+        <a href="#" class="btn-contact" onclick="getLocation()"><i class="fas fa-location-dot"></i></a>
     </div>
 </header>
 
 <main id="mainContent"></main>
 
 <div class="islands-wrapper" id="islandsWrapper">
-    <div class="island-master" id="islandMaster">
-        <div class="search-trigger" onclick="toggleSearch(true)">
-            <i class="fa fa-search"></i>
-        </div>
-        <div id="search-box" style="display:none; flex:1; padding:0 10px;">
-            <input type="text" id="searchInput" placeholder="Buscar 700+ productos..." oninput="handleSearch()">
-            <i class="fa fa-times" onclick="toggleSearch(false)" style="opacity:0.3"></i>
+    <div class="island-master">
+        <div class="search-trigger" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
+        <div id="search-box" class="search-container" style="display:none;">
+            <input type="text" id="searchInput" placeholder="¿Qué vas a preparar hoy?" oninput="handleSearch()">
+            <i class="fa fa-times" onclick="toggleSearch(false)"></i>
         </div>
         <div class="mode-switch" id="modeContainer">
             <div class="mode-slider" id="modeSlider"></div>
@@ -60,7 +53,7 @@
 </div>
 
 <div class="cart-modal" id="cartModal" onclick="closeModalExterno(event)">
-    <div class="cart-modal-content" onclick="event.stopPropagation()">
+    <div class="cart-modal-content">
         <div id="step-cart">
             <div class="modal-header">
                 <h2>Tu Pedido</h2>
@@ -68,16 +61,13 @@
             </div>
             <div id="cartItems"></div>
             <div class="modal-footer">
-                <div class="total-row">
-                    <span>Total:</span>
-                    <span id="modalTotal">$0.00</span>
-                </div>
-                <button class="btn-confirm-step" onclick="showStep('delivery')">CONFIRMAR</button>
-                <button class="btn-clear" onclick="clearCart()">Vaciar</button>
+                <div class="total-row"><span>Total:</span><span id="modalTotal">$0.00</span></div>
+                <button class="btn-confirm-step" onclick="showStep('delivery')">CONFIRMAR PRODUCTOS</button>
+                <button class="btn-clear" onclick="clearCart()">Vaciar carrito</button>
             </div>
         </div>
 
-        <div id="step-delivery" style="display: none; padding: 30px;">
+        <div id="step-delivery" style="display:none;">
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:15px;">
                     <i class="fa fa-arrow-left" onclick="showStep('cart')"></i>
@@ -87,17 +77,19 @@
             </div>
             <div class="delivery-grid">
                 <div class="delivery-opt active" id="opt-tienda" onclick="setDelivery('Tienda')">
-                    <i class="fa fa-shop"></i>Tienda
+                    <i class="fa fa-shop"></i> Tienda
                 </div>
                 <div class="delivery-opt" id="opt-delivery" onclick="setDelivery('Delivery')">
-                    <i class="fa fa-motorcycle"></i>Delivery
+                    <i class="fa fa-motorcycle"></i> Delivery
                 </div>
             </div>
-            <div id="delivery-fields" style="display: none; position:relative; margin-bottom:20px;">
-                <input type="text" id="deliveryLink" placeholder="Link de Google Maps">
-                <button onclick="getLocation()" class="btn-gps-fix">GPS</button>
+            <div id="delivery-fields" style="display:none;">
+                <div class="gps-input-group">
+                    <input type="text" id="deliveryLink" placeholder="Link de Google Maps">
+                    <button onclick="getLocation()" class="btn-gps-fix">GPS</button>
+                </div>
             </div>
-            <button class="btn-confirm-step green" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
+            <button class="btn-confirm-step neon" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
         </div>
     </div>
 </div>

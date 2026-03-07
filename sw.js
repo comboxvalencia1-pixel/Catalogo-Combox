@@ -1,5 +1,5 @@
-const CACHE_NAME = 'combox-v14';
-const IMG_CACHE = 'combox-images-v1';
+const CACHE_NAME = 'combox-v1';
+const IMG_CACHE = 'combox-images-v2';
 
 self.addEventListener('install', event => {
     event.waitUntil(

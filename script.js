@@ -1,164 +1,127 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyJOqe3K6Q6Eps-eLDNSwasHfcPRadqUH7rRU5HhpcBiiszYVh9uzpaBXCsZ5OjkfhY/exec?action=getAppData";
-let allProducts = [], cart = [], mode = 'individual', deliveryMethod = 'tienda';
+const API_URL = "https://script.google.com/macros/s/AKfycbyJOqe3K6Q6Eps-eLDNSwasHfcPRadqUH7rRU5HhpcBiiszYVh9uzpaBXCsZ5OjkfhY/exec";
 
-// INICIO Y BLOQUEO DE SPLASH
+let db = {}, cart = [], currentSede = null, currentType = "", currentSub = "";
+
 window.onload = async () => {
-    document.body.style.overflow = 'hidden'; 
-    loadCart(); 
-    await loadData();
+    // Bloquear scroll
+    document.body.style.overflow = 'hidden';
+    await fetchData();
+    checkSede();
+    
     setTimeout(() => {
-        document.getElementById('splash').style.transform = 'translateY(-100%)';
-        document.body.style.overflow = 'auto'; 
-    }, 1200);
+        gsap.to("#splash", { yPercent: -100, duration: 1, ease: "expo.inOut", onComplete: () => {
+            document.body.style.overflow = 'auto';
+            if(db.params.mensaje_bienvenida) showToast(db.params.mensaje_bienvenida);
+        }});
+    }, 1000);
 };
 
-// OPTIMIZADOR DE IMÁGENES DRIVE
-function getThumb(url) {
-    if(!url) return 'https://via.placeholder.com/300';
-    let id = url.split('id=')[1] || url.split('/d/')[1]?.split('/')[0];
-    return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w600` : url;
+async function fetchData() {
+    const res = await fetch(API_URL);
+    db = await res.json();
+    
+    // Configuración Dinámica
+    document.documentElement.style.setProperty('--primary', db.params.codigo_color_cfk);
+    document.getElementById('brandName').innerText = db.params.Nombre_principal;
+    
+    renderTypes();
 }
 
-// PERSISTENCIA 1 HORA
-function saveCart() {
-    localStorage.setItem('combox_cart', JSON.stringify({t: Date.now(), items: cart}));
-}
-function loadCart() {
-    const saved = JSON.parse(localStorage.getItem('combox_cart'));
-    if (saved && Date.now() - saved.t < 3600000) { cart = saved.items; updateUI(); }
-}
+// LÓGICA DE PRECIOS Y PROMOCIONES
+function getActivePrice(p) {
+    const hoy = new Date();
+    const diaSemana = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"][hoy.getDay()];
+    
+    // 1. Validar Promoción
+    const esPromoActiva = p.PROMOCION_ACTIVA === "Activa";
+    const fechaValida = new Date(p.promocion_hasta) >= hoy;
+    const diaValido = p.dias_promocion.toLowerCase().includes(diaSemana) || p.dias_promocion.toLowerCase() === "todos los dias";
+    const sedeValida = p.PROMOCION_VALIDA_POR_SEDE_FK.toString().includes(currentSede.ID_SEDE);
 
-// FEEDBACK HÁPTICO Y SONORO
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playTap() {
-    if (navigator.vibrate) navigator.vibrate(15);
-    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-    osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-}
+    if (esPromoActiva && fechaValida && diaValido && sedeValida) {
+        return { precio: p.Precio_promocion_TEMPORAL, esPromo: true };
+    }
 
-async function loadData() {
-    try {
-        const res = await fetch(API_URL);
-        allProducts = await res.json();
-        render();
-    } catch (e) { console.error(e); }
+    // 2. Precio Normal
+    return { precio: p.Precio_venta_NORMAL, esPromo: false };
 }
 
 function render() {
     const grid = document.getElementById('productGrid');
     const search = document.getElementById('searchInput').value.toLowerCase();
     
-    const filtered = allProducts.filter(p => {
-        const isC = p.nombre.toLowerCase().includes('combo') || p.categoria.toLowerCase().includes('combo');
-        const isS = p.categoria.toLowerCase().includes('servicio');
-        let m = (mode === 'combos' ? isC : mode === 'servicios' ? isS : !isC && !isS);
-        return m && p.nombre.toLowerCase().includes(search);
+    // Decidir tabla según tipo seleccionado
+    let data = (currentType.toLowerCase().includes('combo')) ? db.combos : db.productos;
+    
+    // Filtrar por tipo, subcategoría, búsqueda y etiqueta "Ocultar"
+    let filtrados = data.filter(p => {
+        const nombre = (p.PRODUCTO || p.nombre_COMBO).toLowerCase();
+        const tipoMatch = (p.tipo_producto_fk || p.tipo_producto_fk) === currentType;
+        const subMatch = currentSub === "" || (p.ID_CATEGORIA_FK || p.CATEGORIA) === currentSub;
+        const oculto = p.etiqueta_fk === "Ocultar";
+        return tipoMatch && subMatch && nombre.includes(search) && !oculto;
     });
 
-    grid.innerHTML = filtered.map(p => {
-        const item = cart.find(i => i.nombre === p.nombre);
+    grid.innerHTML = filtrados.map(p => {
+        const {precio, esPromo} = getActivePrice(p);
+        const name = p.PRODUCTO || p.nombre_COMBO;
+        const status = p.etiqueta_fk;
+        const item = cart.find(i => i.nombre === name);
+
         return `
-            <div class="card">
-                <div class="img-box"><img src="${getThumb(p.imagen)}" loading="lazy"></div>
-                <div class="p-name">${p.nombre.toUpperCase()}</div>
-                <div class="p-price">$${parseFloat(p.precio).toFixed(2)}</div>
-                <button class="btn-add ${item ? 'added' : ''}" onclick="addToCart('${p.nombre.replace(/'/g,"")}', ${p.precio})">
-                    ${item ? '<i class="fa fa-check"></i> AGREGADO' : '+ AGREGAR'}
-                    ${item ? `<span class="item-counter">${item.qty}</span>` : ''}
-                </button>
-            </div>`;
+            <div class="card ${status === 'Sin Stock' ? 'disabled' : ''}">
+                ${status === 'Agotándose' ? '<span class="tag-warning">Agotándose</span>' : ''}
+                <img src="${p.foto_producto || p.IMAGEN_PRODUCTO_CATALOGO}">
+                <div class="p-name">${name.toUpperCase()}</div>
+                <div class="p-price ${esPromo ? 'promo-anim' : ''}">$${parseFloat(precio).toFixed(2)}</div>
+                ${status === 'Sin Stock' ? 
+                    '<button class="btn-add gray" disabled>SIN STOCK</button>' : 
+                    `<button class="btn-add ${item?'added':''}" onclick="addToCart('${name}', ${precio})">
+                        ${item ? '<i class="fa fa-check"></i> AGREGADO' : '+ AGREGAR'}
+                        ${item ? `<span class="badge">${item.qty}</span>` : ''}
+                    </button>`
+                }
+            </div>
+        `;
     }).join('');
 }
 
-function addToCart(name, price) {
-    playTap();
-    const item = cart.find(i => i.nombre === name);
-    if(item) item.qty++; else cart.push({nombre: name, precio: price, qty: 1});
-    saveCart(); updateUI(); render();
+// WHATSAPP FORMATTER
+function sendWhatsApp() {
+    const nombre = document.getElementById(deliveryMethod === 'tienda' ? 'nameTienda' : 'nameDelivery').value;
+    if(!nombre) return alert("Ingresa tu nombre");
+
+    let subtotal = cart.reduce((a, b) => a + (b.precio * b.qty), 0);
+    let itemsTxt = cart.map(i => `- *${i.nombre.toUpperCase()}*\n\`Cant:\` *${i.qty}* | *$\`${(i.precio*i.qty).toFixed(2)}\`*`).join('\n\n');
+
+    let msg = "";
+    if(deliveryMethod === 'delivery') {
+        msg = `Hola! Soy *${nombre}*, quiero este pedido.\n\n${itemsTxt}\n\n💵 *SUBTOTAL:* *$\`${subtotal.toFixed(2)}\`*\n\n______________________________________\n\n🛵 *ENTREGA POR DELIVERY:*\n\nPor favor dime cuánto sale para esta zona.\n\n${document.getElementById('deliveryLink').value}`;
+    } else {
+        msg = `Hola! Soy *${nombre}*, Confirmame La disponibilidad para este pedido. Quiero recogerlo en la sede de *${currentSede.NOMBRE_SEDE}*\n\n${itemsTxt}\n\n_______________________________________\n\n💵 *SUBTOTAL:* *$\`${subtotal.toFixed(2)}\`*`;
+    }
+
+    window.open(`https://wa.me/${currentSede.TELEFONO.replace('+', '')}?text=${encodeURIComponent(msg)}`);
 }
 
-function updateUI() {
-    const total = cart.reduce((a, i) => a + (i.precio * i.qty), 0);
-    const count = cart.reduce((a, i) => a + i.qty, 0);
-    document.getElementById('floatTotal').innerText = `$${total.toFixed(2)}`;
-    document.getElementById('modalTotal').innerText = `$${total.toFixed(2)}`;
-    document.getElementById('floatCount').innerText = `${count} ${count === 1 ? 'PRODUCTO' : 'PRODUCTOS'}`;
-    document.getElementById('cartFloating').classList.toggle('visible', count > 0);
-    renderCartItems();
-}
-
-function renderCartItems() {
-    const cont = document.getElementById('cartItems');
-    cont.innerHTML = cart.map((item, idx) => `
-        <div class="cart-item-row">
-            <div><div class="cart-item-name">${item.nombre.toUpperCase()}</div><div class="cart-item-price">$${item.precio}</div></div>
-            <div class="qty-control">
-                <button onclick="updateQty(${idx}, -1)">-</button>
-                <span>${item.qty}</span>
-                <button onclick="updateQty(${idx}, 1)">+</button>
-            </div>
-        </div>`).join('');
-}
-
-function updateQty(idx, d) {
-    playTap(); cart[idx].qty += d;
-    if(cart[idx].qty <= 0) cart.splice(idx, 1);
-    saveCart(); updateUI(); render();
-}
-
-// GPS NATIVO CORREGIDO
+// GPS NATIVO
 function getLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
-            playTap();
-            const link = `http://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
+            const link = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
             document.getElementById('deliveryLink').value = link;
+            playTap();
         });
     }
 }
 
-// MENSAJE WHATSAPP EXACTO SEGÚN INSTRUCCIÓN
-function sendWhatsApp() {
-    const name = deliveryMethod === 'tienda' ? document.getElementById('clientNameTienda').value : document.getElementById('clientNameDelivery').value;
-    if(!name) return alert("Por favor ingresa tu nombre");
-
-    const items = cart.map(i => `- *${i.nombre.toUpperCase()}*\n\`Cant:\`  *${i.qty}* |  *$\`${(i.precio * i.qty).toFixed(2)}\`*`).join('\n\n');
-    const total = document.getElementById('modalTotal').innerText;
-    
-    let msg = "";
-    if(deliveryMethod === 'delivery') {
-        msg = `Hola! Soy *${name}*, quiero este pedido.\n\n${items}\n\n💵 *SUBTOTAL:* *${total}*\n\n______________________________________\n\n🛵 *ENTREGA POR DELIVERY:*\n\nPor favor dime cuánto sale para esta zona.\n\n${document.getElementById('deliveryLink').value}`;
-    } else {
-        msg = `Hola! Soy *${name}*, Confirmame La disponibilidad para este pedido. Quiero recogerlo en la sede de *Naguanagua*\n\n${items}\n\n_______________________________________\n\n💵 *SUBTOTAL:* *${total}*`;
-    }
-    window.open(`https://wa.me/584244701273?text=${encodeURIComponent(msg)}`);
+// HAPTICOS Y SONIDO
+function playTap() {
+    if (navigator.vibrate) navigator.vibrate(20);
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine'; o.frequency.setValueAtTime(600, ctx.currentTime);
+    g.gain.setValueAtTime(0.1, ctx.currentTime);
+    o.start(); o.stop(ctx.currentTime + 0.05);
 }
-
-// INTERFAZ DE NAVEGACIÓN
-function toggleSearch(s) {
-    document.getElementById('search-box').style.display = s ? 'flex' : 'none';
-    document.getElementById('modeContainer').style.display = s ? 'none' : 'flex';
-}
-function setMode(m, p) {
-    playTap(); mode = m;
-    document.querySelectorAll('.mode-opt').forEach((o, i) => o.classList.toggle('active', i === p));
-    document.getElementById('modeSlider').style.transform = `translateX(${p * 100}%)`;
-    render();
-}
-function toggleModal(s) { playTap(); document.getElementById('cartModal').classList.toggle('active', s); if(!s) goToStep(1); }
-function goToStep(s) { playTap(); document.querySelectorAll('.modal-step').forEach(x => x.classList.remove('active')); document.getElementById(`step-${s}`).classList.add('active'); }
-function selectDelivery(t) {
-    playTap(); deliveryMethod = t;
-    document.querySelectorAll('.delivery-opt').forEach(o => o.classList.toggle('active', o.id === `opt-${t}`));
-    document.querySelectorAll('.form-group').forEach(f => f.classList.toggle('active', f.id === `form-${t}`));
-}
-function clearCart() { if(confirm("¿Vaciar carrito?")){cart=[]; localStorage.removeItem('combox_cart'); updateUI(); render(); toggleModal(false);}}
-
-window.addEventListener('scroll', () => {
-    const h = document.getElementById('mainHeader'), i = document.getElementById('islandsWrapper');
-    if(window.scrollY > 80) { h.classList.add('hidden'); i.classList.add('sticky'); }
-    else { h.classList.remove('hidden'); i.classList.remove('sticky'); }
-});

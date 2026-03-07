@@ -1,144 +1,164 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbyJOqe3K6Q6Eps-eLDNSwasHfcPRadqUH7rRU5HhpcBiiszYVh9uzpaBXCsZ5OjkfhY/exec";
 
-let db = {}, cart = [], currentSede = null, currentTypeID = "", deliveryMethod = "tienda";
+let db = { productos: [], combos: [], sedes: [], params: {}, tipos: [] };
+let cart = JSON.parse(localStorage.getItem('combox_cart')) || [];
+let currentSede = null;
+let currentType = null;
+let deliveryMethod = 'tienda';
 
-// IDs DE ETIQUETAS SEGÚN TU EXCEL
-const STATUS = {
-    DISPONIBLE: "369a743e",
-    AGOTANDOSE: "1f2947d6",
-    SIN_STOCK: "5161a4dd",
-    OCULTAR: "adb79eaf"
-};
+// Audio Context para Sonido Sintético (Instrucción playTap)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playTap() {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+    if (navigator.vibrate) navigator.vibrate(50);
+}
 
 window.onload = async () => {
-    document.body.style.overflow = 'hidden';
-    // Seguro de vida para el splash (5 segundos máximo)
-    const safetyTimer = setTimeout(() => hideSplash(), 5000);
-
     try {
-        await fetchData();
-        checkSede();
-        clearTimeout(safetyTimer);
-        hideSplash();
+        const response = await fetch(`${API_URL}?action=getAppData`);
+        db = await response.json();
+        
+        // Aplicar Parametros Dinámicos
+        document.getElementById('brandName')?.innerText = db.params.Nombre_principal;
+        if(db.params.pagina_funcional === "no") {
+            document.body.innerHTML = "<h1>SITIO EN MANTENIMIENTO</h1>";
+            return;
+        }
+
+        initApp();
+        setTimeout(hideSplash, 1000); // Instrucción: no más de 1 seg
     } catch (e) {
-        console.error("Fallo al cargar:", e);
-        hideSplash();
+        console.error("Error cargando DB", e);
     }
 };
 
-async function fetchData() {
-    const res = await fetch(`${API_URL}?action=getAppData`);
-    db = await res.json();
-    
-    if(db.params.pagina_funcional !== "Activa") {
-        document.body.innerHTML = "<div style='padding:50px; text-align:center;'><h1>SITIO EN MANTENIMIENTO</h1></div>";
-        throw new Error("Página desactivada en Sheets");
-    }
-
-    // Aplicar color desde tu tabla Colores_web (usando el ID guardado en params)
-    document.documentElement.style.setProperty('--primary', "#E53935"); // Color rojo de tu Excel
-    document.getElementById('brandName').innerText = db.params.Nombre_principal;
-    
-    // Iniciar con el primer tipo de producto (Individual)
-    if(db.tipos && db.tipos.length > 0) currentTypeID = db.tipos[0].id_tipo_producto;
-    
-    renderTypes();
-}
-
 function hideSplash() {
-    gsap.to("#splash", { yPercent: -100, duration: 1, ease: "expo.inOut", onComplete: () => {
+    const s = document.getElementById('splash');
+    s.style.opacity = '0';
+    setTimeout(() => {
+        s.style.display = 'none';
         document.body.style.overflow = 'auto';
-        if(db.params.mensaje_bienvenida) showToast(db.params.mensaje_bienvenida);
-    }});
+    }, 800);
 }
 
-function checkSede() {
-    const saved = localStorage.getItem('combox_sede');
-    if(saved) {
-        currentSede = JSON.parse(saved);
-        updateSedeUI();
-        render();
+function initApp() {
+    // Cargar Sede por defecto o preguntar
+    currentSede = db.sedes[0]; 
+    renderTypeButtons();
+    renderProducts();
+    updateCartUI();
+}
+
+// LÓGICA DE PRECIOS (Corregida con Mayorista y Promos)
+function getActivePrice(p, qty = 1) {
+    let precio = parseFloat(p.Precio_venta_NORMAL || 0);
+    let esPromo = false;
+
+    // 1. Validar Mayorista
+    const minMayor = parseInt(p.cantidad_minima_mayor || 0);
+    if (minMayor > 0 && qty >= minMayor && parseFloat(p.precio_mayor) > 0) {
+        precio = parseFloat(p.precio_mayor);
+    }
+
+    // 2. Validar Promoción Activa
+    if (p.PROMOCION_ACTIVA === "Activa") {
+        const hoy = new Date();
+        const hasta = new Date(p.promocion_hasta);
+        const diaHoy = hoy.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
+        
+        const sedeOk = !p.PROMOCION_VALIDA_POR_SEDE_FK || p.PROMOCION_VALIDA_POR_SEDE_FK.includes(currentSede.NOMBRE_SEDE);
+        const fechaOk = !p.promocion_hasta || hasta >= hoy.setHours(0,0,0,0);
+        const diaOk = p.dias_promocion.toLowerCase().includes("todos") || p.dias_promocion.toLowerCase().includes(diaHoy);
+
+        if (sedeOk && fechaOk && diaOk) {
+            precio = parseFloat(p.Precio_promocion_TEMPORAL);
+            esPromo = true;
+        }
+    }
+    return { precio, esPromo };
+}
+
+// BUSCADOR INTELIGENTE
+function filterProducts() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    renderProducts(query);
+}
+
+function addToCart(id) {
+    playTap();
+    const item = db.productos.find(x => x.ID_PRODUCTO === id) || db.combos.find(x => x.ID_PRODUCTO_VENTA === id);
+    const inCart = cart.find(x => (x.ID_PRODUCTO || x.ID_PRODUCTO_VENTA) === id);
+
+    if (inCart) {
+        inCart.qty++;
     } else {
-        document.getElementById('sedeModal').classList.add('active');
-        renderSedeList();
+        cart.push({ ...item, qty: 1 });
+    }
+    
+    updateCartUI();
+    saveCart();
+}
+
+function updateCartUI() {
+    const total = cart.reduce((acc, curr) => {
+        const { precio } = getActivePrice(curr, curr.qty);
+        return acc + (precio * curr.qty);
+    }, 0);
+
+    const count = cart.reduce((acc, curr) => acc + curr.qty, 0);
+
+    document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
+    document.getElementById('cartCount').innerText = `${count} producto(s)`;
+    
+    const island = document.getElementById('bottomIsland');
+    island.style.display = cart.length > 0 ? 'flex' : 'none';
+}
+
+function saveCart() {
+    localStorage.setItem('combox_cart', JSON.stringify(cart));
+}
+
+// GPS NATIVO
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const link = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+            document.getElementById('locationLink').value = link;
+            checkForm();
+        });
     }
 }
 
-function renderSedeList() {
-    const container = document.getElementById('sedeList');
-    container.innerHTML = db.sedes.map(s => `
-        <div class="sede-option" onclick="selectSede('${s.ID_SEDE}')">
-            <strong>${s.NOMBRE_SEDE}</strong>
-        </div>
-    `).join('');
-}
-
-function selectSede(id) {
-    currentSede = db.sedes.find(s => s.ID_SEDE == id);
-    localStorage.setItem('combox_sede', JSON.stringify(currentSede));
-    document.getElementById('sedeModal').classList.remove('active');
-    updateSedeUI();
-    render();
-}
-
-function updateSedeUI() {
-    document.getElementById('btnWS').href = `https://wa.me/${currentSede.TELEFONO}`;
-    document.getElementById('btnIG').href = currentSede.LINK_INSTAGRAM;
-    document.getElementById('btnMap').href = currentSede.LINK_UBICACION;
-}
-
-function renderTypes() {
-    const container = document.getElementById('typeSelector');
-    container.innerHTML = db.tipos.map(t => `
-        <button class="type-btn ${currentTypeID === t.id_tipo_producto ? 'active' : ''}" 
-                onclick="currentTypeID='${t.id_tipo_producto}'; render(); renderTypes();">
-            ${t.tipo_producto}
-        </button>
-    `).join('');
-}
-
-function getActivePrice(p) {
-    const esPromo = p.PROMOCION_ACTIVA === "Activa";
-    const sedeValida = !p.PROMOCION_VALIDA_POR_SEDE_FK || p.PROMOCION_VALIDA_POR_SEDE_FK.includes(currentSede.ID_SEDE);
+function finalizarPedido() {
+    let msg = `Hola! Soy *${document.getElementById('clientName').value || document.getElementById('receiverName').value}*, `;
     
-    if (esPromo && sedeValida) {
-        return { precio: p.Precio_promocion_TEMPORAL, esPromo: true };
+    if(deliveryMethod === 'tienda') {
+        msg += `quiero recoger en la sede de *${currentSede.NOMBRE_SEDE}*\n\n`;
+    } else {
+        msg += `quiero este pedido a domicilio.\n\n`;
     }
-    return { precio: p.Precio_venta_NORMAL, esPromo: false };
-}
 
-function render() {
-    const grid = document.getElementById('productGrid');
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    
-    // Si el tipo actual es el ID de combos, usamos db.combos
-    let data = (currentTypeID === "edefbb62") ? db.combos : db.productos;
-    
-    let filtrados = data.filter(p => {
-        const nombre = (p.PRODUCTO || p.nombre_COMBO || "").toLowerCase();
-        const tipoMatch = p.tipo_producto_fk === currentTypeID;
-        const oculto = p.etiqueta_fk === STATUS.OCULTAR;
-        return tipoMatch && nombre.includes(search) && !oculto;
+    cart.forEach(item => {
+        const { precio } = getActivePrice(item, item.qty);
+        msg += `- *${(item.PRODUCTO || item.nombre_COMBO).toUpperCase()}*\n`;
+        msg += `\`Cant:\` *${item.qty}* | *$\`${(precio * item.qty).toFixed(2)}\`*\n\n`;
     });
 
-    grid.innerHTML = filtrados.map(p => {
-        const {precio, esPromo} = getActivePrice(p);
-        const name = p.PRODUCTO || p.nombre_COMBO;
-        const status = p.etiqueta_fk;
+    const total = document.getElementById('cartTotal').innerText;
+    msg += `💵 *SUBTOTAL:* *${total}*\n`;
 
-        return `
-            <div class="card ${status === STATUS.SIN_STOCK ? 'disabled' : ''}">
-                ${status === STATUS.AGOTANDOSE ? '<span class="tag-warn">AGOTÁNDOSE</span>' : ''}
-                <img src="${p.foto_producto || p.IMAGEN_PRODUCTO_CATALOGO}">
-                <div class="p-name">${name}</div>
-                <div class="p-price ${esPromo ? 'promo-anim' : ''}">$${parseFloat(precio || 0).toFixed(2)}</div>
-                ${status === STATUS.SIN_STOCK ? 
-                    '<button class="btn-add gray" disabled>SIN STOCK</button>' : 
-                    `<button class="btn-add" onclick="addToCart('${name}', ${precio})">AGREGAR</button>`
-                }
-            </div>
-        `;
-    }).join('');
+    if(deliveryMethod === 'delivery') {
+        msg += `\n🛵 *ENTREGA POR DELIVERY:*\n${document.getElementById('locationLink').value}`;
+    }
+
+    const tel = currentSede.TELEFONO.replace(/\D/g,'');
+    window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
 }
-
-// ... (Resto de funciones de carrito y modal iguales)

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#f70202">
-    <title>COMBOX | V1</title>
+    <title>COMBOX | Catálogo Inteligente</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -13,42 +13,49 @@
 <body oncontextmenu="return false;">
 
 <div id="splash">
-    <h1 class="splash-logo">COMBOX</h1>
+    <div class="splash-content">
+        <h1 class="splash-logo">COMBOX</h1>
+    </div>
 </div>
+
+<div id="welcomeToast" class="toast"></div>
 
 <header id="mainHeader">
     <div class="header-tag">EXCLUSIVE EXPERIENCE • 2026</div>
-    <h1 class="logo-main">COMBOX</h1>
+    <h1 id="brandName" class="logo-main">COMBOX</h1>
     <div class="contact-bar">
-        <a href="https://wa.me/584244701273" target="_blank" class="btn-contact-circle"><i class="fab fa-whatsapp"></i></a>
-        <a href="https://instagram.com/combox.valencia" target="_blank" class="btn-contact-circle"><i class="fab fa-instagram"></i></a>
-        <a href="http://maps.google.com/?q=Naguanagua" target="_blank" class="btn-contact-circle"><i class="fas fa-location-dot"></i></a>
+        <button onclick="toggleHorarios()" class="btn-contact-circle"><i class="fa fa-clock"></i></button>
+        <a id="btnWS" href="#" target="_blank" class="btn-contact-circle"><i class="fab fa-whatsapp"></i></a>
+        <a id="btnIG" href="#" target="_blank" class="btn-contact-circle"><i class="fab fa-instagram"></i></a>
+        <a id="btnMap" href="#" target="_blank" class="btn-contact-circle"><i class="fas fa-location-dot"></i></a>
+        <button onclick="cambiarSede()" class="btn-contact-circle"><i class="fa fa-shop"></i></button>
     </div>
+    <div id="horariosDrop" class="horarios-card"></div>
 </header>
 
 <main id="mainContent">
-    <div id="productGrid" class="grid"></div>
-</main>
-
-<div class="islands-wrapper" id="islandsWrapper">
-    <div class="island-master" id="islandMaster">
-        <div class="search-trigger" onclick="toggleSearch(true)"><i class="fa fa-search"></i></div>
-        <div id="search-box" class="search-container">
-            <input type="text" id="searchInput" placeholder="¿Qué buscas hoy?" oninput="render()">
-            <div class="close-search" onclick="toggleSearch(false)"><i class="fa fa-times"></i></div>
+    <div class="islands-wrapper" id="islandsWrapper">
+        <div class="island-master">
+            <div class="search-trigger" onclick="activarInput()"><i class="fa fa-search"></i></div>
+            <div id="search-box" class="search-container">
+                <input type="text" id="searchInput" placeholder="¿Qué buscas hoy?" oninput="render()">
+            </div>
+            <div class="type-selector" id="typeSelector"></div>
         </div>
-        <div class="mode-switch" id="modeContainer">
-            <div class="mode-slider" id="modeSlider"></div>
-            <div class="mode-opt active" onclick="setMode('individual', 0)">Individual</div>
-            <div class="mode-opt" onclick="setMode('combos', 1)">Combos</div>
-            <div class="mode-opt" onclick="setMode('servicios', 2)">Servicios</div>
-        </div>
+        <div id="subcatContainer" class="subcat-pills"></div>
     </div>
-</div>
+
+    <section id="promoCarousel" class="promo-section">
+        <h2 class="section-title">PROMOCIONES ACTIVAS</h2>
+        <div class="carousel-track" id="promoTrack"></div>
+    </section>
+
+    <div id="productGrid" class="grid-container"></div>
+</main>
 
 <div class="cart-floating" id="cartFloating">
     <div class="cart-info">
-        <span id="floatTotal">$0.00</span>
+        <span id="floatTotal" class="neon-text">$0.00</span>
         <span id="floatCount">0 PRODUCTOS</span>
     </div>
     <button class="btn-view-cart neon-btn" onclick="toggleModal(true)">VER PEDIDO</button>
@@ -59,54 +66,49 @@
         <div id="step-1" class="modal-step active">
             <div class="modal-header">
                 <h2>Tu Pedido</h2>
-                <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
+                <div class="close-modal" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
             </div>
             <div id="cartItems" class="scroll-area"></div>
             <div class="modal-footer">
-                <div class="subtotal-row">
-                    <span>Subtotal:</span>
-                    <span id="modalTotal" class="price-big-red">$0.00</span>
-                </div>
+                <div class="subtotal-row"><span>Subtotal:</span><span id="modalTotal" class="price-big-red">$0.00</span></div>
                 <button class="btn-confirm neon-btn" onclick="goToStep(2)">CONFIRMAR PEDIDO</button>
                 <button class="btn-clear" onclick="clearCart()">Vaciar Carrito</button>
             </div>
         </div>
-
         <div id="step-2" class="modal-step">
             <div class="modal-header">
                 <div class="back-btn" onclick="goToStep(1)"><i class="fa fa-arrow-left"></i></div>
                 <h2>Entrega</h2>
-                <div class="close-circle" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
             </div>
             <div class="delivery-selector">
-                <div class="delivery-opt active" id="opt-tienda" onclick="selectDelivery('tienda')">
-                    <i class="fa fa-shop"></i> RECOGER EN TIENDA
-                </div>
-                <div class="delivery-opt" id="opt-delivery" onclick="selectDelivery('delivery')">
-                    <i class="fa fa-motorcycle"></i> DELIVERY
-                </div>
+                <div class="delivery-opt active" id="opt-tienda" onclick="selectDelivery('tienda')"><i class="fa fa-shop"></i> RECOGER</div>
+                <div class="delivery-opt" id="opt-delivery" onclick="selectDelivery('delivery')"><i class="fa fa-motorcycle"></i> DELIVERY</div>
             </div>
             <div id="form-tienda" class="form-group active">
-                <label>Sede de Entrega</label>
-                <input type="text" value="Sede de Naguanagua" disabled class="input-premium">
-                <label>Nombre de quien retira</label>
-                <input type="text" id="clientNameTienda" placeholder="Escribe tu nombre..." class="input-premium">
+                <label>Sede</label><input type="text" id="sedeFinal" disabled class="input-premium">
+                <label>Tu Nombre</label><input type="text" id="nameTienda" class="input-premium" placeholder="¿Quién retira?">
             </div>
             <div id="form-delivery" class="form-group">
-                <label>Ubicación</label>
                 <div class="gps-group">
                     <button class="btn-gps" onclick="getLocation()"><i class="fa fa-location-dot"></i> Aquí</button>
-                    <input type="text" id="deliveryLink" placeholder="Link de Google Maps..." class="input-premium">
+                    <input type="text" id="deliveryLink" class="input-premium" placeholder="Link de ubicación...">
                 </div>
-                <label>Nombre de quien recibe</label>
-                <input type="text" id="clientNameDelivery" placeholder="Escribe tu nombre..." class="input-premium">
+                <input type="text" id="nameDelivery" class="input-premium" placeholder="¿Quién recibe?">
             </div>
             <button class="btn-confirm neon-btn" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
         </div>
     </div>
 </div>
 
+<div id="sedeModal" class="sede-selector-overlay">
+    <div class="sede-card">
+        <h3>Bienvenido a COMBOX</h3>
+        <p>Selecciona tu sede para ver precios y stock:</p>
+        <div id="sedeList"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="script.js"></script>
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js');}</script>
 </body>
 </html>

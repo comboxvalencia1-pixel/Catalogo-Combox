@@ -73,6 +73,11 @@ window.onload = async () => {
 
     try {
         const res = await fetch(`${API_URL}?action=getAppData`);
+        
+        if (!res.ok) {
+             throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+
         db = await res.json();
 
         // Asegurar que todos los arrays existan
@@ -87,7 +92,10 @@ window.onload = async () => {
 
         // Aplicar dinamismo desde los parámetros de la hoja CONFIG
         document.documentElement.style.setProperty('--primary', db.params.codigo_color_fk || '#E53935');
-        document.getElementById('brandName').innerText = db.params.Nombre_principal || "COMBOX";
+        const brandElement = document.getElementById('brandName');
+        if (brandElement) {
+             brandElement.innerText = db.params.Nombre_principal || "COMBOX";
+        }
 
         // Mostrar mensaje de bienvenida si existe
         if (db.params.mensaje_bienvenida) {
@@ -157,7 +165,8 @@ function initApp() {
 
 function openSedeModal() {
     renderSedes();
-    document.getElementById('sedeModal').style.display = 'flex';
+    const modal = document.getElementById('sedeModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function renderSedes() {
@@ -193,12 +202,25 @@ function setSede(sedeId) {
  * Actualiza los enlaces del header según la sede actual.
  */
 function actualizarEnlacesSede() {
-    document.getElementById('currentSedeName').innerText = currentSede.NOMBRE_SEDE || 'Sede';
-    document.getElementById('currentSedeNameModal').innerText = currentSede.NOMBRE_SEDE || 'Sede';
-    const tel = (currentSede.TELEFONO || '').replace(/\D/g, '');
-    document.getElementById('linkWS').href = `https://wa.me/${tel}`;
-    document.getElementById('linkIG').href = currentSede.LINK_INSTAGRAM || '#';
-    document.getElementById('linkMap').href = currentSede.LINK_UBICACION || '#';
+    const currentSedeNameElement = document.getElementById('currentSedeName');
+    if (currentSedeNameElement) {
+        currentSedeNameElement.innerText = currentSede.NOMBRE_SEDE || 'Sede';
+    }
+    
+    const currentSedeNameModalElement = document.getElementById('currentSedeNameModal');
+    if(currentSedeNameModalElement){
+         currentSedeNameModalElement.innerText = currentSede.NOMBRE_SEDE || 'Sede';
+    }
+
+    const tel = (currentSede.TELEFONO || '').toString().replace(/\D/g, '');
+    const linkWSElement = document.getElementById('linkWS');
+    if (linkWSElement) linkWSElement.href = `https://wa.me/${tel}`;
+
+    const linkIGElement = document.getElementById('linkIG');
+    if(linkIGElement) linkIGElement.href = currentSede.LINK_INSTAGRAM || '#';
+
+    const linkMapElement = document.getElementById('linkMap');
+    if(linkMapElement) linkMapElement.href = currentSede.LINK_UBICACION || '#';
 }
 
 // ====================================================
@@ -207,6 +229,7 @@ function actualizarEnlacesSede() {
 
 function renderTypeButtons() {
     const container = document.getElementById('typeButtons');
+    if (!container) return;
     container.innerHTML = '';
     db.tipos.forEach(tipo => {
         const btn = document.createElement('button');
@@ -230,6 +253,7 @@ function selectType(typeId) {
 
 function renderSubcategorias() {
     const container = document.getElementById('subcatContainer');
+    if (!container) return;
     container.innerHTML = '';
 
     // Buscar el tipo seleccionado por su ID
@@ -343,6 +367,7 @@ function getActivePrice(item, qty = 1) {
  */
 function renderProducts(query = "") {
     const container = document.getElementById('productContainer');
+    if (!container) return;
     container.innerHTML = "";
 
     const tipoSeleccionado = db.tipos.find(t => t.id_tipo_producto === currentType);
@@ -430,7 +455,7 @@ function createCard(item) {
     // Imagen
     const img = document.createElement('img');
     img.loading = 'lazy';
-    img.src = item.foto_producto || item.IMAGEN_PRODUCTO_CATALOGO || 'placeholder.jpg';
+    img.src = item.foto_producto || item.IMAGEN_PRODUCTO_CATALOGO || 'logo_white.png';
     img.alt = item.PRODUCTO || item.nombre_COMBO;
     card.appendChild(img);
 
@@ -489,11 +514,12 @@ function renderPromoCarousel() {
         return label === 'PROMO';
     }).slice(0, 10); // Máximo 10 slides
 
+    const promoSection = document.getElementById('promoSection');
     if (promos.length === 0) {
-        document.getElementById('promoSection').style.display = 'none';
+        if (promoSection) promoSection.style.display = 'none';
         return;
     }
-    document.getElementById('promoSection').style.display = 'block';
+    if (promoSection) promoSection.style.display = 'block';
 
     promos.forEach(item => {
         const slide = document.createElement('div');
@@ -501,7 +527,7 @@ function renderPromoCarousel() {
         // Usamos getActivePrice para asegurar el precio correcto (aunque ya sabemos que es PROMO)
         const { precio } = getActivePrice(item, 1);
         slide.innerHTML = `
-            <img src="${item.foto_producto || item.IMAGEN_PRODUCTO_CATALOGO || 'placeholder.jpg'}" loading="lazy">
+            <img src="${item.foto_producto || item.IMAGEN_PRODUCTO_CATALOGO || 'logo_white.png'}" loading="lazy">
             <h4>${(item.PRODUCTO || item.nombre_COMBO || '').toUpperCase()}</h4>
             <span class="promo-price">$${precio.toFixed(2)}</span>
         `;
@@ -541,9 +567,15 @@ function addToCart(id, btn) {
 function updateCartUI() {
     const total = cart.reduce((acc, i) => acc + (getActivePrice(i, i.qty).precio * i.qty), 0);
     const count = cart.reduce((acc, i) => acc + i.qty, 0);
-    document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
-    document.getElementById('cartCount').innerText = `${count} producto(s)`;
-    document.getElementById('bottomIsland').style.display = cart.length > 0 ? 'flex' : 'none';
+    
+    const cartTotalElement = document.getElementById('cartTotal');
+    if (cartTotalElement) cartTotalElement.innerText = `$${total.toFixed(2)}`;
+    
+    const cartCountElement = document.getElementById('cartCount');
+    if(cartCountElement) cartCountElement.innerText = `${count} producto(s)`;
+    
+    const bottomIsland = document.getElementById('bottomIsland');
+    if (bottomIsland) bottomIsland.style.display = cart.length > 0 ? 'flex' : 'none';
 }
 
 function saveCart() {
@@ -552,15 +584,18 @@ function saveCart() {
 
 function openCart() {
     renderCartItems();
-    document.getElementById('cartModal').style.display = 'flex';
+    const modal = document.getElementById('cartModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
 }
 
 function renderCartItems() {
     const list = document.getElementById('cartItemsList');
+    if (!list) return;
     list.innerHTML = '';
     cart.forEach((item, index) => {
         const { precio } = getActivePrice(item, item.qty);
@@ -580,7 +615,8 @@ function renderCartItems() {
         list.appendChild(itemDiv);
     });
     const total = cart.reduce((acc, i) => acc + (getActivePrice(i, i.qty).precio * i.qty), 0);
-    document.getElementById('modalTotal').innerText = `$${total.toFixed(2)}`;
+    const modalTotalElement = document.getElementById('modalTotal');
+    if (modalTotalElement) modalTotalElement.innerText = `$${total.toFixed(2)}`;
 }
 
 function adjustQty(index, delta) {
@@ -590,7 +626,8 @@ function adjustQty(index, delta) {
     }
     saveCart();
     updateCartUI();
-    if (document.getElementById('cartModal').style.display === 'flex') {
+    const modal = document.getElementById('cartModal');
+    if (modal && modal.style.display === 'flex') {
         renderCartItems();
     }
 }
@@ -608,7 +645,8 @@ function clearCart() {
 
 function showDeliveryOptions() {
     closeModal('cartModal');
-    document.getElementById('deliveryModal').style.display = 'flex';
+    const modal = document.getElementById('deliveryModal');
+    if (modal) modal.style.display = 'flex';
     selectMethod('tienda');
     checkForm();
 }
@@ -620,10 +658,19 @@ function backToCart() {
 
 function selectMethod(method) {
     deliveryMethod = method;
-    document.getElementById('btnStore').classList.toggle('active', method === 'tienda');
-    document.getElementById('btnDelivery').classList.toggle('active', method === 'delivery');
-    document.getElementById('storeInfo').style.display = method === 'tienda' ? 'block' : 'none';
-    document.getElementById('deliveryInfo').style.display = method === 'delivery' ? 'block' : 'none';
+    
+    const btnStore = document.getElementById('btnStore');
+    if (btnStore) btnStore.classList.toggle('active', method === 'tienda');
+    
+    const btnDelivery = document.getElementById('btnDelivery');
+    if (btnDelivery) btnDelivery.classList.toggle('active', method === 'delivery');
+    
+    const storeInfo = document.getElementById('storeInfo');
+    if (storeInfo) storeInfo.style.display = method === 'tienda' ? 'block' : 'none';
+    
+    const deliveryInfo = document.getElementById('deliveryInfo');
+    if(deliveryInfo) deliveryInfo.style.display = method === 'delivery' ? 'block' : 'none';
+    
     checkForm();
 }
 
@@ -638,9 +685,12 @@ function getLocation() {
     navigator.geolocation.getCurrentPosition(
         pos => {
             // Formato correcto para Google Maps
-            const link = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
-            document.getElementById('locationLink').value = link;
-            checkForm();
+            const link = `http://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+            const locationLinkElement = document.getElementById('locationLink');
+            if (locationLinkElement) {
+                locationLinkElement.value = link;
+                checkForm();
+            }
         },
         error => {
             alert('No se pudo obtener la ubicación: ' + error.message);
@@ -653,12 +703,17 @@ function getLocation() {
  */
 function checkForm() {
     const btn = document.getElementById('btnWhatsApp');
+    if (!btn) return;
     if (deliveryMethod === 'tienda') {
-        const name = document.getElementById('clientName').value.trim();
+        const clientNameElement = document.getElementById('clientName');
+        const name = clientNameElement ? clientNameElement.value.trim() : '';
         btn.disabled = !name;
     } else {
-        const ref = document.getElementById('locationLink').value.trim();
-        const name = document.getElementById('receiverName').value.trim();
+        const locationLinkElement = document.getElementById('locationLink');
+        const ref = locationLinkElement ? locationLinkElement.value.trim() : '';
+        
+        const receiverNameElement = document.getElementById('receiverName');
+        const name = receiverNameElement ? receiverNameElement.value.trim() : '';
         btn.disabled = !(ref && name);
     }
 }
@@ -676,9 +731,15 @@ document.addEventListener('input', function(e) {
 
 function finalizarPedido() {
     const method = deliveryMethod;
-    const nombre = method === 'tienda'
-        ? document.getElementById('clientName').value.trim()
-        : document.getElementById('receiverName').value.trim();
+    
+    let nombre = '';
+    if (method === 'tienda') {
+        const clientNameElement = document.getElementById('clientName');
+        nombre = clientNameElement ? clientNameElement.value.trim() : '';
+    } else {
+         const receiverNameElement = document.getElementById('receiverName');
+         nombre = receiverNameElement ? receiverNameElement.value.trim() : '';
+    }
 
     let msg = `Hola! Soy *${nombre}*, `;
     if (method === 'tienda') {
@@ -693,14 +754,17 @@ function finalizarPedido() {
         msg += `\`Cant:\` *${item.qty}* | *\$${(precio * item.qty).toFixed(2)}*\n\n`;
     });
 
-    const total = document.getElementById('cartTotal').innerText;
+    const totalElement = document.getElementById('cartTotal');
+    const total = totalElement ? totalElement.innerText : '$0.00';
     msg += `💵 *SUBTOTAL:* *${total}*\n`;
 
     if (method === 'delivery') {
-        msg += `\n🛵 *ENTREGA POR DELIVERY:*\n${document.getElementById('locationLink').value}`;
+        const locationLinkElement = document.getElementById('locationLink');
+        const locationValue = locationLinkElement ? locationLinkElement.value : '';
+        msg += `\n🛵 *ENTREGA POR DELIVERY:*\n${locationValue}`;
     }
 
-    const tel = (currentSede.TELEFONO || '').replace(/\D/g, '');
+    const tel = (currentSede.TELEFONO || '').toString().replace(/\D/g, '');
     window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 

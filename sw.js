@@ -1,5 +1,5 @@
-const CACHE_NAME = 'combox-vmax-v1';
-const IMG_CACHE = 'combox-images-v1';
+const CACHE_NAME = 'combox-vmax-v2';
+const IMG_CACHE = 'combox-images-v2';
 const STATIC = ['./', './index.html', './style.css', './script.js', './manifest.json'];
 
 self.addEventListener('install', e => {

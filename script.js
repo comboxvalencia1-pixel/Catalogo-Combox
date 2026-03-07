@@ -17,29 +17,33 @@ function playTap() {
 }
 
 window.onload = async () => {
-    // Si la API falla, a los 8 segundos quita el splash rojo
-    const timer = setTimeout(hideSplash, 8000); 
+    // 1. Mostrar Splash
+    setTimeout(() => { const s = document.getElementById('splash'); if(s) s.style.display = 'none'; }, 1000);
+
+    // 2. Caché local para velocidad (igual que V14)
+    const cache = localStorage.getItem('combox_cache');
+    if(cache) { 
+        db = JSON.parse(cache); 
+        initApp(); 
+    }
 
     try {
-        const res = await fetch(`${API_URL}?action=getAppData`, { mode: 'cors', redirect: 'follow' });
-        if(!res.ok) throw new Error("Fallo de red");
+        // 3. LA MAGIA DE LA V1: Petición súper simple. SIN mode: cors, SIN credentials.
+        // Le añadimos el Date.now() solo para que no lea memoria vieja.
+        const res = await fetch(`${API_URL}?action=getAppData&t=${Date.now()}`);
         
         db = await res.json();
-        console.log("Datos recibidos:", db); // <-- Útil para diagnosticar en F12
         
-        if (db.error) {
-            document.getElementById('productContainer').innerHTML = `<p style="padding:20px; text-align:center; color:red;">Error de Base de Datos: ${db.error}</p>`;
-            hideSplash(); return;
-        }
-
+        // Guardamos los datos nuevos
+        localStorage.setItem('combox_cache', JSON.stringify(db));
+        
         initApp();
-        clearTimeout(timer);
-        setTimeout(hideSplash, 800);
+        
     } catch (e) { 
-        hideSplash();
-        document.getElementById('productContainer').innerHTML = "<p style='text-align:center; padding:20px;'>Error de conexión. Recarga la página.</p>";
+        console.error("Error cargando productos. Usando caché si existe.", e); 
     }
 };
+
 
 function hideSplash() {
     const s = document.getElementById('splash');

@@ -2,83 +2,114 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>COMBOX | Exclusive Experience</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>COMBOX | Catálogo Dinámico</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-<body>
+<body oncontextmenu="return false;">
 
 <div id="splash">
-    <div class="splash-content">
-        <h1 class="splash-logo">COMBOX</h1>
-        <div class="spinner"></div>
-    </div>
+    <img src="logo_white.png" class="pulse-logo" id="splashLogo">
 </div>
 
-<header>
-    <div class="top-bar">EXCLUSIVE EXPERIENCE • 2026</div>
-    <h1 id="brandName">COMBOX</h1>
-    <div class="nav-icons">
-        <button onclick="cambiarSede()"><i class="fa fa-shop"></i></button>
-        <a id="btnWS" target="_blank"><i class="fab fa-whatsapp"></i></a>
-        <a id="btnIG" target="_blank"><i class="fab fa-instagram"></i></a>
+<header id="mainHeader">
+    <div class="top-bar" id="topBar">COMBOX • SELECCIONA SEDE</div>
+    <div class="header-content">
+        <img src="logo_white.png" alt="Logo" class="header-logo">
+    </div>
+    <div class="header-buttons">
+        <button onclick="showSedes()"><i class="fa-solid fa-shop"></i></button>
+        <button onclick="showHorarios()"><i class="fa-solid fa-clock"></i></button>
+        <a id="linkWS" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+        <a id="linkIG" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+        <a id="linkMap" target="_blank"><i class="fa-solid fa-location-dot"></i></a>
     </div>
 </header>
 
 <main>
-    <div class="dynamic-island">
-        <div class="search-bar">
-            <i class="fa fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Buscar..." oninput="render()">
+    <div class="island-master" id="searchIsland">
+        <div class="island-top">
+            <div class="search-box" onclick="expandSearch()">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="filterProducts()">
+            </div>
+            <div id="typeButtons" class="type-selector">
+                </div>
         </div>
-        <div id="typeSelector" class="scroll-x"></div>
+        <div id="subcatContainer" class="subcategories-pills">
+            </div>
     </div>
-    
-    <div id="subcatContainer" class="scroll-x subcats"></div>
 
-    <div id="productGrid" class="grid"></div>
+    <section id="promoSection">
+        <h2 class="section-title">PROMOCIONES ACTIVAS</h2>
+        <div class="promo-carousel" id="promoCarousel"></div>
+    </section>
+
+    <div id="productContainer">
+        </div>
 </main>
 
-<div id="cartFloating" class="cart-pill">
-    <div class="info">
-        <span id="floatCount">0</span>
-        <span id="floatTotal">$0.00</span>
+<div id="bottomIsland" class="liquid-glass-island">
+    <div class="island-cart-info">
+        <span id="cartTotal" class="neon-price">$0.00</span>
+        <span id="cartCount" class="cart-subtitle">0 productos</span>
     </div>
-    <button onclick="toggleModal(true)">VER PEDIDO</button>
+    <button class="btn-ver-pedido" onclick="openCart()">VER PEDIDO</button>
 </div>
 
-<div id="sedeModal" class="overlay">
-    <div class="modal">
-        <h3>Selecciona tu Sede</h3>
-        <div id="sedeList"></div>
-    </div>
-</div>
-
-<div id="cartModal" class="overlay">
-    <div class="modal">
-        <div id="step-1" class="step active">
-            <h3>Tu Pedido</h3>
-            <div id="cartItems"></div>
-            <button class="btn-main" onclick="goToStep(2)">CONTINUAR</button>
-            <button class="btn-close" onclick="toggleModal(false)">Cerrar</button>
+<div id="cartModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>TU PEDIDO</h3>
+            <button class="close-btn" onclick="closeModal('cartModal')"><i class="fa-solid fa-circle-xmark"></i></button>
         </div>
-        <div id="step-2" class="step">
-            <h3>Finalizar</h3>
-            <input type="text" id="userName" placeholder="Tu nombre">
-            <div class="delivery-btns">
-                <button id="btnTienda" onclick="setDelivery('tienda')" class="active">Tienda</button>
-                <button id="btnDelivery" onclick="setDelivery('delivery')">Delivery</button>
+        <div id="cartItemsList" class="cart-items-container"></div>
+        <div class="cart-footer">
+            <div class="subtotal-row">
+                <span>Subtotal:</span>
+                <span id="modalTotal" class="red-total">$0.00</span>
             </div>
-            <button class="btn-main" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
-            <button class="btn-close" onclick="goToStep(1)">Volver</button>
+            <button class="btn-confirm" onclick="showDeliveryOptions()">CONFIRMAR PEDIDO</button>
+            <button class="btn-empty" onclick="clearCart()">Vaciar Carrito</button>
         </div>
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<div id="deliveryModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <button class="back-btn" onclick="backToCart()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h3>ENTREGA</h3>
+        </div>
+        <div class="delivery-options">
+            <button id="btnStore" class="delivery-btn active" onclick="selectMethod('tienda')">
+                <i class="fa-solid fa-shop"></i> Recoger en tienda
+            </button>
+            <button id="btnDelivery" class="delivery-btn" onclick="selectMethod('delivery')">
+                <i class="fa-solid fa-motorcycle"></i> Delivery
+            </button>
+        </div>
+        
+        <div id="deliveryFields" class="form-fields">
+            <div id="storeInfo">
+                <p>Predeterminado: <b id="currentSedeName">Naguanagua</b></p>
+                <input type="text" id="clientName" placeholder="Nombre del cliente">
+            </div>
+            <div id="deliveryInfo" style="display:none;">
+                <div class="gps-input-group">
+                    <button class="btn-gps" onclick="getLocation()"><i class="fa-solid fa-location-crosshairs"></i> Aquí</button>
+                    <input type="text" id="locationLink" placeholder="Link de Google Maps o Referencia">
+                </div>
+                <input type="text" id="receiverName" placeholder="Nombre de quien recibe">
+            </div>
+        </div>
+        
+        <button id="btnWhatsApp" class="btn-final-wa" disabled onclick="finalizarPedido()">PEDIR POR WHATSAPP</button>
+    </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>

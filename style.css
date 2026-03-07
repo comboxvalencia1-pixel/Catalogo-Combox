@@ -1,54 +1,117 @@
-:root { --primary: #E53935; } /* Rojo según tu tabla Colores_web */
-
-.tag-warn {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: #FF9800;
-    color: white;
-    font-size: 0.6rem;
-    padding: 4px 8px;
-    border-radius: 10px;
-    font-weight: 900;
+:root {
+    --primary: #E53935; /* Se actualizará desde Sheets */
+    --neon-green: #39FF14;
+    --glass: rgba(255, 255, 255, 0.2);
+    --dark-glass: rgba(0, 0, 0, 0.7);
 }
 
-.card.disabled {
-    filter: grayscale(1);
-    opacity: 0.7;
+* {
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
-.sede-option {
-    background: #f5f5f5;
-    padding: 20px;
-    margin: 10px 0;
-    border-radius: 15px;
-    cursor: pointer;
-    font-weight: 700;
-    text-align: center;
-    border: 2px solid transparent;
+body {
+    background: #f0f0f0;
+    overflow-x: hidden;
+    touch-action: manipulation;
 }
 
-.sede-option:hover {
-    border-color: var(--primary);
-    background: white;
+/* Splash Screen */
+#splash {
+    position: fixed; inset: 0; background: #E53935;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10000; transition: opacity 0.8s ease;
 }
 
-.sede-selector-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.9);
-    z-index: 11000;
-    display: none;
-    align-items: center;
-    justify-content: center;
+.pulse-logo {
+    width: 150px;
+    animation: pulse 1.5s infinite;
 }
 
-.sede-selector-overlay.active { display: flex; }
+@keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+}
 
-.sede-card {
-    background: white;
-    padding: 30px;
+/* Isla Dinámica */
+.island-master {
+    position: sticky; top: 15px; margin: 15px;
+    background: var(--glass);
+    backdrop-filter: blur(15px);
     border-radius: 30px;
-    width: 90%;
-    max-width: 400px;
+    padding: 10px;
+    z-index: 1000;
+    transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.liquid-glass-island {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    width: 90%; max-width: 400px;
+    background: var(--dark-glass);
+    backdrop-filter: blur(20px);
+    border-radius: 25px;
+    padding: 15px 25px;
+    display: none; /* Se activa al agregar producto */
+    justify-content: space-between; align-items: center;
+    z-index: 2000;
+    animation: slideUp 0.5s ease;
+}
+
+.neon-price { color: var(--neon-green); font-weight: 800; font-size: 1.2rem; }
+
+/* Botones de Categorías */
+.type-selector button {
+    background: rgba(255,255,255,0.1);
+    border: none; padding: 8px 15px; border-radius: 20px;
+    color: #444; font-weight: 600; cursor: pointer;
+}
+
+.type-selector button.active {
+    background: var(--primary);
+    color: white;
+}
+
+/* Grids */
+.grid-category-title {
+    padding: 20px 15px 10px; font-weight: 800; color: #333;
+}
+
+.product-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px;
+}
+
+.card {
+    background: white; border-radius: 20px; padding: 10px;
+    text-align: center; position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.card img {
+    width: 100%; border-radius: 15px; aspect-ratio: 1; object-fit: contain;
+}
+
+.btn-add {
+    background: var(--dark-glass); color: white; border: none;
+    padding: 8px; border-radius: 12px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    transition: 0.3s;
+}
+
+.btn-add.added { background: var(--neon-green); color: black; }
+
+/* Modales */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px); z-index: 5000;
+    display: none; align-items: flex-end;
+}
+
+.modal-card {
+    background: white; width: 100%; border-radius: 30px 30px 0 0;
+    padding: 25px; max-height: 90vh; overflow-y: auto;
 }

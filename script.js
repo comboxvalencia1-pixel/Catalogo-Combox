@@ -1,7 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbyJOqe3K6Q6Eps-eLDNSwasHfcPRadqUH7rRU5HhpcBiiszYVh9uzpaBXCsZ5OjkfhY/exec?action=getAppData";
 let allProducts = [], cart = [], mode = 'individual', deliveryMethod = 'tienda';
 
-// INICIO Y BLOQUEO DE SPLASH
+// INICIO Y BLOQUEO DE SPLASh
 window.onload = async () => {
     document.body.style.overflow = 'hidden'; 
     loadCart(); 

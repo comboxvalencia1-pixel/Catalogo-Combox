@@ -3,112 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#f70202">
-    <title>COMBOX | Catálogo Inteligente</title>
+    <meta name="theme-color" content="#E53935">
+    <title>COMBOX | Exclusive Experience</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
 <body oncontextmenu="return false;">
 
-<div id="splash">
-    <div class="splash-content">
-        <h1 class="splash-logo">COMBOX</h1>
-    </div>
-</div>
-
-<div id="welcomeToast" class="toast"></div>
-
-<header id="mainHeader">
-    <div class="header-tag">EXCLUSIVE EXPERIENCE • 2026</div>
-    <h1 id="brandName" class="logo-main">COMBOX</h1>
-    <div class="contact-bar">
-        <button onclick="toggleHorarios()" class="btn-contact-circle"><i class="fa fa-clock"></i></button>
-        <a id="btnWS" href="#" target="_blank" class="btn-contact-circle"><i class="fab fa-whatsapp"></i></a>
-        <a id="btnIG" href="#" target="_blank" class="btn-contact-circle"><i class="fab fa-instagram"></i></a>
-        <a id="btnMap" href="#" target="_blank" class="btn-contact-circle"><i class="fas fa-location-dot"></i></a>
-        <button onclick="cambiarSede()" class="btn-contact-circle"><i class="fa fa-shop"></i></button>
-    </div>
-    <div id="horariosDrop" class="horarios-card"></div>
-</header>
-
-<main id="mainContent">
-    <div class="islands-wrapper" id="islandsWrapper">
-        <div class="island-master">
-            <div class="search-trigger" onclick="activarInput()"><i class="fa fa-search"></i></div>
-            <div id="search-box" class="search-container">
-                <input type="text" id="searchInput" placeholder="¿Qué buscas hoy?" oninput="render()">
-            </div>
-            <div class="type-selector" id="typeSelector"></div>
-        </div>
-        <div id="subcatContainer" class="subcat-pills"></div>
-    </div>
-
-    <section id="promoCarousel" class="promo-section">
-        <h2 class="section-title">PROMOCIONES ACTIVAS</h2>
-        <div class="carousel-track" id="promoTrack"></div>
-    </section>
-
-    <div id="productGrid" class="grid-container"></div>
-</main>
-
-<div class="cart-floating" id="cartFloating">
-    <div class="cart-info">
-        <span id="floatTotal" class="neon-text">$0.00</span>
-        <span id="floatCount">0 PRODUCTOS</span>
-    </div>
-    <button class="btn-view-cart neon-btn" onclick="toggleModal(true)">VER PEDIDO</button>
-</div>
-
-<div class="cart-modal" id="cartModal">
-    <div class="cart-modal-content">
-        <div id="step-1" class="modal-step active">
-            <div class="modal-header">
-                <h2>Tu Pedido</h2>
-                <div class="close-modal" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
-            </div>
-            <div id="cartItems" class="scroll-area"></div>
-            <div class="modal-footer">
-                <div class="subtotal-row"><span>Subtotal:</span><span id="modalTotal" class="price-big-red">$0.00</span></div>
-                <button class="btn-confirm neon-btn" onclick="goToStep(2)">CONFIRMAR PEDIDO</button>
-                <button class="btn-clear" onclick="clearCart()">Vaciar Carrito</button>
+    <div id="splash">
+        <div class="splash-content">
+            <h1 class="splash-logo">COMBOX</h1>
+            <div class="loader-dots">
+                <span></span><span></span><span></span>
             </div>
         </div>
-        <div id="step-2" class="modal-step">
-            <div class="modal-header">
-                <div class="back-btn" onclick="goToStep(1)"><i class="fa fa-arrow-left"></i></div>
-                <h2>Entrega</h2>
-            </div>
-            <div class="delivery-selector">
-                <div class="delivery-opt active" id="opt-tienda" onclick="selectDelivery('tienda')"><i class="fa fa-shop"></i> RECOGER</div>
-                <div class="delivery-opt" id="opt-delivery" onclick="selectDelivery('delivery')"><i class="fa fa-motorcycle"></i> DELIVERY</div>
-            </div>
-            <div id="form-tienda" class="form-group active">
-                <label>Sede</label><input type="text" id="sedeFinal" disabled class="input-premium">
-                <label>Tu Nombre</label><input type="text" id="nameTienda" class="input-premium" placeholder="¿Quién retira?">
-            </div>
-            <div id="form-delivery" class="form-group">
-                <div class="gps-group">
-                    <button class="btn-gps" onclick="getLocation()"><i class="fa fa-location-dot"></i> Aquí</button>
-                    <input type="text" id="deliveryLink" class="input-premium" placeholder="Link de ubicación...">
+    </div>
+
+    <div id="welcomeToast" class="toast"></div>
+
+    <header id="mainHeader">
+        <div class="header-tag">EXCLUSIVE EXPERIENCE • 2026</div>
+        <h1 id="brandName" class="logo-main">COMBOX</h1>
+        
+        <div class="contact-bar">
+            <button onclick="toggleHorarios()" class="btn-contact-circle" title="Horarios">
+                <i class="fa fa-clock"></i>
+            </button>
+            <a id="btnWS" href="#" target="_blank" class="btn-contact-circle">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+            <a id="btnIG" href="#" target="_blank" class="btn-contact-circle">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a id="btnMap" href="#" target="_blank" class="btn-contact-circle">
+                <i class="fas fa-location-dot"></i>
+            </a>
+            <button onclick="cambiarSede()" class="btn-contact-circle" title="Cambiar Sede">
+                <i class="fa fa-shop"></i>
+            </button>
+        </div>
+        
+        <div id="horariosDrop" class="horarios-card"></div>
+    </header>
+
+    <main id="mainContent">
+        <div class="islands-wrapper" id="islandsWrapper">
+            <div class="island-master">
+                <div class="search-trigger">
+                    <i class="fa fa-search"></i>
                 </div>
-                <input type="text" id="nameDelivery" class="input-premium" placeholder="¿Quién recibe?">
+                <div id="search-box" class="search-container">
+                    <input type="text" id="searchInput" placeholder="¿Qué buscas hoy?" oninput="render()">
+                </div>
+                <div class="type-selector" id="typeSelector"></div>
             </div>
-            <button class="btn-confirm neon-btn" onclick="sendWhatsApp()">PEDIR POR WHATSAPP</button>
+            <div id="subcatContainer" class="subcat-pills"></div>
+        </div>
+
+        <div id="productGrid" class="grid-container">
+            </div>
+    </main>
+
+    <div class="cart-floating" id="cartFloating">
+        <div class="cart-info">
+            <span id="floatTotal" class="neon-text">$0.00</span>
+            <span id="floatCount">0 PRODUCTOS</span>
+        </div>
+        <button class="btn-view-cart neon-btn" onclick="toggleModal(true)">
+            VER PEDIDO
+        </button>
+    </div>
+
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-modal-content">
+            <div id="step-1" class="modal-step active">
+                <div class="modal-header">
+                    <h2>Tu Pedido</h2>
+                    <div class="close-modal" onclick="toggleModal(false)"><i class="fa fa-times"></i></div>
+                </div>
+                <div id="cartItems" class="scroll-area"></div>
+                <div class="modal-footer">
+                    <div class="subtotal-row">
+                        <span>Total:</span>
+                        <span id="modalTotal" class="price-big-red">$0.00</span>
+                    </div>
+                    <button class="btn-confirm neon-btn" onclick="goToStep(2)">CONFIRMAR DATOS</button>
+                    <button class="btn-clear" onclick="clearCart()">Vaciar</button>
+                </div>
+            </div>
+
+            <div id="step-2" class="modal-step">
+                <div class="modal-header">
+                    <div class="back-btn" onclick="goToStep(1)"><i class="fa fa-arrow-left"></i></div>
+                    <h2>Entrega</h2>
+                </div>
+                
+                <div class="delivery-selector">
+                    <div class="delivery-opt active" id="opt-tienda" onclick="selectDelivery('tienda')">
+                        <i class="fa fa-shop"></i> RECOGER
+                    </div>
+                    <div class="delivery-opt" id="opt-delivery" onclick="selectDelivery('delivery')">
+                        <i class="fa fa-motorcycle"></i> DELIVERY
+                    </div>
+                </div>
+
+                <div id="form-tienda" class="form-group active">
+                    <label>Nombre de quien retira:</label>
+                    <input type="text" id="nameTienda" class="input-premium" placeholder="Ej: Juan Pérez">
+                </div>
+
+                <div id="form-delivery" class="form-group">
+                    <div class="gps-group">
+                        <button class="btn-gps" onclick="getLocation()">
+                            <i class="fa fa-location-arrow"></i> Usar mi GPS
+                        </button>
+                        <input type="text" id="deliveryLink" class="input-premium" placeholder="Link de Google Maps">
+                    </div>
+                    <label>¿Quién recibe?</label>
+                    <input type="text" id="nameDelivery" class="input-premium" placeholder="Nombre completo">
+                </div>
+
+                <button class="btn-confirm neon-btn" onclick="sendWhatsApp()">
+                    <i class="fab fa-whatsapp"></i> ENVIAR PEDIDO
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="sedeModal" class="sede-selector-overlay">
-    <div class="sede-card">
-        <h3>Bienvenido a COMBOX</h3>
-        <p>Selecciona tu sede para ver precios y stock:</p>
-        <div id="sedeList"></div>
+    <div id="sedeModal" class="sede-selector-overlay">
+        <div class="sede-card">
+            <div class="sede-header">
+                <img src="https://cdn-icons-png.flaticon.com/512/199/199551.png" width="50" alt="Logo">
+                <h3>Bienvenido a COMBOX</h3>
+                <p>Selecciona la sede más cercana para ver precios y disponibilidad:</p>
+            </div>
+            <div id="sedeList" class="sede-list-container">
+                </div>
+        </div>
     </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

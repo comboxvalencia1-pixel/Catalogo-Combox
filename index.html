@@ -1,123 +1,70 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>COMBOX</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="manifest" href="manifest.json">
-</head>
-<body oncontextmenu="return false;">
+const CACHE_NAME = 'combox-v13';
+const IMG_CACHE = 'combox-images-v13';
+const API_CACHE = 'combox-api-cache';
 
-<div id="splash">
-    <img src="logo_white.png" class="pulse-logo" alt="COMBOX">
-</div>
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.addAll(['./index.html', './style.css', './script.js', './manifest.json']);
+        })
+    );
+    self.skipWaiting();
+});
 
-<header>
-    <div class="top-bar">
-        <span id="brandName">COMBOX</span> • <span id="currentSedeName">SELECCIONA SEDE</span>
-    </div>
-    <div class="header-buttons">
-        <button onclick="openSedeModal()"><i class="fa-solid fa-shop"></i></button>
-        <button onclick="toggleHorarios()"><i class="fa-solid fa-clock"></i></button>
-        <a id="linkWS" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
-        <a id="linkIG" target="_blank"><i class="fa-brands fa-instagram"></i></a>
-        <a id="linkMap" target="_blank"><i class="fa-solid fa-location-dot"></i></a>
-    </div>
-</header>
+self.addEventListener('fetch', event => {
+    const url = event.request.url;
 
-<div class="island-master">
-    <div class="search-bar">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchInput" placeholder="Buscar producto..." onkeyup="renderProducts(this.value)">
-    </div>
-    <div class="type-selector" id="typeButtons">
-        </div>
-    <div class="subcategories-pills" id="subcatContainer">
-        </div>
-</div>
+    // 1. ESTRATEGIA PARA LA API (Stale-While-Revalidate)
+    if (url.includes('script.google.com')) {
+        event.respondWith(
+            caches.open(API_CACHE).then(cache => {
+                return cache.match(event.request).then(cachedResponse => {
+                    const fetchPromise = fetch(event.request).then(networkResponse => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    }).catch(() => {}); // Falla silenciosa si no hay internet
+                    
+                    return cachedResponse || fetchPromise;
+                });
+            })
+        );
+        return;
+    }
 
-<div id="promoSection" style="display:none;">
-    <h3 class="section-title">Promociones 🔥</h3>
-    <div class="carousel" id="promoCarousel">
-        </div>
-</div>
+    // 2. ESTRATEGIA PARA IMÁGENES
+    if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
+        event.respondWith(
+            caches.open(IMG_CACHE).then(cache => {
+                return cache.match(event.request).then(cachedResponse => {
+                    const fetchPromise = fetch(event.request).then(networkResponse => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    }).catch(() => cachedResponse);
+                    return cachedResponse || fetchPromise;
+                });
+            })
+        );
+        return;
+    }
 
-<div id="productContainer">
-    </div>
+    // 3. ESTRATEGIA PARA HTML/CSS/JS (Network First, fallback a Caché)
+    event.respondWith(
+        fetch(event.request).then(response => {
+            if (response && response.status === 200) {
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+            }
+            return response;
+        }).catch(() => caches.match(event.request))
+    );
+});
 
-<div id="bottomIsland" class="liquid-glass-island" style="display:none;" onclick="openCart()">
-    <div class="island-cart-info">
-        <span class="neon-price" id="cartTotal">$0.00</span>
-        <span class="cart-subtitle" id="cartCount">0 productos</span>
-    </div>
-    <button class="btn-ver-pedido">Ver Pedido</button>
-</div>
-
-<div id="cartModal" class="modal-overlay">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h3>TU PEDIDO</h3>
-            <button class="close-btn" onclick="closeModal('cartModal')"><i class="fa-solid fa-circle-xmark"></i></button>
-        </div>
-        <div class="cart-items-container" id="cartItemsList">
-            </div>
-        <div class="cart-footer">
-            <div class="subtotal-row">
-                <span>Total a Pagar:</span>
-                <span class="red-total" id="modalTotal">$0.00</span>
-            </div>
-            <button class="btn-confirm" onclick="showDeliveryOptions()">CONTINUAR</button>
-            <button class="btn-empty" onclick="clearCart()">Vaciar Carrito</button>
-        </div>
-    </div>
-</div>
-
-<div id="deliveryModal" class="modal-overlay">
-    <div class="modal-card">
-        <div class="modal-header">
-            <button class="back-btn" onclick="backToCart()"><i class="fa-solid fa-arrow-left"></i></button>
-            <h3>ENTREGA</h3>
-        </div>
-        <div class="delivery-options">
-            <button id="btnStore" class="delivery-btn active" onclick="selectMethod('tienda')">
-                <i class="fa-solid fa-shop"></i> Recoger en tienda
-            </button>
-            <button id="btnDelivery" class="delivery-btn" onclick="selectMethod('delivery')">
-                <i class="fa-solid fa-motorcycle"></i> Delivery
-            </button>
-        </div>
-        
-        <div id="deliveryFields" class="form-fields">
-            <div id="storeInfo">
-                <p>Predeterminado: <b id="currentSedeNameModal">Sede</b></p>
-                <input type="text" id="clientName" placeholder="Nombre del cliente">
-            </div>
-            <div id="deliveryInfo" style="display:none;">
-                <div class="gps-input-group">
-                    <button class="btn-gps" onclick="getLocation()"><i class="fa-solid fa-location-crosshairs"></i> Aquí</button>
-                    <input type="text" id="locationLink" placeholder="Link de Google Maps o Referencia">
-                </div>
-                <input type="text" id="receiverName" placeholder="Nombre de quien recibe">
-            </div>
-        </div>
-        
-        <button id="btnWhatsApp" class="btn-final-wa" disabled onclick="finalizarPedido()">PEDIR POR WHATSAPP</button>
-    </div>
-</div>
-
-<div id="sedeModal" class="modal-overlay">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h3>SELECCIONA UNA SEDE</h3>
-            <button class="close-btn" onclick="closeModal('sedeModal')"><i class="fa-solid fa-circle-xmark"></i></button>
-        </div>
-        <div id="sedeList" class="sede-list">
-            </div>
-    </div>
-</div>
-
-<script src="script.js"></script>
-</body>
-</html>
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(keys => Promise.all(
+            keys.filter(key => key !== CACHE_NAME && key !== IMG_CACHE && key !== API_CACHE)
+                .map(key => caches.delete(key))
+        ))
+    );
+    self.clients.claim();
+});

@@ -10,79 +10,70 @@
 </head>
 <body oncontextmenu="return false;">
 
-<!-- SPLASH: pantalla de inicio con logo pulsante -->
 <div id="splash">
     <img src="logo_white.png" class="pulse-logo" alt="COMBOX">
 </div>
 
-<!-- HEADER: barra superior con nombre de la empresa, sede actual y botones de acción -->
 <header>
     <div class="top-bar">
         <span id="brandName">COMBOX</span> • <span id="currentSedeName">SELECCIONA SEDE</span>
     </div>
     <div class="header-buttons">
-        <!-- Botón para abrir modal de selección de sede -->
         <button onclick="openSedeModal()"><i class="fa-solid fa-shop"></i></button>
-        <!-- Botón para mostrar horarios -->
         <button onclick="toggleHorarios()"><i class="fa-solid fa-clock"></i></button>
-        <!-- Enlaces dinámicos a WhatsApp, Instagram y ubicación -->
         <a id="linkWS" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
         <a id="linkIG" target="_blank"><i class="fa-brands fa-instagram"></i></a>
         <a id="linkMap" target="_blank"><i class="fa-solid fa-location-dot"></i></a>
     </div>
 </header>
 
-<!-- CONTENIDO PRINCIPAL -->
-<main id="appContent">
-    <!-- ISLA DE BÚSQUEDA: sticky, con buscador, tipos y subcategorías -->
-    <div class="island-master" id="searchIsland">
-        <div class="search-bar">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="renderProducts(this.value)">
+<div class="island-master">
+    <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Buscar producto..." onkeyup="renderProducts(this.value)">
+    </div>
+    <div class="type-selector" id="typeButtons">
         </div>
-        <div id="typeButtons" class="type-selector"></div>
-        <div id="subcatContainer" class="subcategories-pills"></div>
-    </div>
-
-    <!-- CARRUSEL DE PROMOCIONES ACTIVAS (oculto si no hay) -->
-    <div id="promoSection" style="display: none;">
-        <h3 class="section-title">PROMOCIONES ACTIVAS</h3>
-        <div id="promoCarousel" class="carousel"></div>
-    </div>
-
-    <!-- CONTENEDOR DE PRODUCTOS (se llena dinámicamente) -->
-    <div id="productContainer"></div>
-</main>
-
-<!-- ISLA INFERIOR DEL CARRITO (visible solo cuando hay productos) -->
-<div id="bottomIsland" class="liquid-glass-island" onclick="openCart()" style="display: none;">
-    <div class="island-cart-info">
-        <span id="cartTotal" class="neon-price">$0.00</span>
-        <span id="cartCount" class="cart-subtitle">0 productos</span>
-    </div>
-    <button class="btn-ver-pedido">VER PEDIDO</button>
+    <div class="subcategories-pills" id="subcatContainer">
+        </div>
 </div>
 
-<!-- MODAL DEL CARRITO -->
+<div id="promoSection" style="display:none;">
+    <h3 class="section-title">Promociones 🔥</h3>
+    <div class="carousel" id="promoCarousel">
+        </div>
+</div>
+
+<div id="productContainer">
+    </div>
+
+<div id="bottomIsland" class="liquid-glass-island" style="display:none;" onclick="openCart()">
+    <div class="island-cart-info">
+        <span class="neon-price" id="cartTotal">$0.00</span>
+        <span class="cart-subtitle" id="cartCount">0 productos</span>
+    </div>
+    <button class="btn-ver-pedido">Ver Pedido</button>
+</div>
+
 <div id="cartModal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
             <h3>TU PEDIDO</h3>
             <button class="close-btn" onclick="closeModal('cartModal')"><i class="fa-solid fa-circle-xmark"></i></button>
         </div>
-        <div id="cartItemsList" class="cart-items-container"></div>
+        <div class="cart-items-container" id="cartItemsList">
+            </div>
         <div class="cart-footer">
             <div class="subtotal-row">
-                <span>Subtotal:</span>
-                <span id="modalTotal" class="red-total">$0.00</span>
+                <span>Total a Pagar:</span>
+                <span class="red-total" id="modalTotal">$0.00</span>
             </div>
-            <button class="btn-confirm" onclick="showDeliveryOptions()">CONFIRMAR PEDIDO</button>
+            <button class="btn-confirm" onclick="showDeliveryOptions()">CONTINUAR</button>
             <button class="btn-empty" onclick="clearCart()">Vaciar Carrito</button>
         </div>
     </div>
 </div>
 
-<!-- MODAL DE ENTREGA -->
 <div id="deliveryModal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -99,12 +90,10 @@
         </div>
         
         <div id="deliveryFields" class="form-fields">
-            <!-- Opción Recoger en tienda -->
             <div id="storeInfo">
-                <p>Predeterminado: <b id="currentSedeNameModal">Naguanagua</b></p>
+                <p>Predeterminado: <b id="currentSedeNameModal">Sede</b></p>
                 <input type="text" id="clientName" placeholder="Nombre del cliente">
             </div>
-            <!-- Opción Delivery -->
             <div id="deliveryInfo" style="display:none;">
                 <div class="gps-input-group">
                     <button class="btn-gps" onclick="getLocation()"><i class="fa-solid fa-location-crosshairs"></i> Aquí</button>
@@ -114,11 +103,10 @@
             </div>
         </div>
         
-        <button id="btnWhatsApp" class="btn-final-wa" onclick="finalizarPedido()">PEDIR POR WHATSAPP</button>
+        <button id="btnWhatsApp" class="btn-final-wa" disabled onclick="finalizarPedido()">PEDIR POR WHATSAPP</button>
     </div>
 </div>
 
-<!-- MODAL DE SELECCIÓN DE SEDES -->
 <div id="sedeModal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -126,8 +114,7 @@
             <button class="close-btn" onclick="closeModal('sedeModal')"><i class="fa-solid fa-circle-xmark"></i></button>
         </div>
         <div id="sedeList" class="sede-list">
-            <!-- Las sedes se cargarán dinámicamente desde script.js -->
-        </div>
+            </div>
     </div>
 </div>
 

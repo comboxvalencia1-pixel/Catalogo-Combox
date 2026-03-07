@@ -1,4 +1,5 @@
-const API_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; // REEMPLAZA ESTO
+const API_URL = "https://script.google.com/macros/s/AKfycbyJOqe3K6Q6Eps-eLDNSwasHfcPRadqUH7rRU5HhpcBiiszYVh9uzpaBXCsZ5OjkfhY/exec";
+
 
 let db = { productos: [], combos: [], sedes: [], params: {}, tipos: [], categorias: [], catCombos: [], etiquetas: [] };
 let cart = JSON.parse(localStorage.getItem('combox_cart')) || [];

@@ -1,6 +1,5 @@
-const CACHE_NAME = 'combox-v13';
-const IMG_CACHE = 'combox-images-v13';
-const API_CACHE = 'combox-api-cache';
+const CACHE_NAME = 'combox-v14';
+const IMG_CACHE = 'combox-images-v1';
 
 self.addEventListener('install', event => {
     event.waitUntil(
@@ -14,24 +13,7 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
     const url = event.request.url;
 
-    // 1. ESTRATEGIA PARA LA API (Stale-While-Revalidate)
-    if (url.includes('script.google.com')) {
-        event.respondWith(
-            caches.open(API_CACHE).then(cache => {
-                return cache.match(event.request).then(cachedResponse => {
-                    const fetchPromise = fetch(event.request).then(networkResponse => {
-                        cache.put(event.request, networkResponse.clone());
-                        return networkResponse;
-                    }).catch(() => {}); // Falla silenciosa si no hay internet
-                    
-                    return cachedResponse || fetchPromise;
-                });
-            })
-        );
-        return;
-    }
-
-    // 2. ESTRATEGIA PARA IMÁGENES
+    // Estrategia exclusiva para imágenes: Stale-While-Revalidate
     if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
         event.respondWith(
             caches.open(IMG_CACHE).then(cache => {
@@ -40,6 +22,7 @@ self.addEventListener('fetch', event => {
                         cache.put(event.request, networkResponse.clone());
                         return networkResponse;
                     }).catch(() => cachedResponse);
+                    
                     return cachedResponse || fetchPromise;
                 });
             })
@@ -47,10 +30,10 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // 3. ESTRATEGIA PARA HTML/CSS/JS (Network First, fallback a Caché)
+    // Estrategia para API y HTML: Red primero, respaldo de caché
     event.respondWith(
         fetch(event.request).then(response => {
-            if (response && response.status === 200) {
+            if (response.status === 200) {
                 const responseClone = response.clone();
                 caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
             }
@@ -62,8 +45,7 @@ self.addEventListener('fetch', event => {
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys => Promise.all(
-            keys.filter(key => key !== CACHE_NAME && key !== IMG_CACHE && key !== API_CACHE)
-                .map(key => caches.delete(key))
+            keys.filter(key => key !== CACHE_NAME && key !== IMG_CACHE).map(key => caches.delete(key))
         ))
     );
     self.clients.claim();

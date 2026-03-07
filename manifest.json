@@ -4,13 +4,12 @@
   "description": "Catálogo premium de productos y combos para preparar en Naguanagua.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#e60303",
-  "theme_color": "#e60303",
+  "background_color": "#E53935",
+  "theme_color": "#E53935",
   "orientation": "portrait",
   "categories": ["food", "shopping"],
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "screenshots": [

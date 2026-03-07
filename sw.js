@@ -1,25 +1,22 @@
-const VERSION = '8.0.1'; // Cambiar esto basado en db.params.version_web
-const CACHE_NAME = `combox-v${VERSION}`;
+const CACHE_NAME = 'combox-v8.2';
+const IMG_CACHE = 'combox-images-v1';
 
-self.addEventListener('install', e => {
-    e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./', './index.html', './style.css', './script.js'])));
-});
-
-self.addEventListener('fetch', e => {
-    // Estrategia: Stale-While-Revalidate para imágenes
-    if (e.request.url.includes('googleusercontent.com')) {
-        e.respondWith(
-            caches.open('combox-img').then(cache => {
-                return cache.match(e.request).then(res => {
-                    const fetchPromise = fetch(e.request).then(networkRes => {
-                        cache.put(e.request, networkRes.clone());
-                        return networkRes;
+self.addEventListener('fetch', event => {
+    if (event.request.url.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+        event.respondWith(
+            caches.open(IMG_CACHE).then(cache => {
+                return cache.match(event.request).then(response => {
+                    const fetchPromise = fetch(event.request).then(networkResponse => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
                     });
-                    return res || fetchPromise;
+                    return response || fetchPromise;
                 });
             })
         );
     } else {
-        e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match(event.request))
+        );
     }
 });

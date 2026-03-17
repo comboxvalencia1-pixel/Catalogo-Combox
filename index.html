@@ -333,10 +333,10 @@
 <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES DE HOY 🔥</h2>
 </div>
 </div>
-<div class="flex gap-4 overflow-x-auto hide-scrollbar snap-x px-1" id="promo-carousel">
-<!-- Skeleton promos -->
-<div class="min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-11px)] lg:min-w-[calc(25%-12px)] h-64 rounded-[2rem] skeleton"></div>
-<div class="min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-11px)] lg:min-w-[calc(25%-12px)] h-64 rounded-[2rem] skeleton"></div>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-x-auto hide-scrollbar flex-nowrap snap-x px-1" id="promo-carousel">
+<!-- Skeleton promos matching main grid exactly -->
+<div class="aspect-[4/5] rounded-[2rem] skeleton min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-11px)] lg:min-w-[calc(25%-12px)]"></div>
+<div class="aspect-[4/5] rounded-[2rem] skeleton min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-11px)] lg:min-w-[calc(25%-12px)]"></div>
 </div>
 </section>
 <main class="mt-8 px-4 space-y-12 max-content-width" id="catalog-grid">
@@ -563,6 +563,7 @@
         });
         if(promos.length > 0) {
             section.classList.remove('hidden');
+            // Using same createCard function to ensure exact matching styles
             grid.innerHTML = promos.map(p => createCard(p, true)).join('');
         } else {
             section.classList.add('hidden');
@@ -600,8 +601,11 @@
         const isOut = p.status === 'OUT_OF_STOCK';
         let precio = p.precios.normal;
         if(p.promocion.activa) precio = p.precios.promo;
+        
+        // Match carousel width to grid width: 2 cols mobile, 3 tablet, 4 desktop
         const cardClass = isPromoCard ? 'min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-11px)] lg:min-w-[calc(25%-12px)] snap-start' : '';
         const imgUrl = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
+        
         return `
             <div class="product-card-glass ${isOut ? 'out-of-stock' : ''} ${cardClass}" id="card-${p.id}">
                 <div class="bg-blur-image" style="background-image: url('${imgUrl}')"></div>
@@ -627,8 +631,9 @@
         cart[id] = (cart[id] || 0) + 1;
         if(window.navigator.vibrate) window.navigator.vibrate(20);
         updateOrder();
-        const card = document.querySelector(`#card-${id}`);
-        if(card) {
+        
+        // Update all instances of this card (e.g. if in promo and catalog)
+        document.querySelectorAll(`#card-${id}`).forEach(card => {
             const badge = card.querySelector('.count-badge');
             if(badge) {
                 badge.innerText = cart[id];
@@ -638,7 +643,7 @@
             }
             const pill = card.querySelector('.price-pill');
             if(pill) pill.classList.add('active');
-        }
+        });
     }
 
     function updateOrder() {

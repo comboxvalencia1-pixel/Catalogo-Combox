@@ -52,6 +52,10 @@
             font-style: normal; 
         }
 
+        body.modal-open {
+            overflow: hidden !important;
+        }
+
         #splash { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: all 0.6s ease; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; font-style: normal; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
@@ -196,28 +200,28 @@
             transition: all 0.2s ease;
         }
         .price-pill.active { background: #ff0000; box-shadow: 0 0 20px rgba(255, 0, 0, 0.4); border-color: rgba(255, 255, 255, 0.3); }
-        .count-badge { position: absolute; top: -8px; right: -8px; background: white; color: black; font-size: 9px; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4); z-index: 40; }
+        .count-badge { position: absolute; top: -8px; right: -8px; background: white; color: black; font-size: 9px; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4); z-index: 40; pointer-events: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .order-island-hidden { transform: translate(-50%, 160px) !important; }
         .out-of-stock { grayscale: 1; opacity: 0.6; }
         
-        #sedes-modal, #categories-modal {
+        #sedes-modal, #categories-modal, #cart-modal {
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1), -webkit-backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none; 
             opacity: 0; 
             backdrop-filter: blur(0px);
             -webkit-backdrop-filter: blur(0px);
         }
-        #sedes-modal.active, #categories-modal.active {
+        #sedes-modal.active, #categories-modal.active, #cart-modal.active {
             pointer-events: auto; 
             opacity: 1; 
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
         
-        #sedes-content, #categories-content { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        #sedes-modal.active #sedes-content, #categories-modal.active #categories-content { transform: translateY(0); }
+        #sedes-content, #categories-content, #cart-content { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        #sedes-modal.active #sedes-content, #categories-modal.active #categories-content, #cart-modal.active #cart-content { transform: translateY(0); }
         
         .modal-overlay { background: rgba(0, 0, 0, 0.6); }
         
@@ -360,7 +364,42 @@
 <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
 <span class="font-black text-2xl text-white tracking-tighter" id="order-total">$0.00</span>
 </div>
-<button class="bg-primary text-white font-black px-8 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 transition-transform tracking-widest" onclick="sendWhatsApp()">Ver Pedido</button>
+<button class="bg-primary text-white font-black px-8 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 transition-transform tracking-widest" onclick="toggleCartModal(true)">Ver Pedido</button>
+</div>
+</div>
+<!-- Modal Pedido (TÚ PEDIDO) -->
+<div class="fixed inset-0 z-[300] flex items-end" id="cart-modal">
+<div class="modal-overlay absolute inset-0" onclick="toggleCartModal(false)"></div>
+<div class="relative w-full liquid-glass rounded-t-[40px] px-6 pt-4 pb-8 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20 md:max-w-xl md:mx-auto md:rounded-b-[40px] md:mb-10 md:top-1/2 md:bottom-auto md:-translate-y-1/2 flex flex-col max-h-[90vh]" id="cart-content">
+<div class="flex justify-center mb-4">
+<div class="w-12 h-1.5 bg-white/20 rounded-full"></div>
+</div>
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-6 bg-primary rounded-full"></div>
+<h2 class="text-2xl font-black text-white uppercase tracking-tighter">Tú Pedido</h2>
+</div>
+<button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/60 active:scale-90 transition-transform" onclick="toggleCartModal(false)">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Products List -->
+<div class="flex-1 overflow-y-auto hide-scrollbar space-y-4 mb-6" id="cart-items-list">
+<!-- Items injected by JS -->
+</div>
+<!-- Summary & Actions -->
+<div class="pt-6 border-t border-white/10 space-y-4">
+<div class="flex justify-between items-end mb-2">
+<span class="text-[11px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
+<span class="text-3xl font-black text-white tracking-tighter" id="cart-subtotal">$0.00</span>
+</div>
+<button class="w-full bg-neon-accent text-black font-[900] py-5 rounded-3xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] transition-all tracking-[0.15em]" onclick="sendWhatsApp()">
+                Confirmar Pedido
+            </button>
+<button class="w-full py-3 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">
+                Vaciar Carrito
+            </button>
+</div>
 </div>
 </div>
 <!-- Modal Sedes -->
@@ -442,6 +481,7 @@
     const searchContainer = document.getElementById('search-container');
     
     window.addEventListener('scroll', () => {
+        if (document.body.classList.contains('modal-open')) return;
         const currentScrollY = window.scrollY;
         if (currentScrollY > 100) {
             if (currentScrollY > lastScrollY) {
@@ -469,6 +509,14 @@
             render();
         } catch (e) {
             console.error("Error loading data", e);
+        }
+    }
+
+    function lockScroll(lock) {
+        if (lock) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
         }
     }
 
@@ -506,6 +554,7 @@
         const modal = document.getElementById('sedes-modal');
         if(show) modal.classList.add('active');
         else modal.classList.remove('active');
+        lockScroll(show);
     }
 
     function toggleCategoriesModal(show) {
@@ -516,6 +565,18 @@
         } else {
             modal.classList.remove('active');
         }
+        lockScroll(show);
+    }
+
+    function toggleCartModal(show) {
+        const modal = document.getElementById('cart-modal');
+        if(show) {
+            renderCart();
+            modal.classList.add('active');
+        } else {
+            modal.classList.remove('active');
+        }
+        lockScroll(show);
     }
 
     function selectLocation(name) {
@@ -563,7 +624,6 @@
         });
         if(promos.length > 0) {
             section.classList.remove('hidden');
-            // Using same createCard function to ensure exact matching styles
             grid.innerHTML = promos.map(p => createCard(p, true)).join('');
         } else {
             section.classList.add('hidden');
@@ -602,12 +662,11 @@
         let precio = p.precios.normal;
         if(p.promocion.activa) precio = p.precios.promo;
         
-        // Match carousel width to grid width: 2 cols mobile, 3 tablet, 4 desktop
         const cardClass = isPromoCard ? 'min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-11px)] lg:min-w-[calc(25%-12px)] snap-start' : '';
         const imgUrl = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
         
         return `
-            <div class="product-card-glass ${isOut ? 'out-of-stock' : ''} ${cardClass}" id="card-${p.id}">
+            <div class="product-card-glass ${isOut ? 'out-of-stock' : ''} ${cardClass}" id="card-${p.id}" data-id="${p.id}">
                 <div class="bg-blur-image" style="background-image: url('${imgUrl}')"></div>
                 <div class="glass-overlay">
                     ${p.promocion.activa ? '<div class="absolute top-3 right-3 bg-black/80 px-2 py-1 rounded-full text-[8px] font-black text-white backdrop-blur-md border border-white/20 z-30">PROMO 🔥</div>' : ''}
@@ -616,7 +675,7 @@
                         <img class="placeholder-blur" src="${imgUrl}" aria-hidden="true" />
                     </div>
                     <h3 class="font-bold mb-1 tracking-tight text-white uppercase text-center w-full text-[10px] md:text-xs h-6 md:h-8 line-clamp-2 leading-tight">${p.nombre}</h3>
-                    <div class="flex justify-center w-full mt-3 relative">
+                    <div class="flex justify-center w-full mt-3 relative btn-action-area">
                         ${count > 0 ? `<div class="count-badge">${count}</div>` : ''}
                         <button onclick="add('${p.id}')" ${isOut ? 'disabled' : ''} class="price-pill w-full py-2.5 md:py-3 rounded-full text-[11px] md:text-xs font-bold ${count > 0 ? 'active' : ''}">
                             ${isOut ? 'SIN STOCK' : '$' + precio.toFixed(2)}
@@ -627,39 +686,118 @@
         `;
     }
 
+    function renderCart() {
+        const list = document.getElementById('cart-items-list');
+        const items = Object.keys(cart).map(id => {
+            const p = db.catalogo.find(x => x.id === id);
+            return { ...p, qty: cart[id] };
+        }).filter(p => p.qty > 0);
+
+        if(items.length === 0) {
+            list.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-zinc-600">
+                    <span class="material-symbols-outlined text-6xl mb-4">shopping_basket</span>
+                    <p class="font-black uppercase tracking-widest text-[10px]">Carrito vacío</p>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = items.map(p => {
+            let price = p.promocion.activa ? p.precios.promo : p.precios.normal;
+            return `
+                <div class="flex items-center justify-between bg-white/5 p-4 rounded-3xl border border-white/10 gap-3">
+                    <div class="flex items-center gap-4 flex-1">
+                        <div class="w-16 h-16 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
+                            <img src="${p.imagen}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-base font-[800] text-white uppercase leading-tight line-clamp-2">${p.nombre}</span>
+                            <span class="text-sm text-primary font-black tracking-wider mt-0.5">$${price.toFixed(2)} c/u</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center bg-black/40 rounded-full p-1 border border-white/10 flex-shrink-0">
+                        <button onclick="changeQty('${p.id}', -1)" class="w-8 h-8 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform">
+                            <span class="material-symbols-outlined text-sm">remove</span>
+                        </button>
+                        <span class="px-2 text-xs font-black text-white w-6 text-center">${p.qty}</span>
+                        <button onclick="changeQty('${p.id}', 1)" class="w-8 h-8 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function changeQty(id, delta) {
+        cart[id] = Math.max(0, (cart[id] || 0) + delta);
+        if(cart[id] === 0) delete cart[id];
+        if(window.navigator.vibrate) window.navigator.vibrate(10);
+        updateOrder();
+        renderCart();
+        syncCardBadge(id); // Target specific element update
+    }
+
+    function syncCardBadge(id) {
+        const count = cart[id] || 0;
+        document.querySelectorAll(`[data-id="${id}"]`).forEach(card => {
+            const badge = card.querySelector('.count-badge');
+            const pill = card.querySelector('.price-pill');
+            
+            if (count > 0) {
+                if (badge) {
+                    badge.innerText = count;
+                } else {
+                    const actionArea = card.querySelector('.btn-action-area');
+                    actionArea.insertAdjacentHTML('afterbegin', `<div class="count-badge">${count}</div>`);
+                }
+                if (pill) pill.classList.add('active');
+            } else {
+                if (badge) badge.remove();
+                if (pill) pill.classList.remove('active');
+            }
+        });
+    }
+
+    function clearCart() {
+        if(confirm('¿Estás seguro de vaciar tu pedido?')) {
+            const oldIds = Object.keys(cart);
+            cart = {};
+            updateOrder();
+            toggleCartModal(false);
+            oldIds.forEach(id => syncCardBadge(id));
+        }
+    }
+
     function add(id) {
         cart[id] = (cart[id] || 0) + 1;
         if(window.navigator.vibrate) window.navigator.vibrate(20);
         updateOrder();
-        
-        // Update all instances of this card (e.g. if in promo and catalog)
-        document.querySelectorAll(`#card-${id}`).forEach(card => {
-            const badge = card.querySelector('.count-badge');
-            if(badge) {
-                badge.innerText = cart[id];
-            } else {
-                const badgeContainer = card.querySelector('.relative.mt-3');
-                badgeContainer.insertAdjacentHTML('afterbegin', `<div class="count-badge">${cart[id]}</div>`);
-            }
-            const pill = card.querySelector('.price-pill');
-            if(pill) pill.classList.add('active');
-        });
+        syncCardBadge(id); // Optimized DOM update
     }
 
     function updateOrder() {
         let total = 0;
-        let items = 0;
+        let itemsCount = 0;
         Object.keys(cart).forEach(id => {
             const p = db.catalogo.find(x => x.id === id);
             if(!p) return;
             let price = p.promocion.activa ? p.precios.promo : p.precios.normal;
             total += price * cart[id];
-            items += cart[id];
+            itemsCount += cart[id];
         });
         document.getElementById('order-total').innerText = `$${total.toFixed(2)}`;
+        document.getElementById('cart-subtotal').innerText = `$${total.toFixed(2)}`;
         const island = document.getElementById('order-island');
-        if(items > 0) island.classList.remove('order-island-hidden');
-        else island.classList.add('order-island-hidden');
+        if(itemsCount > 0) {
+            island.classList.remove('order-island-hidden');
+        } else {
+            island.classList.add('order-island-hidden');
+            if (document.getElementById('cart-modal').classList.contains('active')) {
+                toggleCartModal(false);
+            }
+        }
     }
 
     function setType(id, btn) {
@@ -686,7 +824,7 @@
             const p = db.catalogo.find(x => x.id === id);
             if(!p) return;
             let price = p.promocion.activa ? p.precios.promo : p.precios.normal;
-            msg += `• ${cart[id]}x ${p.nombre} ($${(price * cart[id]).toFixed(2)})\n`;
+            msg += `• ${cart[id]}x ${p.nombre.toUpperCase()} ($${(price * cart[id]).toFixed(2)})\n`;
             total += price * cart[id];
         });
         msg += `--------------------------\n*TOTAL:* $${total.toFixed(2)}`;

@@ -204,7 +204,7 @@
         .order-island-hidden { transform: translate(-50%, 160px) !important; }
         .out-of-stock { grayscale: 1; opacity: 0.6; }
         
-        #sedes-modal, #categories-modal, #cart-modal, #product-modal, #horario-modal {
+        #sedes-modal, #categories-modal, #cart-modal, #product-modal, #horario-modal, #checkout-modal {
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none; 
             opacity: 0; 
@@ -217,11 +217,20 @@
             will-change: opacity, backdrop-filter;
         }
 
-        #sedes-modal.active, #categories-modal.active, #cart-modal.active, #horario-modal.active {
+        #sedes-modal.active, #categories-modal.active, #horario-modal.active, #checkout-modal.active {
             pointer-events: auto; 
             opacity: 1; 
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+            z-index: 350;
+        }
+        
+        #cart-modal.active {
+            pointer-events: auto; 
+            opacity: 1; 
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 300;
         }
 
         #product-modal.active {
@@ -232,7 +241,7 @@
             z-index: 400;
         }
         
-        #sedes-content, #categories-content, #cart-content, #product-content, #horario-content { 
+        #sedes-content, #categories-content, #cart-content, #product-content, #horario-content, #checkout-content { 
             transform: translateY(100%); 
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
         }
@@ -241,7 +250,8 @@
         #categories-modal.active #categories-content, 
         #cart-modal.active #cart-content, 
         #product-modal.active #product-content,
-        #horario-modal.active #horario-content { 
+        #horario-modal.active #horario-content,
+        #checkout-modal.active #checkout-content { 
             transform: translateY(0); 
         }
         
@@ -405,15 +415,66 @@
                 <span class="text-3xl font-black text-white tracking-tighter" id="cart-subtotal">$0.00</span>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <button class="bg-neon-accent text-black font-[900] py-5 rounded-3xl text-[10px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] transition-all tracking-wider" onclick="sendWhatsApp('delivery')">
-                    Delivery
+                <button class="bg-neon-accent text-black font-[900] py-4 rounded-3xl text-[10px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] transition-all tracking-wider flex items-center justify-center gap-2" onclick="openCheckoutModal('delivery')">
+                    <span class="material-symbols-outlined text-lg">two_wheeler</span> Delivery
                 </button>
-                <button class="bg-white/10 text-white font-[900] py-5 rounded-3xl text-[10px] uppercase border border-white/10 active:scale-[0.98] transition-all tracking-wider" onclick="sendWhatsApp('pickup')">
-                    Pick-Up
+                <button class="bg-white/10 text-white font-[900] py-4 rounded-3xl text-[10px] uppercase border border-white/10 active:scale-[0.98] transition-all tracking-wider flex items-center justify-center gap-2" onclick="openCheckoutModal('pickup')">
+                    <span class="material-symbols-outlined text-lg">storefront</span> Pick-Up
                 </button>
             </div>
             <button class="w-full py-3 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">
                 Vaciar Carrito
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="fixed inset-0 z-[350] flex items-end" id="checkout-modal">
+    <div class="modal-overlay absolute inset-0" onclick="toggleCheckoutModal(false)"></div>
+    <div class="relative w-full liquid-glass rounded-t-[40px] px-6 pt-4 pb-8 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20 md:max-w-xl md:mx-auto md:rounded-b-[40px] md:mb-10 md:top-1/2 md:bottom-auto md:-translate-y-1/2 flex flex-col max-h-[90vh]" id="checkout-content">
+        <div class="flex justify-center mb-4">
+            <div class="w-12 h-1.5 bg-white/20 rounded-full"></div>
+        </div>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div>
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter" id="checkout-title">Datos de Envío</h2>
+            </div>
+            <button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/60 active:scale-90 transition-transform" onclick="toggleCheckoutModal(false)">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+        </div>
+        
+        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-4">
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
+                <div class="relative">
+                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary appearance-none pr-10 text-sm font-semibold" onchange="updateCheckoutSede(this.value)">
+                        </select>
+                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
+                <input type="text" id="checkout-name" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary placeholder:text-white/30 text-sm" placeholder="Ej. Juan Pérez">
+            </div>
+
+            <div id="checkout-location-container">
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación Actual</label>
+                <div class="flex gap-2">
+                    <input type="text" id="checkout-location" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary placeholder:text-white/30 text-sm flex-1" placeholder="Buscando tu ubicación...">
+                    <button class="w-14 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" onclick="clearLocationInput()">
+                        <span class="material-symbols-outlined text-xl">delete_sweep</span>
+                    </button>
+                </div>
+                <p class="text-[9px] text-zinc-500 mt-2 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">info</span> Puedes borrar el enlace si prefieres escribir tu dirección manualmente.</p>
+            </div>
+        </div>
+
+        <div class="pt-6 border-t border-white/10 mt-auto">
+            <button id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-5 rounded-3xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] transition-all tracking-wider flex items-center justify-center gap-2" onclick="submitOrder()">
+                Solicitar <span class="material-symbols-outlined">send</span>
             </button>
         </div>
     </div>
@@ -478,6 +539,10 @@
     let currentCat = 'TODOS';
     let currentSede = null;
     
+    // Variables de estado para el Checkout
+    let checkoutType = 'delivery';
+    let checkoutSede = null;
+    
     let lastScrollY = window.scrollY;
     const searchContainer = document.getElementById('search-container');
     
@@ -519,7 +584,6 @@
         }
     }
 
-    // Funciones dinámicas para los botones de Navegación del JSON
     function openMap() {
         if (currentSede && currentSede.LINK_UBICACION) {
             window.open(currentSede.LINK_UBICACION, '_blank');
@@ -542,6 +606,17 @@
     function lockScroll(lock) {
         if (lock) document.body.classList.add('modal-open');
         else document.body.classList.remove('modal-open');
+    }
+
+    function checkActiveModals() {
+        if (!document.getElementById('cart-modal').classList.contains('active') && 
+            !document.getElementById('sedes-modal').classList.contains('active') && 
+            !document.getElementById('categories-modal').classList.contains('active') &&
+            !document.getElementById('horario-modal').classList.contains('active') &&
+            !document.getElementById('checkout-modal').classList.contains('active') &&
+            !document.getElementById('product-modal').classList.contains('active')) {
+            lockScroll(false);
+        }
     }
 
     function toggleSearch() {
@@ -579,13 +654,14 @@
         if(show) {
             renderSedesModal();
             modal.classList.add('active');
+            lockScroll(true);
         } else {
             modal.classList.remove('active');
+            checkActiveModals();
         }
-        lockScroll(show);
     }
 
-    /* --- NUEVAS FUNCIONES PARA EL MODAL DE HORARIOS --- */
+    /* --- FUNCIONES DE HORARIOS --- */
     function formatTimeFromIso(isoString) {
         if (!isoString) return null;
         const date = new Date(isoString);
@@ -603,7 +679,7 @@
         const dayNamesEs = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
         const now = new Date();
-        const currentDayIndex = (now.getDay() + 6) % 7; // Convertir: Domingo(0) -> 6, Lunes(1) -> 0
+        const currentDayIndex = (now.getDay() + 6) % 7; 
 
         container.innerHTML = days.map((day, index) => {
             const openIso = currentSede[`${day}_APERTURA`];
@@ -630,10 +706,143 @@
         if(show) {
             renderHorarioModal();
             modal.classList.add('active');
+            lockScroll(true);
         } else {
             modal.classList.remove('active');
+            checkActiveModals();
         }
-        lockScroll(show);
+    }
+
+    /* --- NUEVAS FUNCIONES DE CHECKOUT (Delivery / PickUp) --- */
+    function openCheckoutModal(type) {
+        checkoutType = type;
+        const title = document.getElementById('checkout-title');
+        const sedeLabel = document.getElementById('checkout-sede-label');
+        const locContainer = document.getElementById('checkout-location-container');
+        const submitBtn = document.getElementById('checkout-submit-btn');
+        const accent = document.getElementById('checkout-accent');
+
+        if (type === 'delivery') {
+            title.innerText = 'Datos de Delivery';
+            sedeLabel.innerText = 'Sede que enviará tu pedido';
+            locContainer.style.display = 'block';
+            submitBtn.innerHTML = 'Solicitar Delivery <span class="material-symbols-outlined">two_wheeler</span>';
+            submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-5 rounded-3xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] transition-all tracking-wider flex items-center justify-center gap-2";
+            accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
+            getLocation(); // Obtener GPS automáticamente al abrir
+        } else {
+            title.innerText = 'Datos de Pick-Up';
+            sedeLabel.innerText = 'Sede donde retirarás';
+            locContainer.style.display = 'none';
+            submitBtn.innerHTML = 'Solicitar Pick-Up <span class="material-symbols-outlined">storefront</span>';
+            submitBtn.className = "w-full bg-white text-black font-[900] py-5 rounded-3xl text-sm uppercase shadow-lg shadow-white/20 active:scale-[0.98] transition-all tracking-wider flex items-center justify-center gap-2";
+            accent.className = "w-1.5 h-6 bg-white rounded-full";
+        }
+
+        // Llenar select de sedes
+        const select = document.getElementById('checkout-sede-select');
+        if (db && db.sedes) {
+            select.innerHTML = db.sedes.map(s => 
+                `<option value="${s.ID_SEDE}" class="text-black" ${currentSede && currentSede.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`
+            ).join('');
+            checkoutSede = currentSede;
+        }
+
+        toggleCheckoutModal(true);
+    }
+
+    function toggleCheckoutModal(show) {
+        const modal = document.getElementById('checkout-modal');
+        if(show) {
+            modal.classList.add('active');
+            lockScroll(true);
+        } else {
+            modal.classList.remove('active');
+            checkActiveModals();
+        }
+    }
+
+    function updateCheckoutSede(id) {
+        if(db && db.sedes) {
+            checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede;
+        }
+    }
+
+    function clearLocationInput() {
+        const locInput = document.getElementById('checkout-location');
+        locInput.value = '';
+        locInput.focus();
+    }
+
+    function getLocation() {
+        const locInput = document.getElementById('checkout-location');
+        if (locInput.value !== '' && !locInput.value.includes('Buscando')) return;
+
+        if (navigator.geolocation) {
+            locInput.value = "Obteniendo coordenadas...";
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    locInput.value = `https://www.google.com/maps?q=${lat},${lon}`;
+                },
+                (error) => {
+                    console.warn("Error al obtener ubicación:", error);
+                    locInput.value = "";
+                    locInput.placeholder = "No se pudo obtener. Escribe tu dirección manual.";
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        } else {
+            locInput.value = "";
+            locInput.placeholder = "GPS no soportado. Escribe tu dirección manual.";
+        }
+    }
+
+    function submitOrder() {
+        const nameInput = document.getElementById('checkout-name').value.trim();
+        const locInput = document.getElementById('checkout-location').value.trim();
+        
+        if (!nameInput) {
+            alert('Por favor, ingresa tu nombre.');
+            document.getElementById('checkout-name').focus();
+            return;
+        }
+        
+        if (checkoutType === 'delivery' && (!locInput || locInput.includes('Obteniendo'))) {
+            alert('Por favor, indica tu ubicación o espera a que se genere el enlace.');
+            document.getElementById('checkout-location').focus();
+            return;
+        }
+
+        let telefono = checkoutSede && checkoutSede.TELEFONO ? checkoutSede.TELEFONO : '584244701273';
+        let nombreSede = checkoutSede ? checkoutSede.NOMBRE_SEDE : '';
+        
+        let msg = `*NUEVO PEDIDO COMBOX - Sede: ${nombreSede}*\n`;
+        
+        if (checkoutType === 'delivery') {
+            msg += `--------------------------\n🚀 *ENTREGA POR DELIVERY*\n`;
+            msg += `👤 *Cliente:* ${nameInput}\n`;
+            msg += `📍 *Ubicación:* ${locInput}\n`;
+            msg += `--------------------------\n\n`;
+        } else {
+            msg += `--------------------------\n🛍️ *RECOGER EN TIENDA (Pick-Up)*\n`;
+            msg += `👤 *Cliente:* ${nameInput}\n`;
+            msg += `--------------------------\n\n`;
+        }
+
+        let total = 0;
+        const allItems = getAllSourceData();
+        Object.keys(cart).forEach(id => {
+            const p = allItems.find(x => getUnifiedId(x) === id);
+            if(!p) return;
+            const price = getProductPrice(p);
+            msg += `- *${p.nombre.toUpperCase()}*\n \`Cant:\` *\`${cart[id]}\`* | *\`$${(price * cart[id]).toFixed(2)}\`*\n\n`;
+            total += price * cart[id];
+        });
+        
+        msg += `--------------------------\n*TOTAL A PAGAR:* $${total.toFixed(2)}`;
+        window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`, '_blank');
     }
     /* -------------------------------------------------- */
 
@@ -642,10 +851,11 @@
         if(show) {
             renderAllCategories();
             modal.classList.add('active');
+            lockScroll(true);
         } else {
             modal.classList.remove('active');
+            checkActiveModals();
         }
-        lockScroll(show);
     }
 
     function toggleCartModal(show) {
@@ -653,10 +863,11 @@
         if(show) {
             renderCart();
             modal.classList.add('active');
+            lockScroll(true);
         } else {
             modal.classList.remove('active');
+            checkActiveModals();
         }
-        lockScroll(show);
     }
 
     // Calcula si una sede está abierta ahora mismo según el día y JSON
@@ -1071,31 +1282,6 @@
         render(); 
     }
 
-    function sendWhatsApp(method) {
-        let telefono = currentSede && currentSede.TELEFONO ? currentSede.TELEFONO : '584244701273';
-        let nombreSede = currentSede ? currentSede.NOMBRE_SEDE : '';
-        let msg = `*NUEVO PEDIDO COMBOX - Sede: ${nombreSede}*\n`;
-        
-        if (method === 'delivery') {
-            msg += `--------------------------\n🚀 *ENTREGA POR DELIVERY*\n📍 _Adjuntaré mi ubicación de Maps a continuación..._\n--------------------------\n\n`;
-        } else {
-            msg += `--------------------------\n🛍️ *RECOGER EN TIENDA*\n_Confirmame la disponibilidad... Quiero recogerlo en la sede de ${nombreSede}_\n--------------------------\n\n`;
-        }
-
-        let total = 0;
-        const allItems = getAllSourceData();
-        Object.keys(cart).forEach(id => {
-            const p = allItems.find(x => getUnifiedId(x) === id);
-            if(!p) return;
-            const price = getProductPrice(p);
-            msg += `- *${p.nombre.toUpperCase()}*\n \`Cant:\` *\`${cart[id]}\`* | *\`$${(price * cart[id]).toFixed(2)}\`*\n\n`;
-            total += price * cart[id];
-        });
-        
-        msg += `--------------------------\n*TOTAL A PAGAR:* $${total.toFixed(2)}`;
-        window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`);
-    }
-
     function toggleProductModal(show) {
         const modal = document.getElementById('product-modal');
         if(show) {
@@ -1103,12 +1289,7 @@
             lockScroll(true);
         } else {
             modal.classList.remove('active');
-            if (!document.getElementById('cart-modal').classList.contains('active') && 
-                !document.getElementById('sedes-modal').classList.contains('active') && 
-                !document.getElementById('categories-modal').classList.contains('active') &&
-                !document.getElementById('horario-modal').classList.contains('active')) {
-                lockScroll(false);
-            }
+            checkActiveModals();
         }
     }
 

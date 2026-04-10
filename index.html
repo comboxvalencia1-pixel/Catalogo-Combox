@@ -4,6 +4,11 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Combox - Menú</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#E30613" />
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
@@ -207,7 +212,7 @@
     <div class="pulse-logo">COMBOX</div>
 </div>
 
-<header class="relative pt-12 pb-16 px-6 overflow-hidden rounded-b-[60px]">
+<header class="relative pb-16 px-6 overflow-hidden rounded-b-[60px]" style="padding-top: calc(3rem + env(safe-area-inset-top));">
     <div class="absolute inset-0 bg-primary opacity-90 rounded-b-[60px]"></div>
     <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.4),transparent_70%)] rounded-b-[60px]"></div>
     <div class="relative z-10 flex flex-col items-center text-center">
@@ -606,7 +611,6 @@
         const cardClass = isPromoCard ? 'min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-11px)] lg:min-w-[calc(25%-12px)] snap-start' : '';
         const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
         
-        // Bloqueo de arrastre añadido a la imagen principal en la tarjeta
         return `<div class="product-card-glass cursor-pointer ${isOut ? 'out-of-stock' : ''} ${cardClass}" data-id="${id}" onclick="openProductView('${id}')"><div class="bg-blur-image" style="background-image: url('${img}')"></div><div class="glass-overlay">${isPromo ? '<div class="absolute top-3 right-3 bg-black/80 px-2 py-1 rounded-full text-[8px] font-black text-white backdrop-blur-md border border-white/20 z-30">PROMO 🔥</div>' : ''}<div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container"><img class="main-image" src="${img}" onload="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/><img class="placeholder-blur" src="${img}" aria-hidden="true"/></div><h3 class="font-black tracking-tight text-white uppercase text-center w-full text-xs md:text-sm h-8 md:h-10 line-clamp-2 leading-tight flex items-center justify-center mt-1">${p.nombre}</h3><p class="text-[8px] md:text-[9px] text-zinc-400/80 font-bold uppercase tracking-widest mt-1 mb-1 text-center">Toca para ver más</p><div class="flex justify-center w-full mt-2 relative btn-action-area">${count > 0 ? `<div class="count-badge">${count}</div>` : ''}<button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill w-full py-2.5 md:py-3 rounded-full text-[11px] md:text-xs font-bold ${count > 0 ? 'active' : ''}">${isOut ? 'SIN STOCK' : '$' + price.toFixed(2)}</button></div></div></div>`;
     }
     
@@ -615,7 +619,6 @@
         const items = Object.keys(cart).map(id => { const p = getAllSourceData().find(x => getUnifiedId(x) === id); return p ? {...p, qty: cart[id]} : null; }).filter(p => p && p.qty > 0);
         if(!items.length) { list.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-zinc-600"><span class="material-symbols-outlined text-6xl mb-4">shopping_basket</span><p class="font-black uppercase tracking-widest text-[10px]">Carrito vacío</p></div>`; return; }
         
-        // Bloqueo de arrastre añadido a la imagen del carrito
         list.innerHTML = items.map(p => { const id = getUnifiedId(p); const price = getProductPrice(p); return `<div class="flex items-center justify-between bg-white/5 p-4 rounded-3xl border border-white/10 gap-3 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')"><div class="flex items-center gap-4 flex-1"><div class="w-16 h-16 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0"><img src="${p.imagen}" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false"></div><div class="flex flex-col min-w-0"><span class="text-base font-[800] text-white uppercase leading-tight line-clamp-2">${p.nombre}</span><span class="text-sm text-primary font-black tracking-wider mt-0.5">$${price.toFixed(2)} c/u</span></div></div><div class="flex items-center bg-black/40 rounded-full p-1 border border-white/10 flex-shrink-0" onclick="event.stopPropagation();"><button onclick="changeQty('${id}', -1)" class="w-8 h-8 rounded-full flex items-center justify-center text-white active:scale-90"><span class="material-symbols-outlined text-sm">remove</span></button><span class="px-2 text-xs font-black text-white w-6 text-center qty-text" style="-webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); display: inline-block;">${p.qty}</span><button onclick="changeQty('${id}', 1)" class="w-8 h-8 rounded-full flex items-center justify-center text-white active:scale-90"><span class="material-symbols-outlined text-sm">add</span></button></div></div>`; }).join('');
     }
     function changeQty(id, delta) {
@@ -661,7 +664,6 @@
         const isOut = p.status === 'OUT_OF_STOCK';
         const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
         
-        // MODIFICACIÓN: "Precio" colocado arriba del valor, imagen protegida contra arrastre y long-press
         document.getElementById('product-content').innerHTML = `
             <div class="absolute top-4 right-4 z-[60]">
                 <button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg" onclick="toggleProductModal(false)">

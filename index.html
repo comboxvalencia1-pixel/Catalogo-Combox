@@ -2,13 +2,12 @@
 <html class="dark" lang="es">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Combox - Menú</title>
-    
+    <!-- CONFIGURACIÓN PARA PANTALLA COMPLETA Y BARRA DE ESTADO TRANSPARENTE -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+    <meta name="theme-color" content="#E30613" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#E30613" />
-
+    <title>Combox - Menú</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
@@ -212,7 +211,8 @@
     <div class="pulse-logo">COMBOX</div>
 </div>
 
-<header class="relative pb-16 px-6 overflow-hidden rounded-b-[60px]" style="padding-top: calc(3rem + env(safe-area-inset-top));">
+<!-- Header modificado: sin pt-12, con padding-top dinámico para safe area -->
+<header class="relative pb-16 px-6 overflow-hidden rounded-b-[60px]" style="padding-top: env(safe-area-inset-top, 0px);">
     <div class="absolute inset-0 bg-primary opacity-90 rounded-b-[60px]"></div>
     <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.4),transparent_70%)] rounded-b-[60px]"></div>
     <div class="relative z-10 flex flex-col items-center text-center">

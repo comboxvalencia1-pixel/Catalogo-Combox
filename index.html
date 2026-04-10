@@ -34,7 +34,20 @@
     <style>
         /* PROTECCIÓN ANTICOPIA */
         * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-        input, textarea, select { -webkit-touch-callout: default !important; -webkit-user-select: auto !important; user-select: auto !important; }
+        input, textarea { -webkit-touch-callout: default !important; -webkit-user-select: auto !important; user-select: auto !important; }
+        
+        /* FIX DE FLECHAS DUPLICADAS EN INPUTS Y SELECTS */
+        select { 
+            -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; 
+            background-image: none !important; 
+        }
+        select::-ms-expand { display: none !important; }
+        input::-webkit-calendar-picker-indicator,
+        input::-webkit-listbox,
+        input::-webkit-contacts-auto-fill-button {
+            display: none !important; visibility: hidden !important; pointer-events: none !important;
+        }
+        
         img { -webkit-user-drag: none; pointer-events: none; }
         
         /* FIX DE SCROLL NATIVO */
@@ -54,20 +67,20 @@
 
         .image-container { position: relative; width: 100%; overflow: hidden; background: rgba(255,255,255,0.03); }
         .placeholder-blur { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: blur(12px); transform: scale(1.1); opacity: 1; transition: opacity 0.5s; z-index: 1; }
-        .main-image { position: relative; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.4s; z-index: 2; }
+        .main-image { position: relative; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.4s; z-index: 2; }
         .main-image.loaded { opacity: 1; }
         .main-image.loaded + .placeholder-blur { opacity: 0; }
         
         .nav-btn-glass { position: relative; z-index: 1; transition: all 0.3s; }
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); transform: translateZ(0); -webkit-transform: translateZ(0); pointer-events: none; }
 
-        .product-card-glass { position: relative; overflow: hidden; border-radius: 2rem; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s; transform: translateZ(0); }
+        .product-card-glass { position: relative; overflow: hidden; border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s; transform: translateZ(0); display: flex; flex-direction: column; height: 100%; }
         .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(30px) brightness(0.65); transform: scale(1.3); z-index: 0; opacity: 0.7; }
-        .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.1); backdrop-filter: blur(10px); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 0.75rem; }
+        .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.1); backdrop-filter: blur(10px); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 0.5rem; flex: 1; }
         
         .price-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); color: white; transition: all 0.2s; }
         .price-pill.active { background: #ff0000; box-shadow: 0 0 20px rgba(255,0,0,0.4); }
-        .count-badge { position: absolute; top: -8px; right: -8px; background: white; color: black; font-size: 9px; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4); z-index: 40; }
+        .count-badge { position: absolute; top: -6px; right: -6px; background: white; color: black; font-size: 9px; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4); z-index: 40; }
         
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -79,33 +92,13 @@
         .island-glass-container::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.2); transform: translateZ(0); -webkit-transform: translateZ(0); pointer-events: none; }
         .out-of-stock { filter: grayscale(1); opacity: 0.6; }
 
-        /* SISTEMA DE MODALES ESTILO TARJETA FLOTANTE REDONDEADA */
-        .modal {
-            position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200;
-            display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-        }
+        .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
         .modal.active { pointer-events: auto; visibility: visible; }
-        
-        .modal-overlay {
-            position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: rgba(0, 0, 0, 0); backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px);
-            transition: background 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease;
-            transform: translateZ(0); -webkit-transform: translateZ(0);
-        }
+        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: background 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease; transform: translateZ(0); -webkit-transform: translateZ(0); }
         .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         
-        .modal-content {
-            position: relative; z-index: 10; width: 100%; max-width: 500px;
-            transform: translateY(20px) scale(0.98); opacity: 0;
-            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            border-radius: 32px; overflow: hidden; /* Todas las esquinas redondas */
-        }
-        .modal-content::before {
-            content: ""; position: absolute; inset: 0; border-radius: 32px;
-            background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            z-index: -1; transform: translateZ(0); -webkit-transform: translateZ(0); pointer-events: none;
-        }
+        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; }
+        .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: 32px; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; transform: translateZ(0); -webkit-transform: translateZ(0); pointer-events: none; }
         .modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
 
         .type-tab { flex: 1; padding: 0.5rem 0; border-radius: 0.75rem; font-size: 10px; font-weight: 900; text-transform: uppercase; transition: all 0.3s; }
@@ -139,29 +132,29 @@
 
 <div class="relative -mt-8 px-4 z-20 max-content-width">
     <div class="flex overflow-x-auto hide-scrollbar py-2 justify-between md:justify-center md:gap-8">
-        <div class="flex flex-col items-center gap-2 min-w-[70px]" onclick="toggleSedesModal(true)">
-            <div class="w-14 h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl" style="color: #39FF14;">storefront</span></div>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">SEDES</span>
+        <div class="flex flex-col items-center gap-2 min-w-[65px]" onclick="toggleSedesModal(true)">
+            <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-xl md:text-2xl" style="color: #39FF14;">storefront</span></div>
+            <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-zinc-400">SEDES</span>
         </div>
-        <div class="flex flex-col items-center gap-2 min-w-[70px]" onclick="openMap()">
-            <div class="w-14 h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl">location_on</span></div>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Mapa</span>
+        <div class="flex flex-col items-center gap-2 min-w-[65px]" onclick="openMap()">
+            <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-xl md:text-2xl">location_on</span></div>
+            <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-zinc-400">Mapa</span>
         </div>
-        <div class="flex flex-col items-center gap-2 min-w-[70px]" onclick="toggleHorarioModal(true)">
-            <div class="w-14 h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl">schedule</span></div>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">HORARIO</span>
+        <div class="flex flex-col items-center gap-2 min-w-[65px]" onclick="toggleHorarioModal(true)">
+            <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-xl md:text-2xl">schedule</span></div>
+            <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-zinc-400">HORARIO</span>
         </div>
-        <div class="flex flex-col items-center gap-2 min-w-[70px]" onclick="openChat()">
-            <div class="w-14 h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.128.55 4.205 1.597 6.035L.12 24l6.096-1.598A11.968 11.968 0 0012.031 24c6.645 0 12.03-5.384 12.03-12.03S18.676 0 12.031 0zm0 22.015c-1.802 0-3.565-.484-5.115-1.402l-.367-.217-3.8.997.996-3.705-.238-.378a9.98 9.98 0 01-1.531-5.342c0-5.508 4.484-9.992 9.993-9.992 5.51 0 9.992 4.484 9.992 9.992s-4.482 9.992-9.992 9.992h-.038z"/></svg>
+        <div class="flex flex-col items-center gap-2 min-w-[65px]" onclick="openChat()">
+            <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
+                <svg class="w-5 h-5 md:w-6 md:h-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.128.55 4.205 1.597 6.035L.12 24l6.096-1.598A11.968 11.968 0 0012.031 24c6.645 0 12.03-5.384 12.03-12.03S18.676 0 12.031 0zm0 22.015c-1.802 0-3.565-.484-5.115-1.402l-.367-.217-3.8.997.996-3.705-.238-.378a9.98 9.98 0 01-1.531-5.342c0-5.508 4.484-9.992 9.993-9.992 5.51 0 9.992 4.484 9.992 9.992s-4.482 9.992-9.992 9.992h-.038z"/></svg>
             </div>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
+            <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
         </div>
-        <div class="flex flex-col items-center gap-2 min-w-[70px]" onclick="openInstagram()">
-            <div class="w-14 h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        <div class="flex flex-col items-center gap-2 min-w-[65px]" onclick="openInstagram()">
+            <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
+                <svg class="w-5 h-5 md:w-6 md:h-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </div>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
+            <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
         </div>
     </div>
 </div>
@@ -194,7 +187,7 @@
 
 <section class="mt-10 px-4 max-content-width" id="promo-section">
     <div class="flex items-center mb-6 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES DE HOY 🔥</h2></div></div>
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-x-auto hide-scrollbar flex-nowrap snap-x px-1" id="promo-carousel"></div>
+    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap snap-x gap-3 px-1" id="promo-carousel"></div>
 </section>
 
 <main class="mt-8 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
@@ -211,10 +204,24 @@
 
 <div class="modal" id="cart-modal">
     <div class="modal-overlay" onclick="toggleCartModal(false)"></div>
-    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-8">
-        <div class="flex items-center justify-between mb-6"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Tu Pedido</h2></div><button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="toggleCartModal(false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
-        <div class="flex-1 overflow-y-auto hide-scrollbar space-y-4 mb-6" id="cart-items-list"></div>
-        <div class="pt-6 border-t border-white/10 space-y-4"><div class="flex justify-between items-end mb-2"><span class="text-[11px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span><span class="text-3xl font-black text-white tracking-tighter" id="cart-subtotal">$0.00</span></div><div class="grid grid-cols-2 gap-3"><button class="bg-neon-accent text-black font-[900] py-4 rounded-3xl text-[10px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('delivery')"><span class="material-symbols-outlined text-lg">two_wheeler</span> Delivery</button><button class="bg-white/10 text-white font-[900] py-4 rounded-3xl text-[10px] uppercase border border-white/10 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('pickup')"><span class="material-symbols-outlined text-lg">storefront</span> Pick-Up</button></div><button class="w-full py-3 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Carrito</button></div>
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-5 pb-8">
+        <div class="flex items-center justify-between mb-5"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tighter">Tu Pedido</h2></div><button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="toggleCartModal(false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
+        <div class="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-5" id="cart-items-list"></div>
+        <div class="pt-5 border-t border-white/10 space-y-4">
+            <div class="flex justify-between items-end mb-1">
+                <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
+                <span class="text-2xl font-black text-white tracking-tighter" id="cart-subtotal">$0.00</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button class="bg-neon-accent text-black font-[900] py-2.5 rounded-2xl text-[10px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('delivery')">
+                    <span class="material-symbols-outlined text-base">two_wheeler</span> Delivery
+                </button>
+                <button class="bg-white/10 text-white font-[900] py-2.5 rounded-2xl text-[10px] uppercase border border-white/10 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('pickup')">
+                    <span class="material-symbols-outlined text-base">storefront</span> Pick-Up
+                </button>
+            </div>
+            <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Carrito</button>
+        </div>
     </div>
 </div>
 
@@ -223,11 +230,27 @@
     <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-8">
         <div class="flex items-center justify-between mb-6"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter" id="checkout-title">Datos</h2></div><button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="closeCheckout()"><span class="material-symbols-outlined text-lg">close</span></button></div>
         <div class="space-y-5 overflow-y-auto hide-scrollbar pb-4" id="checkout-scroll-area">
-            <div><label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label><div class="relative"><select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 appearance-none pr-10 text-base font-semibold" onchange="updateCheckoutSede(this.value)"></select><span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span></div></div>
-            <div><label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label><input type="text" id="checkout-name" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez"></div>
-            <div id="checkout-location-container"><label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación Actual</label><div class="flex gap-2"><input type="text" id="checkout-location" oninput="updateLocationBtnState()" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 placeholder:text-white/30 text-base flex-1" placeholder="Buscando tu ubicación..."><button id="checkout-loc-action-btn" class="w-14 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center active:scale-90 flex-shrink-0" onclick="handleLocationAction()"><span class="material-symbols-outlined text-xl" id="checkout-loc-action-icon">delete_sweep</span></button></div><p class="text-[9px] text-zinc-500 mt-2 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">info</span> Borra para escribir manualmente o auto-completar.</p></div>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
+                <div class="relative">
+                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
+                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
+                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
+            </div>
+            <div id="checkout-location-container">
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación Actual</label>
+                <div class="flex gap-2">
+                    <input type="text" id="checkout-location" autocomplete="off" oninput="updateLocationBtnState()" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 placeholder:text-white/30 text-base flex-1" placeholder="Buscando tu ubicación...">
+                    <button id="checkout-loc-action-btn" class="w-14 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center active:scale-90 flex-shrink-0" onclick="handleLocationAction()"><span class="material-symbols-outlined text-xl" id="checkout-loc-action-icon">delete_sweep</span></button>
+                </div>
+                <p class="text-[9px] text-zinc-500 mt-2 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">info</span> Borra para escribir manualmente o auto-completar.</p>
+            </div>
         </div>
-        <div class="pt-6 border-t border-white/10 mt-auto"><button id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-5 rounded-3xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button></div>
+        <div class="pt-6 border-t border-white/10 mt-auto"><button id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button></div>
     </div>
 </div>
 
@@ -383,7 +406,7 @@
             sedeLabel.innerText = 'Sede que enviará tu pedido';
             locContainer.style.display = 'block';
             submitBtn.innerHTML = 'Solicitar Delivery <span class="material-symbols-outlined">two_wheeler</span>';
-            submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-5 rounded-3xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2";
+            submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2";
             accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
             getLocation();
         } else {
@@ -391,7 +414,7 @@
             sedeLabel.innerText = 'Sede donde retirarás';
             locContainer.style.display = 'none';
             submitBtn.innerHTML = 'Solicitar Pick-Up <span class="material-symbols-outlined">storefront</span>';
-            submitBtn.className = "w-full bg-white text-black font-[900] py-5 rounded-3xl text-sm uppercase shadow-lg shadow-white/20 active:scale-[0.98] flex items-center justify-center gap-2";
+            submitBtn.className = "w-full bg-white text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-white/20 active:scale-[0.98] flex items-center justify-center gap-2";
             accent.className = "w-1.5 h-6 bg-white rounded-full";
         }
         const select = document.getElementById('checkout-sede-select');
@@ -509,6 +532,7 @@
         if(promos.length) { section.classList.remove('hidden'); document.getElementById('promo-carousel').innerHTML = promos.map(p => createCard(p, true)).join(''); }
         else section.classList.add('hidden');
     }
+    
     function renderCatalog() {
         const search = document.getElementById('global-search').value.toLowerCase();
         let items = getSourceData();
@@ -517,22 +541,26 @@
         const grouped = items.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
         const isCarousel = currentCat === 'TODOS' && !search;
         const isFiltered = currentCat !== 'TODOS';
+        
+        // El grid ahora usa auto-fill para asegurar un tamaño constante (mínimo 140px, máximo lo que de la pantalla sin deformarse).
         document.getElementById('catalog-grid').innerHTML = Object.entries(grouped).map(([cat, products]) => {
-            const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap snap-x gap-4 px-1 pb-2' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-1';
+            const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap snap-x gap-3 px-1 pb-2' : 'grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 px-1 items-stretch';
             const headerBtn = isFiltered ? `<button onclick="setCat('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="setCat('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
             return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">${cat}</h2>${isFiltered ? headerBtn : ''}</div>${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
         }).join('');
     }
-    function createCard(p, isPromoCard) {
+    
+    function createCard(p, isCarousel) {
         const id = getUnifiedId(p);
         const count = cart[id] || 0;
         const isOut = p.status === 'OUT_OF_STOCK';
         const price = getProductPrice(p);
         const isPromo = (p.promocion?.activa) || (p.precio_promo && parseFloat(p.precio_promo) > 0);
-        const cardClass = isPromoCard ? 'min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-11px)] lg:min-w-[calc(25%-12px)] snap-start' : '';
+        // Si es carrusel forzamos un ancho para que deslice. Si es grid, el grid de auto-fill controla el tamaño perfecto.
+        const cardClass = isCarousel ? 'w-[140px] sm:w-[150px] flex-shrink-0 snap-start' : 'w-full';
         const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
         
-        return `<div class="product-card-glass cursor-pointer ${isOut ? 'out-of-stock' : ''} ${cardClass}" data-id="${id}" onclick="openProductView('${id}')"><div class="bg-blur-image" style="background-image: url('${img}')"></div><div class="glass-overlay">${isPromo ? '<div class="absolute top-3 right-3 bg-black/80 px-2 py-1 rounded-full text-[8px] font-black text-white backdrop-blur-md border border-white/20 z-30">PROMO 🔥</div>' : ''}<div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container"><img class="main-image" src="${img}" onload="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/><img class="placeholder-blur" src="${img}" aria-hidden="true"/></div><h3 class="font-black tracking-tight text-white uppercase text-center w-full text-xs md:text-sm h-8 md:h-10 line-clamp-2 leading-tight flex items-center justify-center mt-1">${p.nombre}</h3><p class="text-[8px] md:text-[9px] text-zinc-400/80 font-bold uppercase tracking-widest mt-1 mb-1 text-center">Toca para ver más</p><div class="flex justify-center w-full mt-2 relative btn-action-area">${count > 0 ? `<div class="count-badge">${count}</div>` : ''}<button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill w-full py-2.5 md:py-3 rounded-full text-[11px] md:text-xs font-bold ${count > 0 ? 'active' : ''}">${isOut ? 'SIN STOCK' : '$' + price.toFixed(2)}</button></div></div></div>`;
+        return `<div class="product-card-glass cursor-pointer ${isOut ? 'out-of-stock' : ''} ${cardClass}" data-id="${id}" onclick="openProductView('${id}')"><div class="bg-blur-image" style="background-image: url('${img}')"></div><div class="glass-overlay">${isPromo ? '<div class="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded-full text-[8px] font-black text-white backdrop-blur-md border border-white/20 z-30">PROMO 🔥</div>' : ''}<div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container flex-shrink-0"><img class="main-image" src="${img}" onload="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/><img class="placeholder-blur" src="${img}" aria-hidden="true"/></div><h3 class="font-black tracking-tight text-white uppercase text-center w-full text-[11px] md:text-xs h-8 line-clamp-2 leading-tight flex items-center justify-center mt-1">${p.nombre}</h3><p class="text-[8px] text-zinc-400/80 font-bold uppercase tracking-widest mt-1 mb-1 text-center">Toca para ver más</p><div class="flex justify-center w-full mt-auto pt-2 relative btn-action-area">${count > 0 ? `<div class="count-badge">${count}</div>` : ''}<button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill w-full py-2 rounded-full text-[10px] md:text-[11px] font-bold ${count > 0 ? 'active' : ''}">${isOut ? 'SIN STOCK' : '$' + price.toFixed(2)}</button></div></div></div>`;
     }
     
     function renderCart() {
@@ -540,7 +568,29 @@
         const items = Object.keys(cart).map(id => { const p = getAllSourceData().find(x => getUnifiedId(x) === id); return p ? {...p, qty: cart[id]} : null; }).filter(p => p && p.qty > 0);
         if(!items.length) { list.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-zinc-600"><span class="material-symbols-outlined text-6xl mb-4">shopping_basket</span><p class="font-black uppercase tracking-widest text-[10px]">Carrito vacío</p></div>`; return; }
         
-        list.innerHTML = items.map(p => { const id = getUnifiedId(p); const price = getProductPrice(p); return `<div class="flex items-center justify-between bg-white/5 p-4 rounded-3xl border border-white/10 gap-3 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')"><div class="flex items-center gap-4 flex-1"><div class="w-16 h-16 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0"><img src="${p.imagen}" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false"></div><div class="flex flex-col min-w-0"><span class="text-base font-[800] text-white uppercase leading-tight line-clamp-2">${p.nombre}</span><span class="text-sm text-primary font-black tracking-wider mt-0.5">$${price.toFixed(2)} c/u</span></div></div><div class="flex items-center bg-black/40 rounded-full p-1 border border-white/10 flex-shrink-0" onclick="event.stopPropagation();"><button onclick="changeQty('${id}', -1)" class="w-8 h-8 rounded-full flex items-center justify-center text-white active:scale-90"><span class="material-symbols-outlined text-sm">remove</span></button><span class="px-2 text-xs font-black text-white w-6 text-center qty-text" style="-webkit-transform: translate3d(0,0,0); transform: translate3d(0,0,0); display: inline-block;">${p.qty}</span><button onclick="changeQty('${id}', 1)" class="w-8 h-8 rounded-full flex items-center justify-center text-white active:scale-90"><span class="material-symbols-outlined text-sm">add</span></button></div></div>`; }).join('');
+        list.innerHTML = items.map(p => { 
+            const id = getUnifiedId(p); const price = getProductPrice(p); 
+            return `<div class="flex items-center justify-between bg-white/5 p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="w-14 h-14 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
+                        <img src="${p.imagen}" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-sm font-[800] text-white uppercase leading-tight line-clamp-2">${p.nombre}</span>
+                        <span class="text-xs text-primary font-black tracking-wider mt-1">$${price.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center justify-center bg-black/40 rounded-full p-1 border border-white/10 flex-shrink-0 ml-1" onclick="event.stopPropagation();">
+                    <button onclick="changeQty('${id}', 1)" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-90 mb-0.5">
+                        <span class="material-symbols-outlined text-[16px]">add</span>
+                    </button>
+                    <span class="text-[11px] font-black text-white py-0.5">${p.qty}</span>
+                    <button onclick="changeQty('${id}', -1)" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-90 mt-0.5">
+                        <span class="material-symbols-outlined text-[16px]">remove</span>
+                    </button>
+                </div>
+            </div>`; 
+        }).join('');
     }
     function changeQty(id, delta) {
         const newQty = Math.max(0, (cart[id] || 0) + delta);
@@ -593,8 +643,8 @@
             </div>
             <div class="relative w-full h-64 md:h-72 bg-black/40 flex-shrink-0 flex items-end justify-center pb-6">
                 <div class="absolute inset-0 bg-cover bg-center opacity-40 blur-2xl scale-110" style="background-image: url('${img}')"></div>
-                <div class="relative z-10 w-full max-w-[200px] md:max-w-[220px] aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black/20">
-                    <img src="${img}" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
+                <div class="relative z-10 w-full max-w-[200px] md:max-w-[220px] aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black/20 flex-shrink-0">
+                    <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                 </div>
             </div>
             <div class="p-6 md:p-8 flex flex-col flex-1 overflow-y-auto bg-[rgba(10,10,11,0.85)]">

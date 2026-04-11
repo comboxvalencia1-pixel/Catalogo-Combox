@@ -96,7 +96,8 @@
         }
 
         .price-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); color: white; transition: all 0.2s; }
-        .price-pill.active { background: #ff0000 !important; box-shadow: 0 0 20px rgba(255,0,0,0.4) !important; border-color: rgba(255,255,255,0.15) !important; animation: none !important; }
+        /* CORRECCIÓN: Se removió 'animation: none !important;' para que el CSS no pause las animaciones al presionar varias veces */
+        .price-pill.active { background: #ff0000 !important; box-shadow: 0 0 20px rgba(255,0,0,0.4) !important; border-color: rgba(255,255,255,0.15) !important; }
 
         .btn-promo-shine { position: relative; overflow: hidden; transform: translateZ(0); }
         .btn-promo-shine::before {
@@ -239,8 +240,10 @@
         </div>
 
         <div class="w-full bg-[rgba(15,15,18,0.75)] backdrop-blur-xl rounded-full border border-white/10 flex items-center px-4 shadow-2xl transition-all h-[54px]" id="search-island">
-            <span class="material-symbols-outlined text-zinc-400 text-[22px] mr-2">search</span>
-            <input class="flex-1 bg-transparent border-none py-2 text-[15px] text-white outline-none focus:ring-0 placeholder:text-zinc-500" id="global-search" oninput="render()" placeholder="¿Qué buscas?" type="text"/>
+            <button id="search-action-btn" onclick="handleSearchClick()" class="text-zinc-400 mr-2 flex items-center justify-center outline-none active:scale-90 transition-all">
+                <span id="search-icon" class="material-symbols-outlined text-[22px]">search</span>
+            </button>
+            <input class="flex-1 bg-transparent border-none py-2 text-[15px] text-white outline-none focus:ring-0 placeholder:text-zinc-500" id="global-search" oninput="onSearchInput()" placeholder="¿Qué buscas?" type="text"/>
             <button id="cat-menu-btn" class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all ml-2 flex-shrink-0" onclick="toggleCategoriesModal(true)">
                 <span class="material-symbols-outlined text-[20px]">menu</span>
             </button>
@@ -284,7 +287,11 @@
         
         <div class="pt-5 border-t border-white/10 space-y-4">
             <div class="flex justify-between items-end mb-1">
-                <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest mb-1">Subtotal a pagar</span>
+                    <span class="text-[8px] text-zinc-400 font-bold tracking-widest uppercase">Tasa BCV Dólar: <span id="tasa-bcv-display" class="text-white">Bs 0.00</span></span>
+                    <span class="text-[8px] text-primary/80 font-bold tracking-widest mt-0.5 uppercase">* No incluye Delivery ni IVA</span>
+                </div>
                 <div class="flex flex-col items-end">
                     <span class="text-3xl font-black text-white tracking-tighter leading-none" id="cart-subtotal">$0.00</span>
                     <span class="text-[12px] text-zinc-400 font-bold tracking-wider mt-1" id="cart-subtotal-bs">Bs 0,00</span>
@@ -488,6 +495,8 @@
             
             if(db && db.finanzas && db.finanzas.tasa_usd) {
                 tasaBCV = parseFloat(db.finanzas.tasa_usd);
+                const displayEl = document.getElementById('tasa-bcv-display');
+                if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
             }
 
             if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
@@ -666,7 +675,7 @@
         if(!navigator.geolocation) { loc.value = ""; loc.placeholder = "GPS no soportado."; return; }
         loc.value = "Obteniendo coordenadas...";
         navigator.geolocation.getCurrentPosition(
-            pos => { loc.value = `https://maps.google.com/?q=$${pos.coords.latitude},${pos.coords.longitude}`; updateLocationBtnState(); },
+            pos => { loc.value = `http://googleusercontent.com/maps.google.com/3{pos.coords.latitude},${pos.coords.longitude}`; updateLocationBtnState(); },
             err => { loc.value = ""; loc.placeholder = "No se pudo obtener. Escribe dirección."; updateLocationBtnState(); }, 
             { enableHighAccuracy: true, timeout: 5000 }
         );
@@ -802,6 +811,31 @@
     }
     
     function getUnifiedId(p) { return (p.id || p.id_producto || p.ID_PRODUCTO_VENTA || '').toString(); }
+
+    /* CORRECCIÓN: Funciones para manejar la acción de buscar y el botón de limpiar "X" */
+    function onSearchInput() {
+        const val = document.getElementById('global-search').value.trim();
+        const icon = document.getElementById('search-icon');
+        if (val.length > 0) {
+            icon.innerText = 'close';
+            icon.classList.add('text-primary');
+        } else {
+            icon.innerText = 'search';
+            icon.classList.remove('text-primary');
+        }
+        render();
+    }
+
+    function handleSearchClick() {
+        const input = document.getElementById('global-search');
+        if (input.value.length > 0) {
+            input.value = '';
+            onSearchInput(); 
+            setCat('TODOS'); 
+        } else {
+            input.focus();
+        }
+    }
 
     function render() { if(!db) return; renderPromos(); renderCatalog(); }
     
@@ -1025,7 +1059,16 @@
         }
         
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
-        document.getElementById('global-search').value = ''; 
+        
+        /* CORRECCIÓN: Restablecer el botón de búsqueda al cambiar de categoría */
+        const searchInput = document.getElementById('global-search');
+        searchInput.value = ''; 
+        const searchIcon = document.getElementById('search-icon');
+        if(searchIcon) {
+            searchIcon.innerText = 'search';
+            searchIcon.classList.remove('text-primary');
+        }
+        
         render(); 
     }
     

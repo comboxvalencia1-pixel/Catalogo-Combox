@@ -75,8 +75,8 @@
         .price-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); color: white; transition: all 0.2s; }
         .price-pill.active { background: #ff0000 !important; box-shadow: 0 0 20px rgba(255,0,0,0.4) !important; border-color: rgba(255,255,255,0.15) !important; animation: none !important; }
         
-        /* Animación dinámica anaranjada */
-        .pill-promo { border-color: rgba(249, 115, 22, 0.7); animation: promoPulse 1.5s infinite alternate; }
+        /* Animación dinámica anaranjada para la TARJETA entera */
+        .card-promo { border-color: rgba(249, 115, 22, 0.7) !important; animation: promoPulse 1.5s infinite alternate; }
         @keyframes promoPulse {
             from { box-shadow: 0 0 5px rgba(249, 115, 22, 0.3), inset 0 0 2px rgba(249, 115, 22, 0.1); }
             to { box-shadow: 0 0 16px rgba(249, 115, 22, 0.8), inset 0 0 6px rgba(249, 115, 22, 0.4); }
@@ -610,14 +610,24 @@
         const cardClass = isCarousel ? 'carousel-card' : 'w-full';
         const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
         
-        // Etiqueta 🔥 y Píldora animada implementadas aquí:
-        return `<div class="product-card-glass cursor-pointer ${isOut ? 'out-of-stock' : ''} ${cardClass}" data-id="${id}" onclick="openProductView('${id}')">
+        return `<div class="product-card-glass cursor-pointer ${isOut ? 'out-of-stock' : ''} ${cardClass} ${isPromo ? 'card-promo' : ''}" data-id="${id}" onclick="openProductView('${id}')">
             <div class="bg-blur-image" style="background-image: url('${img}')"></div>
             <div class="glass-overlay">
-                ${isPromo ? '<div class="absolute top-2 left-3 z-30 text-lg drop-shadow-md" title="Promoción">🔥</div>' : ''}
-                <div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container flex-shrink-0"><img class="main-image" src="${img}" onload="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/><img class="placeholder-blur" src="${img}" aria-hidden="true"/></div><h3 class="card-title font-black tracking-tight text-white uppercase text-center w-full text-xs md:text-sm h-9 line-clamp-2 leading-tight flex items-center justify-center mt-1">${p.nombre}</h3><p class="text-[8px] text-zinc-400/80 font-bold uppercase tracking-widest mt-1 mb-1 text-center">Toca para ver más</p><div class="flex justify-center w-full mt-auto pt-2 relative btn-action-area">${count > 0 ? `<div class="count-badge">${count}</div>` : ''}
-                <button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold ${count > 0 ? 'active' : ''} ${isPromo && count === 0 ? 'pill-promo' : ''}">${isOut ? 'SIN STOCK' : '$' + price.toFixed(2)}</button>
-            </div></div></div>`;
+                <div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container flex-shrink-0">
+                    ${isPromo ? '<div class="absolute top-2 left-2 z-30 bg-[#E30613]/90 backdrop-blur-sm border border-white/20 text-white text-[9px] font-black px-2 py-1 rounded-full drop-shadow-lg tracking-widest flex items-center gap-1">🔥 PROMO!</div>' : ''}
+                    <img class="main-image" src="${img}" onload="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/>
+                    <img class="placeholder-blur" src="${img}" aria-hidden="true"/>
+                </div>
+                <h3 class="card-title font-black tracking-tight text-white uppercase text-center w-full text-xs md:text-sm h-9 line-clamp-2 leading-tight flex items-center justify-center mt-1">${p.nombre}</h3>
+                <p class="text-[8px] text-zinc-400/80 font-bold uppercase tracking-widest mt-1 mb-1 text-center">Toca para ver más</p>
+                <div class="flex justify-center w-full mt-auto pt-2 relative btn-action-area">
+                    ${count > 0 ? `<div class="count-badge">${count}</div>` : ''}
+                    <button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}">
+                        ${isOut ? 'SIN STOCK' : (isPromo ? '<span class="material-symbols-outlined text-[14px]">arrow_downward</span>' : '') + '$' + price.toFixed(2)}
+                    </button>
+                </div>
+            </div>
+        </div>`;
     }
     
     function renderCart() {
@@ -649,6 +659,7 @@
             </div>`; 
         }).join('');
     }
+
     function changeQty(id, delta) {
         const newQty = Math.max(0, (cart[id] || 0) + delta);
         if(newQty === 0) delete cart[id];
@@ -661,15 +672,28 @@
         const overlay = document.querySelector('#cart-modal .modal-overlay');
         if(overlay) { overlay.style.transform = 'translateZ(0)'; setTimeout(() => { overlay.style.transform = ''; }, 50); }
     }
+
     function syncCardBadge(id) {
         const count = cart[id] || 0;
         document.querySelectorAll(`[data-id="${id}"]`).forEach(card => {
             const badge = card.querySelector('.count-badge');
             const pill = card.querySelector('.price-pill');
-            if(count > 0) { if(badge) badge.innerText = count; else { const area = card.querySelector('.btn-action-area'); if(area) area.insertAdjacentHTML('afterbegin', `<div class="count-badge">${count}</div>`); } if(pill) { pill.classList.add('active'); pill.classList.remove('pill-promo'); } }
-            else { if(badge) badge.remove(); if(pill) { pill.classList.remove('active'); const isPromo = (db.catalogo.concat(db.combos).find(x => getUnifiedId(x) === id)?.promocion?.activa) || (db.catalogo.concat(db.combos).find(x => getUnifiedId(x) === id)?.precio_promo > 0); if(isPromo) pill.classList.add('pill-promo'); } }
+            
+            if(count > 0) { 
+                if(badge) badge.innerText = count; 
+                else { 
+                    const area = card.querySelector('.btn-action-area'); 
+                    if(area) area.insertAdjacentHTML('afterbegin', `<div class="count-badge">${count}</div>`); 
+                } 
+                if(pill) pill.classList.add('active'); 
+            }
+            else { 
+                if(badge) badge.remove(); 
+                if(pill) pill.classList.remove('active'); 
+            }
         });
     }
+
     function clearCart() { if(confirm('¿Vaciar pedido?')) { cart = {}; updateOrder(); toggleCartModal(false); document.querySelectorAll('.count-badge').forEach(b => b.remove()); document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active')); } }
     function add(id) { cart[id] = (cart[id] || 0) + 1; updateOrder(); syncCardBadge(id); if(window.navigator.vibrate) window.navigator.vibrate(20); const cartActive = document.getElementById('cart-modal').classList.contains('active'); if(cartActive) renderCart(); }
     function updateOrder() {

@@ -618,7 +618,7 @@
                     <img class="main-image" src="${img}" onload="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/>
                     <img class="placeholder-blur" src="${img}" aria-hidden="true"/>
                 </div>
-                <h3 class="card-title font-black tracking-tight text-white uppercase text-center w-full text-xs md:text-sm h-9 line-clamp-2 leading-tight flex items-center justify-center mt-1">${p.nombre}</h3>
+                <h3 class="card-title font-black tracking-tight text-white uppercase text-center w-full text-xs md:text-sm line-clamp-2 leading-tight mt-1 min-h-[2.5rem]">${p.nombre}</h3>
                 <p class="text-[8px] text-zinc-400/80 font-bold uppercase tracking-widest mt-1 mb-1 text-center">Toca para ver más</p>
                 <div class="flex justify-center w-full mt-auto pt-2 relative btn-action-area">
                     ${count > 0 ? `<div class="count-badge">${count}</div>` : ''}

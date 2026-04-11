@@ -53,8 +53,10 @@
         #search-container { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
         .search-hidden { transform: translateY(-150%) !important; }
 
-        /* Smooth UI transitions for older Androids */
         button, .nav-col, .product-card-glass, .type-tab { transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, border-color 0.2s, box-shadow 0.2s; will-change: transform; }
+
+        .btn-bounce { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; }
+        .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
 
         .image-container { position: relative; width: 100%; overflow: hidden; background: rgba(255,255,255,0.03); }
         .placeholder-blur { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: blur(12px); transform: scale(1.1); opacity: 1; transition: opacity 0.5s; z-index: 1; }
@@ -144,7 +146,7 @@
 
         .auto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; align-items: stretch; }
         
-        .carousel-card { width: 160px; flex-shrink: 0; scroll-snap-align: start; }
+        .carousel-card { width: 160px; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
         
         .card-title {
             font-size: 12px;
@@ -248,7 +250,7 @@
 
 <section class="mt-10 px-4 max-content-width" id="promo-section">
     <div class="flex items-center mb-6 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-orange-500 rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES DE HOY 🔥</h2></div></div>
-    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap snap-x gap-4 px-1 pt-4 pb-4" id="promo-carousel"></div>
+    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
 </section>
 
 <main class="mt-8 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
@@ -285,7 +287,7 @@
                 <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
                 <div class="flex flex-col items-end">
                     <span class="text-3xl font-black text-white tracking-tighter leading-none" id="cart-subtotal">$0.00</span>
-                    <span class="text-[12px] text-zinc-400 font-bold tracking-wider mt-1" id="cart-subtotal-bs">Bs 0.00</span>
+                    <span class="text-[12px] text-zinc-400 font-bold tracking-wider mt-1" id="cart-subtotal-bs">Bs 0,00</span>
                 </div>
             </div>
             <div class="flex flex-col gap-3">
@@ -356,8 +358,9 @@
             <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleModal('horario-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
         </div>
         <div class="relative mb-6">
-            <select id="horario-sede-select" class="w-full bg-white/10 border border-white/20 rounded-2xl p-3 text-white outline-none focus:ring-1 focus:ring-primary focus:border-primary text-xs font-black uppercase tracking-wider appearance-none shadow-lg" onchange="changeHorarioSede(this.value)"></select>
-            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white pointer-events-none z-10">storefront</span>
+            <select id="horario-sede-select" class="w-full bg-white/10 border border-white/20 rounded-2xl py-3 pr-10 pl-11 text-white outline-none focus:ring-1 focus:ring-primary focus:border-primary text-xs font-black uppercase tracking-wider appearance-none shadow-lg relative" onchange="changeHorarioSede(this.value)"></select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none z-10">expand_more</span>
         </div>
         <div class="space-y-2" id="horario-list-container"></div>
     </div>
@@ -414,7 +417,6 @@
     let audioCtx;
     const searchContainer = document.getElementById('search-container');
 
-    // 1. Inicialización de Audio de Alta Fidelidad (Cero lag)
     function initAudio() {
         if(!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -429,7 +431,6 @@
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         
-        // Sonido tipo Mac (Grave, corto, elegante)
         osc.type = 'sine';
         osc.frequency.setValueAtTime(150, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.04);
@@ -441,24 +442,26 @@
         osc.stop(audioCtx.currentTime + 0.04);
     }
 
-    // Inicializar el motor de audio al primer toque de la pantalla (Regla de navegadores)
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
-
-    // Detectar clics en botones de forma global para reproducir el sonido
-    document.addEventListener('click', (e) => {
-        if(e.target.closest('button, .nav-col, .product-card-glass, .type-tab')) {
-            playClick();
-        }
-    });
     
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
         const currentScrollY = window.scrollY;
-        if (currentScrollY > 100) {
+        const searchValue = document.getElementById('global-search').value.trim();
+
+        if (searchValue !== '') {
+            searchContainer.classList.remove('search-hidden');
+            lastScrollY = currentScrollY;
+            return;
+        }
+
+        if (currentScrollY > 300) {
             if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
             else searchContainer.classList.remove('search-hidden'); 
-        } else searchContainer.classList.remove('search-hidden');
+        } else {
+            searchContainer.classList.remove('search-hidden');
+        }
         lastScrollY = currentScrollY;
     }, { passive: true });
 
@@ -503,7 +506,6 @@
     
     function animateModal(modalId) { requestAnimationFrame(() => { requestAnimationFrame(() => { document.getElementById(modalId).classList.add('active'); lockScroll(true); }); }); }
 
-    // OPTIMIZACIÓN 2: Desbloquear el hilo principal para abrir modales suavemente
     function toggleModal(modalId, show, renderFn) { 
         const modal = document.getElementById(modalId); 
         if(show) { 
@@ -532,7 +534,6 @@
         const select = document.getElementById('horario-sede-select');
         select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}" ${currentHorarioSede.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`).join('');
         
-        // Retardo leve para que el click no congele la UI
         setTimeout(() => {
             renderHorarioList();
             toggleModal('horario-modal', true);
@@ -587,7 +588,7 @@
                     <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
                     <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
                 </div>
-                <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-500/20 text-blue-400 p-2.5 rounded-xl active:scale-95 flex items-center gap-2 border border-blue-500/30 flex-shrink-0">
+                <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-500/20 text-blue-400 p-2.5 rounded-full active:scale-95 flex items-center gap-2 border border-blue-500/30 flex-shrink-0">
                     <span class="material-symbols-outlined text-[20px]">near_me</span> <span class="text-[10px] font-black uppercase tracking-widest">Ir</span>
                 </button>
             </div>
@@ -602,8 +603,9 @@
                     <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
                     <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
                 </div>
-                <button onclick="window.open('https://wa.me/${s.TELEFONO}?text=${encodeURIComponent('Hola Combox, me comunico con la sede de ' + s.NOMBRE_SEDE + '. Necesito información.')}', '_blank')" class="bg-[#25D366]/20 text-[#25D366] p-2.5 rounded-xl active:scale-95 flex items-center gap-2 border border-[#25D366]/30 flex-shrink-0">
-                    <svg class="w-5 h-5 fill-current drop-shadow-md" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> <span class="text-[10px] font-black uppercase tracking-widest">WhatsApp</span>
+                <button onclick="window.open('https://wa.me/${s.TELEFONO}?text=${encodeURIComponent('Hola Combox, me comunico con la sede de ' + s.NOMBRE_SEDE + '. Necesito información.')}', '_blank')" class="bg-[#25D366]/20 text-[#25D366] px-3 py-1.5 rounded-full active:scale-[0.90] transition-transform flex items-center gap-1.5 border border-[#25D366]/40 flex-shrink-0">
+                    <svg class="w-4 h-4 fill-current drop-shadow-md" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> 
+                    <span class="text-[9px] font-black uppercase tracking-widest">WhatsApp</span>
                 </button>
             </div>
         `).join('');
@@ -664,7 +666,7 @@
         if(!navigator.geolocation) { loc.value = ""; loc.placeholder = "GPS no soportado."; return; }
         loc.value = "Obteniendo coordenadas...";
         navigator.geolocation.getCurrentPosition(
-            pos => { loc.value = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`; updateLocationBtnState(); },
+            pos => { loc.value = `https://maps.google.com/?q=$${pos.coords.latitude},${pos.coords.longitude}`; updateLocationBtnState(); },
             err => { loc.value = ""; loc.placeholder = "No se pudo obtener. Escribe dirección."; updateLocationBtnState(); }, 
             { enableHighAccuracy: true, timeout: 5000 }
         );
@@ -682,20 +684,40 @@
         let telefono = checkoutSede?.TELEFONO || '584244701273';
         let nombreSede = checkoutSede?.NOMBRE_SEDE || '';
         
-        let msg = `*NUEVO PEDIDO COMBOX - Sede: ${nombreSede}*\n--------------------------\n${checkoutType === 'delivery' ? '🚀 ENTREGA POR DELIVERY' : '🛍️ RECOGER EN TIENDA (Pick-Up)'}\n👤 Cliente: ${name}\n${checkoutType === 'delivery' ? `📍 Ubicación: ${document.getElementById('checkout-location').value.trim()}\n` : ''}--------------------------\n\n`;
-        
         let total = 0;
         const allItems = getAllSourceData();
+        let itemsText = '';
         
+        // Armar la lista de productos
         Object.keys(cart).forEach(id => {
             const p = allItems.find(x => getUnifiedId(x) === id);
             if(!p) return;
             const price = getProductPrice(p);
-            msg += `- *${p.nombre.toUpperCase()}*\n Cant: *${cart[id]}* | *$${(price * cart[id]).toFixed(2)}*\n\n`;
+            itemsText += `- ${p.nombre.toUpperCase()}\nCant:  \`${cart[id]}\`  |  \`${price}$ c/u\`\n\n`;
             total += price * cart[id];
         });
         
-        msg += `--------------------------\n*TOTAL A PAGAR:* $${total.toFixed(2)}`;
+        let msg = '';
+        
+        if(checkoutType === 'delivery') {
+            const locationLink = document.getElementById('checkout-location').value.trim();
+            msg = `> *🛵 (SOLICITUD DE DELIVERY)*\n`;
+            msg += `> 🏢 *SEDE:* \`${nombreSede}\`\n\n`;
+            msg += `👤 *CLIENTE:* \`${name}\`\n\n`;
+            msg += `📍 *UBICACION:*\n${locationLink}\n\n`;
+            msg += `_________________________________\n\n`;
+            msg += `📦 *PEDIDO:*\n\n${itemsText}`;
+            msg += `*TOTAL (SIN DELIVERY Ni IVA):* \`$${total.toFixed(2)}\`\n\n`;
+            msg += `_Por favor confírmame el total con el delivery, Gracias._`;
+        } else {
+            msg = `> 🚘 *(SOLICITUD DE PICK-UP)*\n`;
+            msg += `> 🏢 *SEDE:* \`${nombreSede}\`\n\n`;
+            msg += `👤 *CLIENTE:* \`${name}\`\n\n`;
+            msg += `_________________________________\n\n`;
+            msg += `📦 *PEDIDO:*\n\n${itemsText}`;
+            msg += `*TOTAL (SIN IVA):* \`$${total.toFixed(2)}\`\n\n`;
+            msg += `_Por favor confírmame disponibilidad, Gracias._`;
+        }
         
         window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`, '_blank');
     }
@@ -739,10 +761,10 @@
             const sched = getSchedule(s);
             const active = currentSede?.ID_SEDE === s.ID_SEDE;
             const [main, sub] = s.NOMBRE_SEDE.split(',');
-            return `<button class="w-full flex items-center justify-between p-4 md:p-5 rounded-3xl ${active ? 'bg-white/10 border-white/40 shadow-lg' : 'bg-white/5 border-white/10'} border transition-all" onclick="selectLocation('${s.ID_SEDE}')">
+            return `<button class="w-full flex items-center justify-between p-4 md:p-5 rounded-3xl ${active ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(227,6,19,0.3)]' : 'bg-white/5 border-white/10'} border transition-all" onclick="selectLocation('${s.ID_SEDE}')">
                 <div class="flex items-center gap-3 min-w-0 flex-1">
                     <div class="w-10 h-10 flex-shrink-0 md:w-12 md:h-12 rounded-2xl ${active ? 'bg-white/20 text-white' : 'bg-white/10 text-white/40'} flex items-center justify-center">
-                        <span class="material-symbols-outlined text-[20px] md:text-[24px]">location_on</span>
+                        <span class="material-symbols-outlined text-[20px] md:text-[24px]">storefront</span>
                     </div>
                     <div class="text-left min-w-0 flex-1 pr-2">
                         <span class="block text-white font-bold text-base md:text-lg truncate leading-tight">${main}</span>
@@ -754,7 +776,7 @@
                         <span class="w-1.5 h-1.5 flex-shrink-0 rounded-full ${sched.isOpen ? 'bg-neon-accent' : 'bg-red-500'}"></span>
                         <span class="text-[8px] md:text-[9px] font-black whitespace-nowrap ${sched.isOpen ? 'text-neon-accent' : 'text-red-500'} uppercase">${sched.text}</span>
                     </div>
-                    <span class="text-[7px] md:text-[8px] whitespace-nowrap text-zinc-500 font-bold uppercase">${sched.nextTime}</span>
+                    <span class="text-[10px] md:text-[11px] whitespace-nowrap text-white font-bold uppercase">${sched.nextTime}</span>
                 </div>
             </button>`;
         }).join('');
@@ -764,7 +786,6 @@
         if(db?.sedes) currentSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
         updateHeader(); 
         if(window.navigator.vibrate) window.navigator.vibrate(15); 
-        // Retardo para que el click cierre suavemente
         setTimeout(() => toggleSedesModal(false), 50); 
     }
 
@@ -786,7 +807,6 @@
     
     function selectCategory(c) {
         toggleCategoriesModal(false);
-        // Esperamos a que la animación de click y cierre de modal comience antes de sobrecargar procesador
         setTimeout(() => setCat(c), 50);
     }
 
@@ -811,7 +831,12 @@
             return p.precio_promo && parseFloat(p.precio_promo) > 0;
         });
         
-        if(promos.length) { section.classList.remove('hidden'); document.getElementById('promo-carousel').innerHTML = promos.map(p => createCard(p, true)).join(''); }
+        if(promos.length) { 
+            section.classList.remove('hidden'); 
+            const containerClass = 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth';
+            document.getElementById('promo-carousel').className = containerClass;
+            document.getElementById('promo-carousel').innerHTML = promos.map(p => createCard(p, true)).join(''); 
+        }
         else section.classList.add('hidden');
     }
     
@@ -828,7 +853,7 @@
         const isFiltered = currentCat !== 'TODOS';
         
         document.getElementById('catalog-grid').innerHTML = Object.entries(grouped).map(([cat, products]) => {
-            const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap snap-x gap-4 px-1 pt-4 pb-4' : 'auto-grid px-1 pt-4 pb-4';
+            const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
             const headerBtn = isFiltered ? `<button onclick="setCat('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
             return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">${cat}</h2>${isFiltered ? headerBtn : ''}</div>${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
         }).join('');
@@ -861,7 +886,7 @@
                 <p class="text-[8px] text-zinc-400/80 font-bold uppercase tracking-widest mb-1 text-center mt-auto">Toca para ver más</p>
                 
                 <div class="flex justify-center w-full pt-1 relative btn-action-area">
-                    ${count > 0 ? `<div class="count-badge">${count}</div>` : ''} <button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill ${pricePillAnimationClass} w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}">
+                    ${count > 0 ? `<div class="count-badge">${count}</div>` : ''} <button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill btn-bounce ${pricePillAnimationClass} w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}">
                         ${isOut ? 'SIN STOCK' : '$' + price.toFixed(2)}
                     </button>
                 </div>
@@ -911,6 +936,7 @@
         updateOrder();
         syncCardBadge(id); 
         
+        playClick();
         if(window.navigator.vibrate) window.navigator.vibrate(10); 
         
         const overlay = document.querySelector('#cart-modal .modal-overlay');
@@ -940,7 +966,17 @@
 
     function clearCart() { if(confirm('¿Vaciar pedido?')) { cart = {}; updateOrder(); toggleCartModal(false); document.querySelectorAll('.count-badge').forEach(b => b.remove()); document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active')); } }
     
-    function add(id) { cart[id] = (cart[id] || 0) + 1; updateOrder(); syncCardBadge(id); if(window.navigator.vibrate) window.navigator.vibrate(20); const cartActive = document.getElementById('cart-modal').classList.contains('active'); if(cartActive) renderCart(); }
+    function add(id) { 
+        cart[id] = (cart[id] || 0) + 1; 
+        updateOrder(); 
+        syncCardBadge(id); 
+        
+        playClick();
+        if(window.navigator.vibrate) window.navigator.vibrate(20); 
+        
+        const cartActive = document.getElementById('cart-modal').classList.contains('active'); 
+        if(cartActive) renderCart(); 
+    }
     
     function updateOrder() {
         let total = 0, count = 0;
@@ -952,7 +988,8 @@
         
         const subtotalBsEl = document.getElementById('cart-subtotal-bs');
         if(subtotalBsEl) {
-            subtotalBsEl.innerText = `Bs ${(total * tasaBCV).toFixed(2)}`;
+            const totalBs = total * tasaBCV;
+            subtotalBsEl.innerText = `Bs ${totalBs.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
         
         const island = document.getElementById('order-island');
@@ -972,7 +1009,6 @@
             menuBtn.classList.add('bg-white/10', 'border-white/20');
             menuBtn.classList.remove('bg-primary', 'border-primary');
         }
-        // Desbloqueo del hilo para evitar congelamiento
         setTimeout(() => render(), 15); 
     }
     
@@ -994,7 +1030,6 @@
     }
     
     function openProductView(id) {
-        // Envolver en setTimeout para que no corte la animación del botón
         setTimeout(() => {
             const p = getAllSourceData().find(x => getUnifiedId(x) === id);
             if(!p) return;
@@ -1013,7 +1048,7 @@
                 <div class="relative w-full h-[340px] md:h-[400px] bg-black/40 flex-shrink-0 flex items-end justify-center pb-8">
                     <div class="absolute inset-0 bg-cover bg-center opacity-40 blur-2xl scale-110" style="background-image: url('${img}')"></div>
                     
-                    <div class="glass-contour relative z-10 w-full max-w-[260px] md:max-w-[300px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0">
+                    <div class="glass-contour relative z-10 w-full max-w-[260px] md:max-w-[1000px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0">
                         <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>
@@ -1039,4 +1074,3 @@
 </script>
 </body>
 </html>
-

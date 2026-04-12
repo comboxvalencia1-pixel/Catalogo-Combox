@@ -67,7 +67,7 @@
         .nav-btn-glass { position: relative; z-index: 1; }
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
-        .product-card-glass { position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; transition: transform 0.15s ease; content-visibility: auto; contain-intrinsic-size: auto 260px; }
+        .product-card-glass { position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; transition: transform 0.15s ease; content-visibility: auto; contain-intrinsic-size: auto 260px; will-change: transform, opacity; }
         .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(20px) brightness(0.65); transform: scale(1.2); z-index: 0; opacity: 0.7; backface-visibility: hidden; }
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.1); backdrop-filter: blur(8px); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
@@ -162,7 +162,6 @@
         @media (max-width: 395px) {
             .nav-col { min-width: 62px !important; gap: 0.3rem !important; }
             .nav-btn-glass { width: 46px !important; height: 46px !important; }
-            /* Se removió el margin: auto; para evitar el desfase hacia abajo */
             .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 24px !important; width: 24px !important; height: 24px !important; }
             .nav-text { font-size: 8px !important; }
             
@@ -286,11 +285,13 @@
         <div class="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-5" id="cart-items-list"></div>
         
         <div class="pt-5 border-t border-white/10 space-y-4">
+            <div class="w-full text-center -mt-2 mb-2">
+                <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
+            </div>
             <div class="flex justify-between items-end mb-1">
                 <div class="flex flex-col">
-                    <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest mb-1">Subtotal a pagar</span>
-                    <span class="text-[8px] text-zinc-400 font-bold tracking-widest uppercase">Tasa BCV Dólar: <span id="tasa-bcv-display" class="text-white">Bs 0.00</span></span>
-                    <span class="text-[8px] text-primary/80 font-bold tracking-widest mt-0.5 uppercase">* No incluye Delivery ni IVA</span>
+                    <span class="text-[10px] text-zinc-300 font-bold tracking-widest uppercase mb-1">Tasa: <span id="tasa-bcv-display">Bs 0.00</span></span>
+                    <span class="text-[10px] text-primary/80 font-bold tracking-widest uppercase">* No incluye Delivery ni IVA</span>
                 </div>
                 <div class="flex flex-col items-end">
                     <span class="text-3xl font-black text-white tracking-tighter leading-none" id="cart-subtotal">$0.00</span>
@@ -453,7 +454,6 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
-    // Optimización de Scroll para celulares Gama Baja
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
         
@@ -587,7 +587,7 @@
                 `;
             }
             
-            return `<div class="flex justify-between items-center p-3.5 rounded-2xl ${isToday ? 'bg-white/10 border border-white/40 shadow-lg' : 'bg-white/5 border border-white/10'}">
+            return `<div onclick="void(0)" class="flex justify-between items-center p-3.5 rounded-2xl ${isToday ? 'bg-white/10 border border-white/40 shadow-lg' : 'bg-white/5 border border-white/10'}">
                 <span class="${isToday ? 'text-white font-black' : 'text-white font-bold'} text-sm">${names[i]}</span>
                 <span class="text-xs tracking-wide flex items-center">${timeHtml}</span>
             </div>`;
@@ -841,11 +841,10 @@
         }
     }
     
-    // Función suave para deslizar a la altura del catálogo
     function scrollToCatalog() {
         const grid = document.getElementById('catalog-anchor');
         if (grid) {
-            const offset = 80; // Altura de la barra de búsqueda flotante
+            const offset = 80; 
             const y = grid.getBoundingClientRect().top + window.scrollY - offset;
             window.scrollTo({ top: y, behavior: 'smooth' });
         }
@@ -855,7 +854,19 @@
     
     function selectCategory(c) {
         toggleCategoriesModal(false);
-        setTimeout(() => setCat(c), 50);
+        const grid = document.getElementById('catalog-grid');
+        if(grid) {
+            grid.innerHTML = `
+                <div class="w-full py-20 flex flex-col items-center justify-center">
+                    <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Cargando catálogo...</span>
+                </div>`;
+        }
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                setCat(c);
+            });
+        }, 150);
     }
 
     function renderAllCategories() {

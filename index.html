@@ -53,7 +53,7 @@
         #search-container { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
         .search-hidden { transform: translateY(-150%) !important; }
 
-        button, .nav-col, .product-card-glass, .type-tab { transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, border-color 0.2s, box-shadow 0.2s; will-change: transform; }
+        button, .nav-col, .type-tab { transition: transform 0.15s ease, background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
 
         .btn-bounce { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; }
         .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
@@ -65,11 +65,11 @@
         .main-image.loaded + .placeholder-blur { opacity: 0; }
         
         .nav-btn-glass { position: relative; z-index: 1; }
-        .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); transform: translateZ(0); -webkit-transform: translateZ(0); pointer-events: none; }
+        .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
-        .product-card-glass { position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; }
-        .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(30px) brightness(0.65); transform: scale(1.3); z-index: 0; opacity: 0.7; }
-        .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.1); backdrop-filter: blur(10px); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
+        .product-card-glass { position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; transition: transform 0.15s ease; content-visibility: auto; contain-intrinsic-size: auto 260px; }
+        .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(20px) brightness(0.65); transform: scale(1.2); z-index: 0; opacity: 0.7; backface-visibility: hidden; }
+        .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.1); backdrop-filter: blur(8px); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
         .glass-contour { position: relative; border-color: transparent !important; }
         .glass-contour::after {
@@ -96,7 +96,6 @@
         }
 
         .price-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); color: white; transition: all 0.2s; }
-        /* CORRECCIÓN: Se removió 'animation: none !important;' para que el CSS no pause las animaciones al presionar varias veces */
         .price-pill.active { background: #ff0000 !important; box-shadow: 0 0 20px rgba(255,0,0,0.4) !important; border-color: rgba(255,255,255,0.15) !important; }
 
         .btn-promo-shine { position: relative; overflow: hidden; transform: translateZ(0); }
@@ -106,7 +105,6 @@
             transform: skewX(-25deg) translate3d(-150%, 0, 0);
             animation: sweepFast 1.5s infinite ease-in-out; 
             z-index: 10; pointer-events: none;
-            will-change: transform;
         }
         @keyframes sweepFast { 
             0% { transform: skewX(-25deg) translate3d(-150%, 0, 0); } 
@@ -127,7 +125,7 @@
         .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
-        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
+        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
         .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
         
         .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; }
@@ -164,7 +162,8 @@
         @media (max-width: 395px) {
             .nav-col { min-width: 62px !important; gap: 0.3rem !important; }
             .nav-btn-glass { width: 46px !important; height: 46px !important; }
-            .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 22px !important; width: 22px !important; height: 22px !important; margin: auto; }
+            /* Se removió el margin: auto; para evitar el desfase hacia abajo */
+            .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 24px !important; width: 24px !important; height: 24px !important; }
             .nav-text { font-size: 8px !important; }
             
             .auto-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)) !important; gap: 0.75rem !important; }
@@ -201,30 +200,30 @@
     <div class="flex overflow-x-auto hide-scrollbar py-2 justify-between md:justify-center md:gap-8">
         
         <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="toggleSedesModal(true)">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl" style="color: #39FF14;">storefront</span></div>
+            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0" style="color: #39FF14;">storefront</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">SEDES</span>
         </div>
         
         <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="toggleModal('mapa-modal', true, renderMapModal)">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl">location_on</span></div>
+            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">location_on</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">Mapa</span>
         </div>
         
         <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="openHorarioModal()">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl">schedule</span></div>
+            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">schedule</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">HORARIO</span>
         </div>
         
         <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="toggleModal('chat-modal', true, renderChatModal)">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                <svg class="w-6 h-6 fill-white m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             </div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
         </div>
         
         <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="openInstagram()">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                <svg class="w-6 h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
         </div>
@@ -256,7 +255,8 @@
     <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
 </section>
 
-<main class="mt-8 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
+<div id="catalog-anchor" class="pt-4"></div>
+<main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
 
 <div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
     <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width">
@@ -422,6 +422,7 @@
     let lastScrollY = window.scrollY; 
     let tasaBCV = 1; 
     let audioCtx;
+    let ticking = false;
     const searchContainer = document.getElementById('search-container');
 
     function initAudio() {
@@ -452,24 +453,28 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
+    // Optimización de Scroll para celulares Gama Baja
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
-        const currentScrollY = window.scrollY;
-        const searchValue = document.getElementById('global-search').value.trim();
+        
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                const currentScrollY = window.scrollY;
+                const searchValue = document.getElementById('global-search').value.trim();
 
-        if (searchValue !== '') {
-            searchContainer.classList.remove('search-hidden');
-            lastScrollY = currentScrollY;
-            return;
+                if (searchValue !== '') {
+                    searchContainer.classList.remove('search-hidden');
+                } else if (currentScrollY > 300) {
+                    if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
+                    else searchContainer.classList.remove('search-hidden'); 
+                } else {
+                    searchContainer.classList.remove('search-hidden');
+                }
+                lastScrollY = currentScrollY;
+                ticking = false;
+            });
+            ticking = true;
         }
-
-        if (currentScrollY > 300) {
-            if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
-            else searchContainer.classList.remove('search-hidden'); 
-        } else {
-            searchContainer.classList.remove('search-hidden');
-        }
-        lastScrollY = currentScrollY;
     }, { passive: true });
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -697,7 +702,6 @@
         const allItems = getAllSourceData();
         let itemsText = '';
         
-        // Armar la lista de productos
         Object.keys(cart).forEach(id => {
             const p = allItems.find(x => getUnifiedId(x) === id);
             if(!p) return;
@@ -812,7 +816,6 @@
     
     function getUnifiedId(p) { return (p.id || p.id_producto || p.ID_PRODUCTO_VENTA || '').toString(); }
 
-    /* CORRECCIÓN: Funciones para manejar la acción de buscar y el botón de limpiar "X" */
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
@@ -824,6 +827,7 @@
             icon.classList.remove('text-primary');
         }
         render();
+        scrollToCatalog();
     }
 
     function handleSearchClick() {
@@ -834,6 +838,16 @@
             setCat('TODOS'); 
         } else {
             input.focus();
+        }
+    }
+    
+    // Función suave para deslizar a la altura del catálogo
+    function scrollToCatalog() {
+        const grid = document.getElementById('catalog-anchor');
+        if (grid) {
+            const offset = 80; // Altura de la barra de búsqueda flotante
+            const y = grid.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
         }
     }
 
@@ -912,7 +926,7 @@
             <div class="glass-overlay">
                 <div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container flex-shrink-0">
                     ${isPromo ? '<div class="absolute top-2 left-2 z-30 bg-black/60 backdrop-blur-md border border-white/10 text-white text-[9px] font-black px-2 py-1 rounded-full shadow-lg tracking-widest flex items-center gap-1">🔥 PROMO!</div>' : ''}
-                    <img class="main-image" src="${img}" onload="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/>
+                    <img class="main-image" src="${img}" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/>
                     <img class="placeholder-blur" src="${img}" aria-hidden="true"/>
                 </div>
                 
@@ -1058,9 +1072,6 @@
             menuBtn.classList.remove('bg-primary', 'border-primary');
         }
         
-        window.scrollTo({ top: 0, behavior: 'smooth' }); 
-        
-        /* CORRECCIÓN: Restablecer el botón de búsqueda al cambiar de categoría */
         const searchInput = document.getElementById('global-search');
         searchInput.value = ''; 
         const searchIcon = document.getElementById('search-icon');
@@ -1070,6 +1081,7 @@
         }
         
         render(); 
+        scrollToCatalog();
     }
     
     function openProductView(id) {

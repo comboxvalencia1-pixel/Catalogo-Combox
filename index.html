@@ -44,7 +44,6 @@
         
         html { background-color: #050505; overscroll-behavior: none; }
         body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; }
-        body.modal-open { overflow: hidden !important; } 
 
         #splash { position: fixed; inset: 0; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; }
@@ -55,8 +54,8 @@
 
         button, .nav-col, .type-tab { transition: transform 0.15s ease, background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
 
-        .btn-bounce { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; }
-        .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
+        .btn-bounce { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; }
+        .btn-bounce-active { transform: scale(0.85) !important; transition: transform 0.05s !important; }
 
         .image-container { position: relative; width: 100%; overflow: hidden; background: rgba(255,255,255,0.03); }
         .placeholder-blur { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: blur(12px); transform: scale(1.1); opacity: 1; transition: opacity 0.5s; z-index: 1; }
@@ -125,7 +124,7 @@
         .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
-        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
+        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transition: background 0.3s ease; transform: translateZ(0); }
         .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
         
         .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; }
@@ -511,14 +510,37 @@
 
     function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
 
-    function lockScroll(lock) { if(lock) document.body.classList.add('modal-open'); else document.body.classList.remove('modal-open'); }
+    // FIX iOS FREEZE: Bloqueo de scroll tradicional, sin forzar la GPU.
+    let scrollPosition = 0;
+    function lockScroll(lock) { 
+        const body = document.body;
+        if(lock) { 
+            if(!body.classList.contains('modal-open')) {
+                scrollPosition = window.scrollY;
+                body.style.position = 'fixed';
+                body.style.top = `-${scrollPosition}px`;
+                body.style.width = '100%';
+                body.classList.add('modal-open');
+            }
+        } else { 
+            if(body.classList.contains('modal-open')) {
+                body.style.position = '';
+                body.style.top = '';
+                body.style.width = '';
+                body.classList.remove('modal-open'); 
+                window.scrollTo(0, scrollPosition);
+            }
+        } 
+    }
     
     function checkActiveModals() {
         const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal'];
         if(!modals.some(id => document.getElementById(id).classList.contains('active'))) lockScroll(false);
     }
     
-    function animateModal(modalId) { requestAnimationFrame(() => { requestAnimationFrame(() => { document.getElementById(modalId).classList.add('active'); lockScroll(true); }); }); }
+    function animateModal(modalId) { 
+        requestAnimationFrame(() => { requestAnimationFrame(() => { document.getElementById(modalId).classList.add('active'); lockScroll(true); }); });
+    }
 
     function toggleModal(modalId, show, renderFn) { 
         const modal = document.getElementById(modalId); 
@@ -530,7 +552,14 @@
             }
         } else { 
             modal.classList.remove('active'); 
-            checkActiveModals(); 
+            
+            // FIX DEFINITIVO iOS: Esperar que termine la animación de salida (300ms) antes de liberar el body.
+            setTimeout(() => {
+                checkActiveModals(); 
+            }, 300);
+            
+            document.body.style.pointerEvents = 'none';
+            setTimeout(() => document.body.style.pointerEvents = 'auto', 350);
         } 
     }
     
@@ -680,7 +709,10 @@
         if(!navigator.geolocation) { loc.value = ""; loc.placeholder = "GPS no soportado."; return; }
         loc.value = "Obteniendo coordenadas...";
         navigator.geolocation.getCurrentPosition(
-            pos => { loc.value = `http://googleusercontent.com/maps.google.com/3{pos.coords.latitude},${pos.coords.longitude}`; updateLocationBtnState(); },
+            pos => { 
+                loc.value = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; 
+                updateLocationBtnState(); 
+            },
             err => { loc.value = ""; loc.placeholder = "No se pudo obtener. Escribe dirección."; updateLocationBtnState(); }, 
             { enableHighAccuracy: true, timeout: 5000 }
         );
@@ -918,6 +950,12 @@
         }).join('');
     }
     
+    function triggerTap(el) {
+        if (!el) return;
+        el.classList.add('btn-bounce-active');
+        setTimeout(() => el.classList.remove('btn-bounce-active'), 150);
+    }
+
     function createCard(p, isCarousel) {
         const id = getUnifiedId(p);
         const count = cart[id] || 0; 
@@ -945,7 +983,7 @@
                 <p class="text-[8px] text-zinc-400/80 font-bold uppercase tracking-widest mb-1 text-center mt-auto">Toca para ver más</p>
                 
                 <div class="flex justify-center w-full pt-1 relative btn-action-area">
-                    ${count > 0 ? `<div class="count-badge">${count}</div>` : ''} <button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill btn-bounce ${pricePillAnimationClass} w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}">
+                    ${count > 0 ? `<div class="count-badge">${count}</div>` : ''} <button onclick="event.stopPropagation(); triggerTap(this); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill btn-bounce ${pricePillAnimationClass} w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}">
                         ${isOut ? 'SIN STOCK' : '$' + price.toFixed(2)}
                     </button>
                 </div>
@@ -1120,7 +1158,7 @@
                 </div>
                 
                 <div class="p-6 md:p-8 flex flex-col flex-1 overflow-y-auto bg-[rgba(10,10,11,0.85)]">
-                    <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-tight mb-2">${p.nombre}</h2>
+                    <h2 class="text-2xl md:text-3xl font-black text-white uppercase leading-tight mb-2" style="word-spacing: 0.15em; letter-spacing: 0.03em;">${p.nombre}</h2>
                     <p class="text-sm text-zinc-400 leading-relaxed overflow-y-auto hide-scrollbar mb-6">${p.descripcion || 'Sin descripción.'}</p>
                     <div class="mt-auto pt-4 border-t border-white/10 flex items-center justify-between">
                         <div class="flex flex-col">

@@ -509,7 +509,6 @@
 
             if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
             
-            // FIX: Renderizado ÚNICO de promociones
             renderPromos(); 
             render(); 
         } catch(e) { console.error("Error cargando DB:", e); }
@@ -898,32 +897,37 @@
         }
     }
 
-    // FIX: Render principal ahora SOLO dibuja el catálogo, las promos quedan intactas
     function render() { if(!db) return; renderCatalog(); }
     
+    // FIX COLAPSO DE SAFARI: Separar el cierre del modal de la recarga masiva de la página.
     function selectCategory(c) {
-        toggleCategoriesModal(false);
-        if (currentCat === c) return;
+        if (currentCat === c) {
+            toggleCategoriesModal(false);
+            return;
+        }
         
-        // Cambio visual instantáneo (Paso 1 y 2)
-        requestAnimationFrame(() => {
-            const grid = document.getElementById('catalog-grid');
-            if(grid) {
-                grid.innerHTML = `
-                    <div class="w-full py-20 flex flex-col items-center justify-center">
-                        <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Cargando...</span>
-                    </div>`;
-            }
-
-            // Paso 3 y 4: Retraso y Carga Pesada
-            clearTimeout(renderTimer);
-            renderTimer = setTimeout(() => {
-                requestAnimationFrame(() => {
-                    setCat(c);
-                });
-            }, 80);
-        });
+        // 1. Damos la orden de cerrar el modal de inmediato.
+        toggleCategoriesModal(false);
+        
+        // 2. Pintamos un círculo de carga estático en el fondo.
+        const grid = document.getElementById('catalog-grid');
+        if(grid) {
+            grid.innerHTML = `
+                <div class="w-full py-20 flex flex-col items-center justify-center">
+                    <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Cargando...</span>
+                </div>`;
+        }
+        
+        // 3. ESPERAMOS 360ms (el modal tarda 300ms en cerrarse por completo y liberar el bloqueo de scroll).
+        // Si procesábamos la categoría antes de que el modal se fuera y el scroll estuviera libre, 
+        // iOS Safari lanzaba una excepción fatal y cerraba la ventana entera.
+        clearTimeout(renderTimer);
+        renderTimer = setTimeout(() => {
+            requestAnimationFrame(() => {
+                setCat(c);
+            });
+        }, 360);
     }
 
     function renderAllCategories() {
@@ -932,7 +936,6 @@
         document.getElementById('all-categories-list').innerHTML = cats.map(c => `<button onclick="selectCategory('${c}')" class="w-full py-4 rounded-2xl text-[10px] font-black uppercase border transition-all ${currentCat === c ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 text-zinc-400 border-white/10'}">${c}</button>`).join('');
     }
     
-    // FIX: Ahora esto se llama una sola vez al cargar la página
     function renderPromos() {
         const section = document.getElementById('promo-section');
         const today = new Date();
@@ -971,7 +974,7 @@
         
         document.getElementById('catalog-grid').innerHTML = Object.entries(grouped).map(([cat, products]) => {
             const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
-            const headerBtn = isFiltered ? `<button onclick="setCat('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
+            const headerBtn = isFiltered ? `<button onclick="selectCategory('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
             return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">${cat}</h2>${isFiltered ? headerBtn : ''}</div>${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
         }).join('');
     }
@@ -1120,11 +1123,9 @@
         else island.classList.add('order-island-hidden');
     }
     
-    // FIX TABS FLUIDOS: Uso correcto de repintado del navegador y retraso para el procesamiento
     function setType(type, btn) { 
         if (currentType === type) return;
         
-        // 1. Cambio visual INSTANTÁNEO de la pestaña seleccionada
         document.querySelectorAll('.type-tab').forEach(b => { b.classList.remove('type-tab-active'); b.classList.add('type-tab-inactive'); }); 
         btn.classList.add('type-tab-active'); 
         btn.classList.remove('type-tab-inactive'); 
@@ -1135,7 +1136,6 @@
             menuBtn.classList.remove('bg-primary', 'border-primary');
         }
 
-        // 2. Le decimos al navegador: "Pinta esto primero y luego pon el cargador"
         requestAnimationFrame(() => {
             const grid = document.getElementById('catalog-grid');
             if(grid) {
@@ -1157,13 +1157,12 @@
                 searchIcon.classList.remove('text-primary');
             }
 
-            // 3. Ya con la interfaz pintada, mandamos a calcular las tarjetas
             clearTimeout(renderTimer);
             renderTimer = setTimeout(() => {
                 requestAnimationFrame(() => {
                     renderCatalog();
                 });
-            }, 180); // Respiro de 180ms para evitar el congelamiento de WebKit
+            }, 200); 
         });
     }
     
@@ -1180,7 +1179,7 @@
         }
         
         const searchInput = document.getElementById('global-search');
-        searchInput.value = ''; 
+        if(searchInput) searchInput.value = ''; 
         const searchIcon = document.getElementById('search-icon');
         if(searchIcon) {
             searchIcon.innerText = 'search';

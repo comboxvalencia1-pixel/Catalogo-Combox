@@ -66,7 +66,8 @@
         .nav-btn-glass { position: relative; z-index: 1; }
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
-        .product-card-glass { position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; transition: transform 0.15s ease; content-visibility: auto; contain-intrinsic-size: auto 260px; will-change: transform, opacity; }
+        .product-card-glass { position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; transition: transform 0.15s ease; will-change: transform; }
+        
         .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(20px) brightness(0.65); transform: scale(1.2); z-index: 0; opacity: 0.7; backface-visibility: hidden; }
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.1); backdrop-filter: blur(8px); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
@@ -248,7 +249,7 @@
     </div>
 </div>
 
-<section class="mt-10 px-4 max-content-width" id="promo-section">
+<section class="mt-10 px-4 max-content-width hidden" id="promo-section">
     <div class="flex items-center mb-6 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-orange-500 rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES DE HOY 🔥</h2></div></div>
     <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
 </section>
@@ -423,6 +424,9 @@
     let tasaBCV = 1; 
     let audioCtx;
     let ticking = false;
+    let renderTimer = null; 
+    let searchTimer = null; 
+    
     const searchContainer = document.getElementById('search-container');
 
     function initAudio() {
@@ -504,13 +508,15 @@
             }
 
             if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
+            
+            // FIX: Renderizado ÚNICO de promociones
+            renderPromos(); 
             render(); 
         } catch(e) { console.error("Error cargando DB:", e); }
     }
 
     function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
 
-    // FIX iOS FREEZE: Bloqueo de scroll tradicional, sin forzar la GPU.
     let scrollPosition = 0;
     function lockScroll(lock) { 
         const body = document.body;
@@ -552,12 +558,7 @@
             }
         } else { 
             modal.classList.remove('active'); 
-            
-            // FIX DEFINITIVO iOS: Esperar que termine la animación de salida (300ms) antes de liberar el body.
-            setTimeout(() => {
-                checkActiveModals(); 
-            }, 300);
-            
+            setTimeout(() => { checkActiveModals(); }, 300);
             document.body.style.pointerEvents = 'none';
             setTimeout(() => document.body.style.pointerEvents = 'auto', 350);
         } 
@@ -851,15 +852,31 @@
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
+        
         if (val.length > 0) {
             icon.innerText = 'close';
             icon.classList.add('text-primary');
+            
+            if (currentCat !== 'TODOS') {
+                currentCat = 'TODOS';
+                const menuBtn = document.getElementById('cat-menu-btn');
+                if(menuBtn) {
+                    menuBtn.classList.add('bg-white/10', 'border-white/20');
+                    menuBtn.classList.remove('bg-primary', 'border-primary');
+                }
+            }
         } else {
             icon.innerText = 'search';
             icon.classList.remove('text-primary');
         }
-        render();
-        scrollToCatalog();
+        
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            requestAnimationFrame(() => {
+                render();
+                if(val.length > 0) scrollToCatalog();
+            });
+        }, 250); 
     }
 
     function handleSearchClick() {
@@ -867,7 +884,6 @@
         if (input.value.length > 0) {
             input.value = '';
             onSearchInput(); 
-            setCat('TODOS'); 
         } else {
             input.focus();
         }
@@ -882,23 +898,32 @@
         }
     }
 
-    function render() { if(!db) return; renderPromos(); renderCatalog(); }
+    // FIX: Render principal ahora SOLO dibuja el catálogo, las promos quedan intactas
+    function render() { if(!db) return; renderCatalog(); }
     
     function selectCategory(c) {
         toggleCategoriesModal(false);
-        const grid = document.getElementById('catalog-grid');
-        if(grid) {
-            grid.innerHTML = `
-                <div class="w-full py-20 flex flex-col items-center justify-center">
-                    <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                    <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Cargando catálogo...</span>
-                </div>`;
-        }
-        setTimeout(() => {
-            requestAnimationFrame(() => {
-                setCat(c);
-            });
-        }, 150);
+        if (currentCat === c) return;
+        
+        // Cambio visual instantáneo (Paso 1 y 2)
+        requestAnimationFrame(() => {
+            const grid = document.getElementById('catalog-grid');
+            if(grid) {
+                grid.innerHTML = `
+                    <div class="w-full py-20 flex flex-col items-center justify-center">
+                        <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Cargando...</span>
+                    </div>`;
+            }
+
+            // Paso 3 y 4: Retraso y Carga Pesada
+            clearTimeout(renderTimer);
+            renderTimer = setTimeout(() => {
+                requestAnimationFrame(() => {
+                    setCat(c);
+                });
+            }, 80);
+        });
     }
 
     function renderAllCategories() {
@@ -907,6 +932,7 @@
         document.getElementById('all-categories-list').innerHTML = cats.map(c => `<button onclick="selectCategory('${c}')" class="w-full py-4 rounded-2xl text-[10px] font-black uppercase border transition-all ${currentCat === c ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 text-zinc-400 border-white/10'}">${c}</button>`).join('');
     }
     
+    // FIX: Ahora esto se llama una sola vez al cargar la página
     function renderPromos() {
         const section = document.getElementById('promo-section');
         const today = new Date();
@@ -1094,9 +1120,11 @@
         else island.classList.add('order-island-hidden');
     }
     
+    // FIX TABS FLUIDOS: Uso correcto de repintado del navegador y retraso para el procesamiento
     function setType(type, btn) { 
-        currentType = type; 
-        currentCat = 'TODOS'; 
+        if (currentType === type) return;
+        
+        // 1. Cambio visual INSTANTÁNEO de la pestaña seleccionada
         document.querySelectorAll('.type-tab').forEach(b => { b.classList.remove('type-tab-active'); b.classList.add('type-tab-inactive'); }); 
         btn.classList.add('type-tab-active'); 
         btn.classList.remove('type-tab-inactive'); 
@@ -1106,7 +1134,37 @@
             menuBtn.classList.add('bg-white/10', 'border-white/20');
             menuBtn.classList.remove('bg-primary', 'border-primary');
         }
-        setTimeout(() => render(), 15); 
+
+        // 2. Le decimos al navegador: "Pinta esto primero y luego pon el cargador"
+        requestAnimationFrame(() => {
+            const grid = document.getElementById('catalog-grid');
+            if(grid) {
+                grid.innerHTML = `
+                    <div class="w-full py-20 flex flex-col items-center justify-center">
+                        <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Cargando...</span>
+                    </div>`;
+            }
+
+            currentType = type; 
+            currentCat = 'TODOS'; 
+
+            const searchInput = document.getElementById('global-search');
+            if (searchInput) searchInput.value = ''; 
+            const searchIcon = document.getElementById('search-icon');
+            if(searchIcon) {
+                searchIcon.innerText = 'search';
+                searchIcon.classList.remove('text-primary');
+            }
+
+            // 3. Ya con la interfaz pintada, mandamos a calcular las tarjetas
+            clearTimeout(renderTimer);
+            renderTimer = setTimeout(() => {
+                requestAnimationFrame(() => {
+                    renderCatalog();
+                });
+            }, 150); // Respiro de 150ms para evitar el congelamiento de WebKit
+        });
     }
     
     function setCat(c) { 

@@ -42,12 +42,14 @@
         input::-webkit-calendar-picker-indicator, input::-webkit-listbox, input::-webkit-contacts-auto-fill-button { display: none !important; visibility: hidden !important; pointer-events: none !important; }
         img { -webkit-user-drag: none; pointer-events: none; }
         
+        /* FIX iOS FRANJA NEGRA y VIEWPORT */
         html { background-color: #050505; overscroll-behavior: none; }
         body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; }
         
+        /* FIX MODAL OPEN - Sin position fixed */
         body.modal-open { overflow: hidden !important; } 
 
-        #splash { position: fixed; inset: 0; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
+        #splash { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
@@ -124,18 +126,19 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .order-island-hidden { transform: translate(-50%, 160px) !important; }
 
-        .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
-        .modal.active { pointer-events: auto; visibility: visible; }
+        /* FIX MODALES Y OVERLAYS */
+        .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; }
+        .modal.active { pointer-events: auto; visibility: visible; transform: translateZ(0); -webkit-transform: translateZ(0); }
         
-        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
         .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
         
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; }
+        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; margin-bottom: env(safe-area-inset-bottom); }
         .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; }
         .modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
 
         .modal-bottom { align-items: flex-end; padding: 0; }
-        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; transform: translateY(100%) scale(1); max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; transform: translateY(100%) scale(1); max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); margin-bottom: 0; }
         .modal-bottom.active .modal-content { transform: translateY(0) scale(1); }
 
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -181,7 +184,7 @@
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
     </style>
 </head>
-<body class="pb-40" oncontextmenu="return false;">
+<body class="pb-32" oncontextmenu="return false;">
 
 <div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-40 pointer-events-none transition-transform duration-300" style="transform: translateY(-100%);">
     <div class="bg-black/60 backdrop-blur-xl border border-white/20 text-white rounded-full px-5 py-2.5 flex items-center gap-2 shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
@@ -267,7 +270,7 @@
             <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
             <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
         </div>
-        <button onclick="selectCategory('TODOS');" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
+        <button onclick="setCat('TODOS'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
     </div>
     <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
 </section>
@@ -1139,7 +1142,6 @@
         
         list.innerHTML = items.map(p => { 
             const id = getUnifiedId(p); const price = getProductPrice(p); 
-            // FIX: Añadido "C/u" en color rojo
             return `<div class="flex items-center justify-between bg-white/5 p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
@@ -1323,13 +1325,9 @@
             const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
             const safeName = p.nombre.replace(/'/g, "\\'");
             
-            // FIX CONTORNO IMAGEN S9: Se quitó el .glass-contour y se usó borde sólido con inner shadow
+            // FIX ESTRUCTURA MODAL LIMPIA
             document.getElementById('product-content').innerHTML = `
-                <div class="absolute inset-0 bg-[#0A0A0B] z-0"></div>
-                <div class="absolute -inset-10 z-10 opacity-35 bg-cover bg-center pointer-events-none" style="background-image: url('${img}'); filter: blur(40px); transform: translateZ(0);"></div>
-                <div class="absolute bottom-0 inset-x-0 h-[65%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/85 to-transparent"></div>
-                
-                <div class="absolute top-4 right-4 z-50 flex items-center gap-2">
+                <div class="absolute top-4 right-4 z-[60] flex items-center gap-2">
                     <button class="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" onclick="shareProduct('${id}', '${safeName}')">
                         <span class="material-symbols-outlined text-[18px]">ios_share</span>
                     </button>
@@ -1338,13 +1336,14 @@
                     </button>
                 </div>
                 
-                <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
-                    <div class="relative w-full h-full max-w-[280px] max-h-[280px] flex-shrink-0 flex items-center justify-center">
-                        <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)]" draggable="false" oncontextmenu="return false;"/>
+                <div class="relative w-full h-[35vh] min-h-[300px] flex-shrink-0 flex items-end justify-center pb-8 mt-8">
+                    <div class="absolute inset-0 bg-cover bg-center opacity-30 blur-2xl scale-110 pointer-events-none" style="background-image: url('${img}'); transform: translateZ(0);"></div>
+                    <div class="relative z-10 w-full max-w-[260px] aspect-square rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center border border-white/20" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
+                        <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>
                 
-                <div class="relative z-40 p-6 md:p-8 flex flex-col flex-1 overflow-y-auto hide-scrollbar">
+                <div class="relative z-40 p-6 md:p-8 flex flex-col flex-1 overflow-y-auto hide-scrollbar bg-transparent">
                     <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-tight mb-2 drop-shadow-md">${p.nombre}</h2>
                     <p class="text-sm text-zinc-300 leading-relaxed overflow-y-auto hide-scrollbar mb-6 drop-shadow-md">${p.descripcion || 'Sin descripción.'}</p>
                     <div class="mt-auto pt-4 border-t border-white/20 flex items-center justify-between">

@@ -53,7 +53,6 @@
         #search-container { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
         .search-hidden { transform: translateY(-150%) !important; }
 
-        /* TRANSICIÓN MEJORADA PARA CATEGORÍAS Y BOTONES */
         button, .nav-col, .type-tab, .cat-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
         .btn-bounce { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; }
@@ -142,7 +141,6 @@
         .type-tab-active { background: #E30613; color: white; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.4); }
         .type-tab-inactive { color: #a1a1aa; background: transparent; }
 
-        /* SKELETON SCREENS PARA CARGA ULTRA RÁPIDA */
         .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .skeleton-title { height: 16px; width: 70%; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 10px auto; }
@@ -180,9 +178,20 @@
 
         .max-content-width { max-width: 1200px; margin-left: auto; margin-right: auto; }
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
+
+        /* Estilo para el pull-to-refresh */
+        #ptr-indicator { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
 <body class="pb-40" oncontextmenu="return false;">
+
+<div id="ptr-indicator" class="fixed top-0 left-0 w-full flex justify-center items-center pt-[env(safe-area-inset-top)] mt-4 z-40 transform -translate-y-[150%]">
+    <div class="bg-black/60 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/20 flex items-center gap-2 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+        <span class="material-symbols-outlined text-white" id="ptr-icon">refresh</span>
+        <span class="text-[10px] font-black text-white tracking-widest uppercase" id="ptr-text">Actualizar</span>
+    </div>
+</div>
+
 <div id="splash">
     <div class="pulse-logo">COMBOX</div>
 </div>
@@ -234,7 +243,18 @@
     </div>
 </div>
 
-<div class="sticky z-50 px-4 mt-8" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
+<section class="mt-8 px-4 max-content-width hidden" id="promo-section">
+    <div class="flex items-center justify-between mb-6 px-1">
+        <div class="flex items-center gap-3">
+            <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+            <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
+        </div>
+        <button onclick="setCat('TODOS'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
+    </div>
+    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
+</section>
+
+<div class="sticky z-50 px-4 mt-6" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
     <div class="flex flex-col items-center gap-3 max-w-2xl mx-auto island-width">
         <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full border border-white/10 shadow-2xl" id="type-tabs-container">
             <button class="type-tab type-tab-active" onclick="setType('Individual', this)">Individual</button>
@@ -253,11 +273,6 @@
         </div>
     </div>
 </div>
-
-<section class="mt-10 px-4 max-content-width hidden" id="promo-section">
-    <div class="flex items-center mb-6 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-orange-500 rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES DE HOY 🔥</h2></div></div>
-    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
-</section>
 
 <div id="catalog-anchor" class="pt-4"></div>
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
@@ -434,6 +449,92 @@
     
     const searchContainer = document.getElementById('search-container');
 
+    // SISTEMA PULL-TO-REFRESH
+    let pStart = { x: 0, y: 0 };
+    let pCurrent = { x: 0, y: 0 };
+    const ptrEl = document.getElementById('ptr-indicator');
+    const ptrText = document.getElementById('ptr-text');
+    const ptrIcon = document.getElementById('ptr-icon');
+    let isLoadingPTR = false;
+
+    document.addEventListener('touchstart', function(e) {
+        if(window.scrollY === 0 && !isLoadingPTR && !document.body.classList.contains('modal-open')) {
+            pStart.x = e.touches[0].screenX;
+            pStart.y = e.touches[0].screenY;
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchmove', function(e) {
+        if(window.scrollY === 0 && !isLoadingPTR && pStart.y > 0 && !document.body.classList.contains('modal-open')) {
+            pCurrent.y = e.touches[0].screenY;
+            let deltaY = pCurrent.y - pStart.y;
+            // Si el usuario jala hacia abajo y no excede los 120px de arrastre visual
+            if(deltaY > 0 && deltaY < 120) {
+                ptrEl.style.transition = 'none';
+                ptrEl.style.transform = `translateY(calc(-150% + ${deltaY}px))`; 
+                if(deltaY > 70) {
+                    ptrText.innerText = "Suelta para actualizar";
+                    ptrIcon.classList.remove('animate-spin');
+                } else {
+                    ptrText.innerText = "Actualizar";
+                    ptrIcon.classList.remove('animate-spin');
+                }
+            }
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchend', function(e) {
+        if(window.scrollY === 0 && !isLoadingPTR && pStart.y > 0 && !document.body.classList.contains('modal-open')) {
+            let deltaY = pCurrent.y - pStart.y;
+            ptrEl.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            if(deltaY > 70) {
+                // Ejecutar actualización
+                isLoadingPTR = true;
+                ptrEl.style.transform = `translateY(0%)`;
+                ptrText.innerText = "Actualizando...";
+                ptrIcon.classList.add('animate-spin');
+                if(window.navigator.vibrate) window.navigator.vibrate(15);
+                forceManualRefresh();
+            } else {
+                // Cancelar
+                ptrEl.style.transform = `translateY(-150%)`;
+            }
+            pStart.y = 0;
+        }
+    });
+
+    async function forceManualRefresh() {
+        try {
+            const res = await fetch(API);
+            const freshDB = await res.json();
+            db = freshDB;
+            localStorage.setItem('combox_db', JSON.stringify(db));
+            setupAfterDBLoad(false);
+            
+            ptrText.innerText = "¡Listo!";
+            ptrIcon.classList.remove('animate-spin');
+            ptrIcon.innerText = "check";
+            
+            setTimeout(() => {
+                ptrEl.style.transform = `translateY(-150%)`;
+                setTimeout(() => {
+                    ptrIcon.innerText = "refresh";
+                    isLoadingPTR = false;
+                }, 300);
+            }, 1000);
+        } catch(e) {
+            console.error(e);
+            ptrText.innerText = "Error";
+            ptrIcon.classList.remove('animate-spin');
+            ptrIcon.innerText = "error";
+            setTimeout(() => {
+                ptrEl.style.transform = `translateY(-150%)`;
+                setTimeout(() => { ptrIcon.innerText = "refresh"; isLoadingPTR = false; }, 300);
+            }, 1000);
+        }
+    }
+
+
     function initAudio() {
         if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     }
@@ -465,7 +566,7 @@
                 const searchValue = document.getElementById('global-search').value.trim();
 
                 if (searchValue !== '') { searchContainer.classList.remove('search-hidden'); } 
-                else if (currentScrollY > 300) {
+                else if (currentScrollY > 350) {
                     if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
                     else searchContainer.classList.remove('search-hidden'); 
                 } else { searchContainer.classList.remove('search-hidden'); }
@@ -490,37 +591,33 @@
     });
 
     async function init() {
-        // RECUPERAR CARRITO PERSISTENTE (24h)
-        try {
-            const savedCart = localStorage.getItem('combox_cart');
-            if(savedCart) {
-                const parsed = JSON.parse(savedCart);
-                if (Date.now() - parsed.time < 86400000) { // Menos de 24 horas
-                    cart = parsed.cart;
-                    updateOrder();
-                } else {
-                    localStorage.removeItem('combox_cart'); // Expiró
-                }
-            }
-        } catch(e) { console.error("Error al cargar carrito:", e); }
-
-        // CACHÉ LOCAL - Carga instantánea
         let loadedFromCache = false;
         try {
             const cachedDB = localStorage.getItem('combox_db');
             if (cachedDB) {
                 db = JSON.parse(cachedDB);
-                setupAfterDBLoad(true);
                 loadedFromCache = true;
             }
         } catch(e) { console.error("Error cargando caché:", e); }
 
-        // ACTUALIZACIÓN EN SEGUNDO PLANO
+        try {
+            const savedCart = localStorage.getItem('combox_cart');
+            if(savedCart) {
+                const parsed = JSON.parse(savedCart);
+                if (Date.now() - parsed.time < 86400000) { cart = parsed.cart; } 
+                else { localStorage.removeItem('combox_cart'); }
+            }
+        } catch(e) { console.error("Error al cargar carrito:", e); }
+
+        if (loadedFromCache) {
+            setupAfterDBLoad(true);
+        }
+
         try {
             const res = await fetch(API);
             const freshDB = await res.json();
             db = freshDB;
-            localStorage.setItem('combox_db', JSON.stringify(db)); // Guarda fresco
+            localStorage.setItem('combox_db', JSON.stringify(db)); 
             setupAfterDBLoad(false); 
         } catch(e) { console.error("Error cargando DB:", e); }
     }
@@ -533,27 +630,25 @@
         }
         if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
         
+        // Calcular si hay items en el carrito para mostrar el botón inferir (Order Island)
+        updateOrder();
+        
         renderPromos();
         
-        // Si no hemos renderizado antes, lo hacemos
         if(!initialRenderDone) {
             render(); 
             initialRenderDone = true;
             
-            // Ocultar Splash
             setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
 
-            // DEEP LINKING: Leer ?id=XYZ de la URL
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
-            if(productId) {
-                // Pequeño timeout para asegurar que el DOM principal se pintó
-                setTimeout(() => openProductView(productId), 500);
-            }
+            if(productId) { setTimeout(() => openProductView(productId), 500); }
+        } else {
+            render();
         }
     }
 
-    // GESTIÓN DEL CARRITO PERSISTENTE
     function saveCart() {
         try { localStorage.setItem('combox_cart', JSON.stringify({cart: cart, time: Date.now()})); } 
         catch(e) { console.error("Error guardando carrito:", e); }
@@ -627,7 +722,7 @@
 
     function changeHorarioSede(id) {
         if(db?.sedes) currentHorarioSede = db.sedes.find(s => s.ID_SEDE === id) || currentHorarioSede;
-        if(window.navigator.vibrate) window.navigator.vibrate(15);
+        if(window.navigator.vibrate) window.navigator.vibrate(10);
         renderHorarioList(); 
     }
 
@@ -872,7 +967,7 @@
     function selectLocation(id) { 
         if(db?.sedes) currentSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
         updateHeader(); 
-        if(window.navigator.vibrate) window.navigator.vibrate(15); 
+        if(window.navigator.vibrate) window.navigator.vibrate(5); 
         setTimeout(() => toggleSedesModal(false), 50); 
     }
 
@@ -941,32 +1036,9 @@
 
     function render() { if(!db) return; renderCatalog(); }
     
-    // TRANSICIÓN Y SKELETONS AL CAMBIAR CATEGORÍA
-    function selectCategory(c) {
-        if (currentCat === c) {
-            toggleCategoriesModal(false);
-            return;
-        }
-        
-        toggleCategoriesModal(false);
-        
-        // Esperamos a que la animación de cierre del modal termine (aprox 300ms)
-        setTimeout(() => {
-            showSkeletons();
-            
-            // Damos un pequeño respiro al navegador antes de renderizar
-            setTimeout(() => {
-                requestAnimationFrame(() => {
-                    setCat(c);
-                });
-            }, 50);
-        }, 300);
-    }
-    
     function showSkeletons() {
         const grid = document.getElementById('catalog-grid');
         if(!grid) return;
-        
         let skeletons = '';
         for(let i=0; i<6; i++) {
             skeletons += `
@@ -977,8 +1049,23 @@
                     </div>
                 </div>`;
         }
-        // Usamos innerHTML aquí porque es estructuralmente muy simple
         grid.innerHTML = `<div class="auto-grid px-1 pt-4 pb-4">${skeletons}</div>`;
+    }
+
+    function selectCategory(c) {
+        if (currentCat === c) {
+            toggleCategoriesModal(false);
+            return;
+        }
+        
+        toggleCategoriesModal(false);
+        
+        setTimeout(() => {
+            showSkeletons();
+            setTimeout(() => {
+                setCat(c);
+            }, 50);
+        }, 300);
     }
 
     function renderAllCategories() {
@@ -1011,7 +1098,6 @@
         else section.classList.add('hidden');
     }
     
-    // RENDERIZADO OPTIMIZADO CON DOCUMENT FRAGMENT
     function renderCatalog() {
         const search = document.getElementById('global-search').value.toLowerCase();
         let items = getSourceData();
@@ -1024,14 +1110,12 @@
         const isCarousel = currentCat === 'TODOS' && !search;
         const isFiltered = currentCat !== 'TODOS';
         
-        // Crear el string html
         const htmlString = Object.entries(grouped).map(([cat, products]) => {
             const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
             const headerBtn = isFiltered ? `<button onclick="selectCategory('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
             return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">${cat}</h2>${isFiltered ? headerBtn : ''}</div>${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
         }).join('');
         
-        // Uso de DocumentFragment para inserción rápida y única
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = htmlString;
         
@@ -1041,8 +1125,8 @@
         }
         
         const grid = document.getElementById('catalog-grid');
-        grid.innerHTML = ''; // Limpiar grilla
-        grid.appendChild(fragment); // Inyectar todo compilado
+        grid.innerHTML = ''; 
+        grid.appendChild(fragment); 
     }
     
     function triggerTap(el) {
@@ -1127,16 +1211,15 @@
         
         updateOrder();
         syncCardBadge(id); 
-        saveCart(); // Guarda en persistencia
+        saveCart(); 
         
         playClick();
-        if(window.navigator.vibrate) window.navigator.vibrate(10); 
+        if(window.navigator.vibrate) window.navigator.vibrate(5); 
         
         const overlay = document.querySelector('#cart-modal .modal-overlay');
         if(overlay) { overlay.style.transform = 'translateZ(0)'; setTimeout(() => { overlay.style.transform = ''; }, 50); }
     }
 
-    // DOM DIFFING: Solo se actualiza el nodo afectado
     function syncCardBadge(id) {
         const count = cart[id] || 0;
         document.querySelectorAll(`[data-id="${id}"]`).forEach(card => {
@@ -1165,7 +1248,7 @@
             toggleCartModal(false); 
             document.querySelectorAll('.count-badge').forEach(b => b.remove()); 
             document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active')); 
-            saveCart(); // Guarda persistencia vacía
+            saveCart(); 
         } 
     }
     
@@ -1173,10 +1256,10 @@
         cart[id] = (cart[id] || 0) + 1; 
         updateOrder(); 
         syncCardBadge(id); 
-        saveCart(); // Guarda persistencia
+        saveCart(); 
         
         playClick();
-        if(window.navigator.vibrate) window.navigator.vibrate(20); 
+        if(window.navigator.vibrate) window.navigator.vibrate(8); 
         
         const cartActive = document.getElementById('cart-modal').classList.contains('active'); 
         if(cartActive) renderCart(); 
@@ -1227,12 +1310,9 @@
         
         showSkeletons();
         
-        clearTimeout(renderTimer);
-        renderTimer = setTimeout(() => {
-            requestAnimationFrame(() => {
-                renderCatalog();
-            });
-        }, 150); // Timeout más rápido porque el fragment es eficiente
+        setTimeout(() => {
+            renderCatalog();
+        }, 150); 
     }
     
     function setCat(c) { 
@@ -1259,7 +1339,6 @@
         scrollToCatalog();
     }
 
-    // COMPARTIR PRODUCTO
     function shareProduct(id, name) {
         const url = window.location.origin + window.location.pathname + '?id=' + id;
         if (navigator.share) {
@@ -1278,7 +1357,6 @@
             const price = getProductPrice(p);
             const isOut = p.status === 'OUT_OF_STOCK';
             const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
-            // Escapamos comillas simples para evitar errores JS al compartir
             const safeName = p.nombre.replace(/'/g, "\\'");
             
             document.getElementById('product-content').innerHTML = `
@@ -1295,8 +1373,8 @@
                     </button>
                 </div>
                 
-                <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center pt-16 pb-4 h-[40vh] md:h-[45vh]">
-                    <div class="glass-contour relative w-[55%] max-w-[260px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0">
+                <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center pt-16 pb-6 h-[45vh] md:h-[50vh]">
+                    <div class="glass-contour relative w-[75%] max-w-[320px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0">
                         <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>

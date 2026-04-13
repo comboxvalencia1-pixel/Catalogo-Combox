@@ -126,15 +126,20 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .order-island-hidden { transform: translate(-50%, 160px) !important; }
 
-        /* FIX MODALES Y OVERLAYS */
+        /* FIX MODALES Y OVERLAYS DEFINITIVO */
         .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; }
         .modal.active { pointer-events: auto; visibility: visible; transform: translateZ(0); -webkit-transform: translateZ(0); }
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
-        .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
         
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; margin-bottom: env(safe-area-inset-bottom); }
-        .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; }
+        /* CORRECCIÓN: Overlay sin color para no manchar la barra de iOS */
+        .modal.active .modal-overlay { background: rgba(0, 0, 0, 0); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        
+        /* CORRECCIÓN: Eliminado margin-bottom */
+        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; }
+        
+        /* CORRECCIÓN: Opacidad del before aumentada a 0.95 para compensar la falta de color del overlay */
+        .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; }
         .modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
 
         .modal-bottom { align-items: flex-end; padding: 0; }

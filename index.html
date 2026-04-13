@@ -178,18 +178,13 @@
 
         .max-content-width { max-width: 1200px; margin-left: auto; margin-right: auto; }
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
-
-        /* Estilo para el pull-to-refresh */
-        #ptr-indicator { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
 <body class="pb-40" oncontextmenu="return false;">
 
-<div id="ptr-indicator" class="fixed top-0 left-0 w-full flex justify-center items-center pt-[env(safe-area-inset-top)] mt-4 z-40 transform -translate-y-[150%]">
-    <div class="bg-black/60 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/20 flex items-center gap-2 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
-        <span class="material-symbols-outlined text-white" id="ptr-icon">refresh</span>
-        <span class="text-[10px] font-black text-white tracking-widest uppercase" id="ptr-text">Actualizar</span>
-    </div>
+<div id="ptr-pill" class="fixed top-0 left-1/2 bg-[rgba(15,15,18,0.9)] backdrop-blur-xl border border-white/20 px-4 py-2.5 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-[9998] flex items-center gap-2" style="transform: translate(-50%, -150%);">
+    <span id="ptr-icon" class="material-symbols-outlined text-primary text-[22px]">refresh</span>
+    <span class="text-white text-[10px] font-black uppercase tracking-widest" id="ptr-text">Desliza abajo</span>
 </div>
 
 <div id="splash">
@@ -243,18 +238,7 @@
     </div>
 </div>
 
-<section class="mt-8 px-4 max-content-width hidden" id="promo-section">
-    <div class="flex items-center justify-between mb-6 px-1">
-        <div class="flex items-center gap-3">
-            <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-            <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
-        </div>
-        <button onclick="setCat('TODOS'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
-    </div>
-    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
-</section>
-
-<div class="sticky z-50 px-4 mt-6" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
+<div class="sticky z-50 px-4 mt-8" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
     <div class="flex flex-col items-center gap-3 max-w-2xl mx-auto island-width">
         <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full border border-white/10 shadow-2xl" id="type-tabs-container">
             <button class="type-tab type-tab-active" onclick="setType('Individual', this)">Individual</button>
@@ -273,6 +257,17 @@
         </div>
     </div>
 </div>
+
+<section class="mt-10 px-4 max-content-width hidden" id="promo-section">
+    <div class="flex items-center justify-between mb-6 px-1">
+        <div class="flex items-center gap-3">
+            <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+            <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
+        </div>
+        <button onclick="setCat('TODOS'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
+    </div>
+    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
+</section>
 
 <div id="catalog-anchor" class="pt-4"></div>
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
@@ -449,92 +444,82 @@
     
     const searchContainer = document.getElementById('search-container');
 
-    // SISTEMA PULL-TO-REFRESH
-    let pStart = { x: 0, y: 0 };
-    let pCurrent = { x: 0, y: 0 };
-    const ptrEl = document.getElementById('ptr-indicator');
-    const ptrText = document.getElementById('ptr-text');
-    const ptrIcon = document.getElementById('ptr-icon');
-    let isLoadingPTR = false;
-
-    document.addEventListener('touchstart', function(e) {
-        if(window.scrollY === 0 && !isLoadingPTR && !document.body.classList.contains('modal-open')) {
-            pStart.x = e.touches[0].screenX;
-            pStart.y = e.touches[0].screenY;
+    // --- LÓGICA PULL-TO-REFRESH ---
+    let ptrStartY = 0;
+    let isPulling = false;
+    
+    document.addEventListener('touchstart', e => {
+        if (window.scrollY <= 0 && !document.body.classList.contains('modal-open')) {
+            ptrStartY = e.touches[0].clientY;
+            isPulling = true;
+            document.getElementById('ptr-pill').style.transition = 'none';
         }
     }, {passive: true});
 
-    document.addEventListener('touchmove', function(e) {
-        if(window.scrollY === 0 && !isLoadingPTR && pStart.y > 0 && !document.body.classList.contains('modal-open')) {
-            pCurrent.y = e.touches[0].screenY;
-            let deltaY = pCurrent.y - pStart.y;
-            // Si el usuario jala hacia abajo y no excede los 120px de arrastre visual
-            if(deltaY > 0 && deltaY < 120) {
-                ptrEl.style.transition = 'none';
-                ptrEl.style.transform = `translateY(calc(-150% + ${deltaY}px))`; 
-                if(deltaY > 70) {
-                    ptrText.innerText = "Suelta para actualizar";
-                    ptrIcon.classList.remove('animate-spin');
-                } else {
-                    ptrText.innerText = "Actualizar";
-                    ptrIcon.classList.remove('animate-spin');
-                }
-            }
-        }
-    }, {passive: true});
-
-    document.addEventListener('touchend', function(e) {
-        if(window.scrollY === 0 && !isLoadingPTR && pStart.y > 0 && !document.body.classList.contains('modal-open')) {
-            let deltaY = pCurrent.y - pStart.y;
-            ptrEl.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            if(deltaY > 70) {
-                // Ejecutar actualización
-                isLoadingPTR = true;
-                ptrEl.style.transform = `translateY(0%)`;
-                ptrText.innerText = "Actualizando...";
-                ptrIcon.classList.add('animate-spin');
-                if(window.navigator.vibrate) window.navigator.vibrate(15);
-                forceManualRefresh();
+    document.addEventListener('touchmove', e => {
+        if (!isPulling) return;
+        const currentY = e.touches[0].clientY;
+        const pullDistance = currentY - ptrStartY;
+        
+        if (pullDistance > 0 && window.scrollY <= 0) {
+            const ptrPill = document.getElementById('ptr-pill');
+            const ptrIcon = document.getElementById('ptr-icon');
+            const ptrText = document.getElementById('ptr-text');
+            
+            let move = pullDistance * 0.4;
+            if (move > 80) move = 80;
+            
+            ptrPill.style.transform = `translate(-50%, ${move - 60}px)`; 
+            ptrIcon.style.transform = `rotate(${move * 5}deg)`;
+            
+            if (move > 55) {
+                ptrText.innerText = "Suelta para actualizar";
+                ptrIcon.classList.add('text-[#39FF14]'); 
+                ptrIcon.classList.remove('text-primary');
             } else {
-                // Cancelar
-                ptrEl.style.transform = `translateY(-150%)`;
+                ptrText.innerText = "Desliza abajo";
+                ptrIcon.classList.remove('text-[#39FF14]');
+                ptrIcon.classList.add('text-primary');
             }
-            pStart.y = 0;
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchend', e => {
+        if (!isPulling) return;
+        isPulling = false;
+        
+        const ptrPill = document.getElementById('ptr-pill');
+        const ptrIcon = document.getElementById('ptr-icon');
+        const ptrText = document.getElementById('ptr-text');
+        
+        ptrPill.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        
+        const currentY = e.changedTouches[0].clientY;
+        const pullDistance = currentY - ptrStartY;
+        const move = pullDistance * 0.4;
+        
+        if (move > 55 && window.scrollY <= 0) {
+            ptrPill.style.transform = `translate(-50%, 20px)`;
+            ptrText.innerText = "Actualizando...";
+            ptrIcon.classList.add('animate-spin');
+            
+            // Guardar carrito por seguridad
+            saveCart(); 
+            // Eliminar caché para forzar la carga de datos nuevos
+            localStorage.removeItem('combox_db');
+            
+            if(window.navigator.vibrate) window.navigator.vibrate(20);
+            
+            // Pequeña pausa para que se vea el spinner y recargar
+            setTimeout(() => {
+                window.location.reload();
+            }, 600);
+        } else {
+            ptrPill.style.transform = `translate(-50%, -150%)`;
         }
     });
 
-    async function forceManualRefresh() {
-        try {
-            const res = await fetch(API);
-            const freshDB = await res.json();
-            db = freshDB;
-            localStorage.setItem('combox_db', JSON.stringify(db));
-            setupAfterDBLoad(false);
-            
-            ptrText.innerText = "¡Listo!";
-            ptrIcon.classList.remove('animate-spin');
-            ptrIcon.innerText = "check";
-            
-            setTimeout(() => {
-                ptrEl.style.transform = `translateY(-150%)`;
-                setTimeout(() => {
-                    ptrIcon.innerText = "refresh";
-                    isLoadingPTR = false;
-                }, 300);
-            }, 1000);
-        } catch(e) {
-            console.error(e);
-            ptrText.innerText = "Error";
-            ptrIcon.classList.remove('animate-spin');
-            ptrIcon.innerText = "error";
-            setTimeout(() => {
-                ptrEl.style.transform = `translateY(-150%)`;
-                setTimeout(() => { ptrIcon.innerText = "refresh"; isLoadingPTR = false; }, 300);
-            }, 1000);
-        }
-    }
-
-
+    // --- LÓGICA DE AUDIO Y SCROLL ---
     function initAudio() {
         if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     }
@@ -566,7 +551,7 @@
                 const searchValue = document.getElementById('global-search').value.trim();
 
                 if (searchValue !== '') { searchContainer.classList.remove('search-hidden'); } 
-                else if (currentScrollY > 350) {
+                else if (currentScrollY > 300) {
                     if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
                     else searchContainer.classList.remove('search-hidden'); 
                 } else { searchContainer.classList.remove('search-hidden'); }
@@ -591,6 +576,7 @@
     });
 
     async function init() {
+        // 1. CARGA CACHÉ LOCAL
         let loadedFromCache = false;
         try {
             const cachedDB = localStorage.getItem('combox_db');
@@ -600,6 +586,7 @@
             }
         } catch(e) { console.error("Error cargando caché:", e); }
 
+        // 2. RECUPERA CARRITO PERSISTENTE
         try {
             const savedCart = localStorage.getItem('combox_cart');
             if(savedCart) {
@@ -609,15 +596,17 @@
             }
         } catch(e) { console.error("Error al cargar carrito:", e); }
 
+        // 3. RENDERIZA RÁPIDO SI HAY CACHÉ
         if (loadedFromCache) {
             setupAfterDBLoad(true);
         }
 
+        // 4. ACTUALIZACIÓN EN SEGUNDO PLANO
         try {
             const res = await fetch(API);
             const freshDB = await res.json();
             db = freshDB;
-            localStorage.setItem('combox_db', JSON.stringify(db)); 
+            localStorage.setItem('combox_db', JSON.stringify(db)); // Guarda fresco
             setupAfterDBLoad(false); 
         } catch(e) { console.error("Error cargando DB:", e); }
     }
@@ -630,7 +619,7 @@
         }
         if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
         
-        // Calcular si hay items en el carrito para mostrar el botón inferir (Order Island)
+        // ACTUALIZAMOS TOTALES AQUÍ (Garantiza que la barra inferir aparezca)
         updateOrder();
         
         renderPromos();
@@ -645,6 +634,7 @@
             const productId = urlParams.get('id');
             if(productId) { setTimeout(() => openProductView(productId), 500); }
         } else {
+            // Refresca catálogo si hay data nueva de fondo sin borrar vistas
             render();
         }
     }
@@ -723,6 +713,1106 @@
     function changeHorarioSede(id) {
         if(db?.sedes) currentHorarioSede = db.sedes.find(s => s.ID_SEDE === id) || currentHorarioSede;
         if(window.navigator.vibrate) window.navigator.vibrate(10);
+        renderHorarioList(); 
+    }
+
+    function renderHorarioList() {
+        if(!currentHorarioSede) return;
+        
+        const days = ["LUNES","MARTES","MIERCOLES","JUEVES","VIERNES","SABADO","DOMINGO"];
+        const names = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+        const now = new Date();
+        const todayIdx = (now.getDay()+6)%7; 
+        
+        document.getElementById('horario-list-container').innerHTML = days.map((d,i) => {
+            const open = currentHorarioSede[`${d}_APERTURA`], close = currentHorarioSede[`${d}_CIERRE`];
+            const isToday = i === todayIdx;
+            
+            let timeHtml = '<span class="text-zinc-500">Cerrado</span>';
+            if (open && close) {
+                timeHtml = `
+                    <span class="inline-flex items-center gap-0.5">
+                        <span class="material-symbols-outlined text-[14px] text-[#39FF14] drop-shadow-[0_0_5px_rgba(57,255,20,0.6)]">lock_open</span>
+                        <span class="text-[#39FF14] font-black drop-shadow-[0_0_5px_rgba(57,255,20,0.6)]">${formatTimeFromIso(open)}</span>
+                    </span>
+                    <span class="text-zinc-500 mx-1">-</span>
+                    <span class="inline-flex items-center gap-0.5">
+                        <span class="material-symbols-outlined text-[14px] text-[#ff0000] drop-shadow-[0_0_5px_rgba(255,0,0,0.6)]">lock</span>
+                        <span class="text-[#ff0000] font-black drop-shadow-[0_0_5px_rgba(255,0,0,0.6)]">${formatTimeFromIso(close)}</span>
+                    </span>
+                `;
+            }
+            
+            return `<div onclick="void(0)" class="flex justify-between items-center p-3.5 rounded-2xl ${isToday ? 'bg-white/10 border border-white/40 shadow-lg' : 'bg-white/5 border border-white/10'}">
+                <span class="${isToday ? 'text-white font-black' : 'text-white font-bold'} text-sm">${names[i]}</span>
+                <span class="text-xs tracking-wide flex items-center">${timeHtml}</span>
+            </div>`;
+        }).join('');
+    }
+
+    function renderMapModal() {
+        if(!db?.sedes) return;
+        document.getElementById('mapa-list-container').innerHTML = db.sedes.map(s => `
+            <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 gap-3">
+                <div class="flex flex-col min-w-0 flex-1">
+                    <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                    <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
+                </div>
+                <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-500/20 text-blue-400 p-2.5 rounded-full active:scale-95 flex items-center gap-2 border border-blue-500/30 flex-shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">near_me</span> <span class="text-[10px] font-black uppercase tracking-widest">Ir</span>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function renderChatModal() {
+        if(!db?.sedes) return;
+        document.getElementById('chat-list-container').innerHTML = db.sedes.map(s => `
+            <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 gap-3">
+                <div class="flex flex-col min-w-0 flex-1">
+                    <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                    <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
+                </div>
+                <button onclick="window.open('https://wa.me/${s.TELEFONO}?text=${encodeURIComponent('Hola Combox, me comunico con la sede de ' + s.NOMBRE_SEDE + '. Necesito información.')}', '_blank')" class="bg-[#25D366]/20 text-[#25D366] px-3 py-1.5 rounded-full active:scale-[0.90] transition-transform flex items-center gap-1.5 border border-[#25D366]/40 flex-shrink-0">
+                    <svg class="w-4 h-4 fill-current drop-shadow-md" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </div>
+            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
+        </div>
+        
+        <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="openInstagram()">
+            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
+                <svg class="w-6 h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            </div>
+            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
+        </div>
+    </div>
+</div>
+
+<div class="sticky z-50 px-4 mt-8" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
+    <div class="flex flex-col items-center gap-3 max-w-2xl mx-auto island-width">
+        <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full border border-white/10 shadow-2xl" id="type-tabs-container">
+            <button class="type-tab type-tab-active" onclick="setType('Individual', this)">Individual</button>
+            <button class="type-tab type-tab-inactive" onclick="setType('Combos', this)">Combos</button>
+            <button class="type-tab type-tab-inactive" onclick="setType('Servicios', this)">Servicios</button>
+        </div>
+
+        <div class="w-full bg-[rgba(15,15,18,0.75)] backdrop-blur-xl rounded-full border border-white/10 flex items-center px-4 shadow-2xl transition-all h-[54px]" id="search-island">
+            <button id="search-action-btn" onclick="handleSearchClick()" class="text-zinc-400 mr-2 flex items-center justify-center outline-none active:scale-90 transition-all">
+                <span id="search-icon" class="material-symbols-outlined text-[22px]">search</span>
+            </button>
+            <input class="flex-1 bg-transparent border-none py-2 text-[15px] text-white outline-none focus:ring-0 placeholder:text-zinc-500" id="global-search" oninput="onSearchInput()" placeholder="¿Qué buscas?" type="text"/>
+            <button id="cat-menu-btn" class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all ml-2 flex-shrink-0" onclick="toggleCategoriesModal(true)">
+                <span class="material-symbols-outlined text-[20px]">menu</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<section class="mt-10 px-4 max-content-width hidden" id="promo-section">
+    <div class="flex items-center justify-between mb-6 px-1">
+        <div class="flex items-center gap-3">
+            <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+            <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
+        </div>
+        <button onclick="setCat('TODOS'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
+    </div>
+    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
+</section>
+
+<div id="catalog-anchor" class="pt-4"></div>
+<main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
+
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
+    <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width">
+        <div class="pl-6 flex flex-col relative z-10">
+            <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
+            <span class="font-black text-2xl text-white tracking-tighter" id="order-total">$0.00</span>
+        </div>
+        <button class="bg-primary text-white font-black px-8 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 transition-transform tracking-widest relative z-10" onclick="toggleCartModal(true)">Ver Pedido</button>
+    </div>
+</div>
+
+<div class="modal modal-bottom" id="cart-modal">
+    <div class="modal-overlay" onclick="toggleCartModal(false)"></div>
+    <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3">
+        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
+        
+        <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-primary rounded-full"></div>
+                <h2 class="text-xl font-black text-white uppercase tracking-tighter">Tu Pedido</h2>
+            </div>
+            <button class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="toggleCartModal(false)">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-5" id="cart-items-list"></div>
+        
+        <div class="pt-5 border-t border-white/10 space-y-4">
+            <div class="w-full text-center -mt-2 mb-2">
+                <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
+            </div>
+            <div class="flex justify-between items-end mb-1">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-zinc-300 font-bold tracking-widest uppercase mb-1">Tasa: <span id="tasa-bcv-display">Bs 0.00</span></span>
+                    <span class="text-[10px] text-primary/80 font-bold tracking-widest uppercase">* No incluye Delivery ni IVA</span>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-3xl font-black text-white tracking-tighter leading-none" id="cart-subtotal">$0.00</span>
+                    <span class="text-[12px] text-zinc-400 font-bold tracking-wider mt-1" id="cart-subtotal-bs">Bs 0,00</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-[13px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('delivery')">
+                    <span class="material-symbols-outlined text-[22px]">two_wheeler</span> Delivery
+                </button>
+                <button class="w-full bg-white/10 text-white font-[900] py-4 rounded-2xl text-[13px] uppercase border border-white/10 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('pickup')">
+                    <span class="material-symbols-outlined text-[22px]">storefront</span> Pick-Up
+                </button>
+            </div>
+            <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Carrito</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="checkout-modal">
+    <div class="modal-overlay" onclick="closeCheckout()"></div>
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div>
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter" id="checkout-title">Datos</h2>
+            </div>
+            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="closeCheckout()">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-4" id="checkout-scroll-area">
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
+                <div class="relative">
+                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
+                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
+                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
+            </div>
+            <div id="checkout-location-container">
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación Actual</label>
+                <div class="flex gap-2">
+                    <input type="text" id="checkout-location" autocomplete="off" oninput="updateLocationBtnState()" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 placeholder:text-white/30 text-base flex-1" placeholder="Buscando tu ubicación...">
+                    <button id="checkout-loc-action-btn" class="w-14 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center active:scale-90 flex-shrink-0" onclick="handleLocationAction()"><span class="material-symbols-outlined text-xl" id="checkout-loc-action-icon">delete_sweep</span></button>
+                </div>
+                <p class="text-[9px] text-zinc-500 mt-2 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">info</span> Borra para escribir manualmente o auto-completar.</p>
+            </div>
+        </div>
+        <div class="pt-6 border-t border-white/10 mt-auto">
+            <button id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="sedes-modal">
+    <div class="modal-overlay" onclick="toggleSedesModal(false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-8"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Seleccionar Sede</h2></div><button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleSedesModal(false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
+        <div class="space-y-4" id="sedes-list-container"></div>
+    </div>
+</div>
+
+<div class="modal" id="horario-modal">
+    <div class="modal-overlay" onclick="toggleModal('horario-modal', false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Horario Semanal</h2></div>
+            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleModal('horario-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
+        </div>
+        <div class="relative mb-6">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white pointer-events-none z-10">storefront</span>
+            <select id="horario-sede-select" class="w-full bg-white/10 border border-white/20 rounded-2xl py-3 pr-10 pl-11 text-white outline-none focus:ring-1 focus:ring-primary focus:border-primary text-xs font-black uppercase tracking-wider appearance-none shadow-lg relative" onchange="changeHorarioSede(this.value)"></select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none z-10">expand_more</span>
+        </div>
+        <div class="space-y-2" id="horario-list-container"></div>
+    </div>
+</div>
+
+<div class="modal" id="mapa-modal">
+    <div class="modal-overlay" onclick="toggleModal('mapa-modal', false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-blue-500 rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Ver Ubicación</h2></div>
+            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleModal('mapa-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
+        </div>
+        <div class="space-y-3" id="mapa-list-container"></div>
+    </div>
+</div>
+
+<div class="modal" id="chat-modal">
+    <div class="modal-overlay" onclick="toggleModal('chat-modal', false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-[#25D366] rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Contactar Sede</h2></div>
+            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleModal('chat-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
+        </div>
+        <div class="space-y-3" id="chat-list-container"></div>
+    </div>
+</div>
+
+<div class="modal" id="categories-modal">
+    <div class="modal-overlay" id="cat-overlay" onclick="toggleCategoriesModal(false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-8"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Categorías</h2></div><button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleCategoriesModal(false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="all-categories-list"></div>
+    </div>
+</div>
+
+<div class="modal" id="product-modal">
+    <div class="modal-overlay" onclick="toggleProductModal(false)"></div>
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden" id="product-content"></div>
+</div>
+
+<script>
+    const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
+    
+    let db = null; 
+    let cart = {}; 
+    let currentType = 'Individual'; 
+    let currentCat = 'TODOS'; 
+    let currentSede = null; 
+    let currentHorarioSede = null; 
+    let checkoutType = 'delivery'; 
+    let checkoutSede = null; 
+    let lastScrollY = window.scrollY; 
+    let tasaBCV = 1; 
+    let audioCtx;
+    let ticking = false;
+    let searchTimer = null; 
+    let initialRenderDone = false;
+    
+    const searchContainer = document.getElementById('search-container');
+
+    // --- LÓGICA PULL-TO-REFRESH ---
+    let ptrStartY = 0;
+    let isPulling = false;
+    
+    document.addEventListener('touchstart', e => {
+        if (window.scrollY <= 0 && !document.body.classList.contains('modal-open')) {
+            ptrStartY = e.touches[0].clientY;
+            isPulling = true;
+            document.getElementById('ptr-pill').style.transition = 'none';
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchmove', e => {
+        if (!isPulling) return;
+        const currentY = e.touches[0].clientY;
+        const pullDistance = currentY - ptrStartY;
+        
+        if (pullDistance > 0 && window.scrollY <= 0) {
+            const ptrPill = document.getElementById('ptr-pill');
+            const ptrIcon = document.getElementById('ptr-icon');
+            const ptrText = document.getElementById('ptr-text');
+            
+            let move = pullDistance * 0.4;
+            if (move > 80) move = 80;
+            
+            ptrPill.style.transform = `translate(-50%, ${move - 60}px)`; 
+            ptrIcon.style.transform = `rotate(${move * 5}deg)`;
+            
+            if (move > 55) {
+                ptrText.innerText = "Suelta para actualizar";
+                ptrIcon.classList.add('text-[#39FF14]'); 
+                ptrIcon.classList.remove('text-primary');
+            } else {
+                ptrText.innerText = "Desliza abajo";
+                ptrIcon.classList.remove('text-[#39FF14]');
+                ptrIcon.classList.add('text-primary');
+            }
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchend', e => {
+        if (!isPulling) return;
+        isPulling = false;
+        
+        const ptrPill = document.getElementById('ptr-pill');
+        const ptrIcon = document.getElementById('ptr-icon');
+        const ptrText = document.getElementById('ptr-text');
+        
+        ptrPill.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        
+        const currentY = e.changedTouches[0].clientY;
+        const pullDistance = currentY - ptrStartY;
+        const move = pullDistance * 0.4;
+        
+        if (move > 55 && window.scrollY <= 0) {
+            ptrPill.style.transform = `translate(-50%, 20px)`;
+            ptrText.innerText = "Actualizando...";
+            ptrIcon.classList.add('animate-spin');
+            
+            // Guardar carrito por seguridad
+            saveCart(); 
+            // Eliminar caché para forzar la carga de datos nuevos
+            localStorage.removeItem('combox_db');
+            
+            if(window.navigator.vibrate) window.navigator.vibrate(20);
+            
+            // Pequeña pausa para que se vea el spinner y recargar
+            setTimeout(() => {
+                window.location.reload();
+            }, 600);
+        } else {
+            ptrPill.style.transform = `translate(-50%, -150%)`;
+        }
+    });
+
+    // --- LÓGICA DE AUDIO Y SCROLL ---
+    function initAudio() {
+        if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    }
+
+    function playClick() {
+        if(!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.04);
+    }
+
+    document.addEventListener('touchstart', initAudio, {once: true, passive: true});
+    document.addEventListener('click', initAudio, {once: true, passive: true});
+    
+    window.addEventListener('scroll', () => {
+        if (document.body.classList.contains('modal-open')) return;
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                const currentScrollY = window.scrollY;
+                const searchValue = document.getElementById('global-search').value.trim();
+
+                if (searchValue !== '') { searchContainer.classList.remove('search-hidden'); } 
+                else if (currentScrollY > 300) {
+                    if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
+                    else searchContainer.classList.remove('search-hidden'); 
+                } else { searchContainer.classList.remove('search-hidden'); }
+                lastScrollY = currentScrollY;
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const inputs = document.querySelectorAll('#checkout-name, #checkout-location');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
+            input.addEventListener('blur', function() {
+                const overlay = document.querySelector('#checkout-modal .modal-overlay');
+                const content = document.querySelector('#checkout-modal .modal-content');
+                if (overlay) { overlay.style.opacity = '0.99'; setTimeout(() => overlay.style.opacity = '1', 50); }
+                if (content) { content.style.opacity = '0.99'; setTimeout(() => content.style.opacity = '1', 50); }
+            });
+        });
+    });
+
+    async function init() {
+        // 1. CARGA CACHÉ LOCAL
+        let loadedFromCache = false;
+        try {
+            const cachedDB = localStorage.getItem('combox_db');
+            if (cachedDB) {
+                db = JSON.parse(cachedDB);
+                loadedFromCache = true;
+            }
+        } catch(e) { console.error("Error cargando caché:", e); }
+
+        // 2. RECUPERA CARRITO PERSISTENTE
+        try {
+            const savedCart = localStorage.getItem('combox_cart');
+            if(savedCart) {
+                const parsed = JSON.parse(savedCart);
+                if (Date.now() - parsed.time < 86400000) { cart = parsed.cart; } 
+                else { localStorage.removeItem('combox_cart'); }
+            }
+        } catch(e) { console.error("Error al cargar carrito:", e); }
+
+        // 3. RENDERIZA RÁPIDO SI HAY CACHÉ
+        if (loadedFromCache) {
+            setupAfterDBLoad(true);
+        }
+
+        // 4. ACTUALIZACIÓN EN SEGUNDO PLANO
+        try {
+            const res = await fetch(API);
+            const freshDB = await res.json();
+            db = freshDB;
+            localStorage.setItem('combox_db', JSON.stringify(db)); // Guarda fresco
+            setupAfterDBLoad(false); 
+        } catch(e) { console.error("Error cargando DB:", e); }
+    }
+
+    function setupAfterDBLoad(isCached) {
+        if(db && db.finanzas && db.finanzas.tasa_usd) {
+            tasaBCV = parseFloat(db.finanzas.tasa_usd);
+            const displayEl = document.getElementById('tasa-bcv-display');
+            if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
+        }
+        if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
+        
+        // ACTUALIZAMOS TOTALES AQUÍ (Garantiza que la barra inferior aparezca)
+        updateOrder();
+        
+        renderPromos();
+        
+        if(!initialRenderDone) {
+            render(); 
+            initialRenderDone = true;
+            
+            setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            if(productId) { setTimeout(() => openProductView(productId), 500); }
+        } else {
+            // Refresca catálogo si hay data nueva de fondo sin borrar vistas
+            render();
+        }
+    }
+
+    function saveCart() {
+        try { localStorage.setItem('combox_cart', JSON.stringify({cart: cart, time: Date.now()})); } 
+        catch(e) { console.error("Error guardando carrito:", e); }
+    }
+
+    function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
+
+    let scrollPosition = 0;
+    function lockScroll(lock) { 
+        const body = document.body;
+        if(lock) { 
+            if(!body.classList.contains('modal-open')) {
+                scrollPosition = window.scrollY;
+                body.style.position = 'fixed';
+                body.style.top = `-${scrollPosition}px`;
+                body.style.width = '100%';
+                body.classList.add('modal-open');
+            }
+        } else { 
+            if(body.classList.contains('modal-open')) {
+                body.style.position = '';
+                body.style.top = '';
+                body.style.width = '';
+                body.classList.remove('modal-open'); 
+                window.scrollTo(0, scrollPosition);
+            }
+        } 
+    }
+    
+    function checkActiveModals() {
+        const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal'];
+        if(!modals.some(id => document.getElementById(id).classList.contains('active'))) lockScroll(false);
+    }
+    
+    function animateModal(modalId) { 
+        requestAnimationFrame(() => { requestAnimationFrame(() => { document.getElementById(modalId).classList.add('active'); lockScroll(true); }); });
+    }
+
+    function toggleModal(modalId, show, renderFn) { 
+        const modal = document.getElementById(modalId); 
+        if(show) { 
+            if(renderFn) {
+                setTimeout(() => { renderFn(); animateModal(modalId); }, 15);
+            } else {
+                animateModal(modalId);
+            }
+        } else { 
+            modal.classList.remove('active'); 
+            setTimeout(() => { checkActiveModals(); }, 300);
+            document.body.style.pointerEvents = 'none';
+            setTimeout(() => document.body.style.pointerEvents = 'auto', 350);
+        } 
+    }
+    
+    function toggleSedesModal(show) { toggleModal('sedes-modal', show, renderSedesModal); }
+    function toggleCategoriesModal(show) { toggleModal('categories-modal', show, renderAllCategories); }
+    function toggleCartModal(show) { toggleModal('cart-modal', show, renderCart); }
+    function toggleProductModal(show) { toggleModal('product-modal', show, null); }
+
+    function formatTimeFromIso(iso) { if(!iso) return null; return new Date(iso).toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}); }
+    
+    function openHorarioModal() {
+        if(!currentSede || !db?.sedes) return;
+        currentHorarioSede = currentSede; 
+        
+        const select = document.getElementById('horario-sede-select');
+        select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}" ${currentHorarioSede.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`).join('');
+        
+        setTimeout(() => { renderHorarioList(); toggleModal('horario-modal', true); }, 15);
+    }
+
+    function changeHorarioSede(id) {
+        if(db?.sedes) currentHorarioSede = db.sedes.find(s => s.ID_SEDE === id) || currentHorarioSede;
+        if(window.navigator.vibrate) window.navigator.vibrate(10);
+        renderHorarioList(); 
+    }
+
+    function renderHorarioList() {
+        if(!currentHorarioSede) return;
+        
+        const days = ["LUNES","MARTES","MIERCOLES","JUEVES","VIERNES","SABADO","DOMINGO"];
+        const names = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+        const now = new Date();
+        const todayIdx = (now.getDay()+6)%7; 
+        
+        document.getElementById('horario-list-container').innerHTML = days.map((d,i) => {
+            const open = currentHorarioSede[`${d}_APERTURA`], close = currentHorarioSede[`${d}_CIERRE`];
+            const isToday = i === todayIdx;
+            
+            let timeHtml = '<span class="text-zinc-500">Cerrado</span>';
+            if (open && close) {
+                timeHtml = `
+                    <span class="inline-flex items-center gap-0.5">
+                        <span class="material-symbols-outlined text-[14px] text-[#39FF14] drop-shadow-[0_0_5px_rgba(57,255,20,0.6)]">lock_open</span>
+                        <span class="text-[#39FF14] font-black drop-shadow-[0_0_5px_rgba(57,255,20,0.6)]">${formatTimeFromIso(open)}</span>
+                    </span>
+                    <span class="text-zinc-500 mx-1">-</span>
+                    <span class="inline-flex items-center gap-0.5">
+                        <span class="material-symbols-outlined text-[14px] text-[#ff0000] drop-shadow-[0_0_5px_rgba(255,0,0,0.6)]">lock</span>
+                        <span class="text-[#ff0000] font-black drop-shadow-[0_0_5px_rgba(255,0,0,0.6)]">${formatTimeFromIso(close)}</span>
+                    </span>
+                `;
+            }
+            
+            return `<div onclick="void(0)" class="flex justify-between items-center p-3.5 rounded-2xl ${isToday ? 'bg-white/10 border border-white/40 shadow-lg' : 'bg-white/5 border border-white/10'}">
+                <span class="${isToday ? 'text-white font-black' : 'text-white font-bold'} text-sm">${names[i]}</span>
+                <span class="text-xs tracking-wide flex items-center">${timeHtml}</span>
+            </div>`;
+        }).join('');
+    }
+
+    function renderMapModal() {
+        if(!db?.sedes) return;
+        document.getElementById('mapa-list-container').innerHTML = db.sedes.map(s => `
+            <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 gap-3">
+                <div class="flex flex-col min-w-0 flex-1">
+                    <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                    <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
+                </div>
+                <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-500/20 text-blue-400 p-2.5 rounded-full active:scale-95 flex items-center gap-2 border border-blue-500/30 flex-shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">near_me</span> <span class="text-[10px] font-black uppercase tracking-widest">Ir</span>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function renderChatModal() {
+        if(!db?.sedes) return;
+        document.getElementById('chat-list-container').innerHTML = db.sedes.map(s => `
+            <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 gap-3">
+                <div class="flex flex-col min-w-0 flex-1">
+                    <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                    <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
+                </div>
+                <button onclick="window.open('https://wa.me/${s.TELEFONO}?text=${encodeURIComponent('Hola Combox, me comunico con la sede de ' + s.NOMBRE_SEDE + '. Necesito información.')}', '_blank')" class="bg-[#25D366]/20 text-[#25D366] px-3 py-1.5 rounded-full active:scale-[0.90] transition-transform flex items-center gap-1.5 border border-[#25D366]/40 flex-shrink-0">
+                    <svg class="w-4 h-4 fill-current drop-shadow-md" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </div>
+            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
+        </div>
+        
+        <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="openInstagram()">
+            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
+                <svg class="w-6 h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            </div>
+            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
+        </div>
+    </div>
+</div>
+
+<div class="sticky z-50 px-4 mt-8" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
+    <div class="flex flex-col items-center gap-3 max-w-2xl mx-auto island-width">
+        <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full border border-white/10 shadow-2xl" id="type-tabs-container">
+            <button class="type-tab type-tab-active" onclick="setType('Individual', this)">Individual</button>
+            <button class="type-tab type-tab-inactive" onclick="setType('Combos', this)">Combos</button>
+            <button class="type-tab type-tab-inactive" onclick="setType('Servicios', this)">Servicios</button>
+        </div>
+
+        <div class="w-full bg-[rgba(15,15,18,0.75)] backdrop-blur-xl rounded-full border border-white/10 flex items-center px-4 shadow-2xl transition-all h-[54px]" id="search-island">
+            <button id="search-action-btn" onclick="handleSearchClick()" class="text-zinc-400 mr-2 flex items-center justify-center outline-none active:scale-90 transition-all">
+                <span id="search-icon" class="material-symbols-outlined text-[22px]">search</span>
+            </button>
+            <input class="flex-1 bg-transparent border-none py-2 text-[15px] text-white outline-none focus:ring-0 placeholder:text-zinc-500" id="global-search" oninput="onSearchInput()" placeholder="¿Qué buscas?" type="text"/>
+            <button id="cat-menu-btn" class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all ml-2 flex-shrink-0" onclick="toggleCategoriesModal(true)">
+                <span class="material-symbols-outlined text-[20px]">menu</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<section class="mt-10 px-4 max-content-width hidden" id="promo-section">
+    <div class="flex items-center justify-between mb-6 px-1">
+        <div class="flex items-center gap-3">
+            <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+            <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
+        </div>
+        <button onclick="setCat('TODOS'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
+    </div>
+    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
+</section>
+
+<div id="catalog-anchor" class="pt-4"></div>
+<main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
+
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
+    <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width">
+        <div class="pl-6 flex flex-col relative z-10">
+            <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
+            <span class="font-black text-2xl text-white tracking-tighter" id="order-total">$0.00</span>
+        </div>
+        <button class="bg-primary text-white font-black px-8 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 transition-transform tracking-widest relative z-10" onclick="toggleCartModal(true)">Ver Pedido</button>
+    </div>
+</div>
+
+<div class="modal modal-bottom" id="cart-modal">
+    <div class="modal-overlay" onclick="toggleCartModal(false)"></div>
+    <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3">
+        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
+        
+        <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-primary rounded-full"></div>
+                <h2 class="text-xl font-black text-white uppercase tracking-tighter">Tu Pedido</h2>
+            </div>
+            <button class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="toggleCartModal(false)">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-5" id="cart-items-list"></div>
+        
+        <div class="pt-5 border-t border-white/10 space-y-4">
+            <div class="w-full text-center -mt-2 mb-2">
+                <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
+            </div>
+            <div class="flex justify-between items-end mb-1">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-zinc-300 font-bold tracking-widest uppercase mb-1">Tasa: <span id="tasa-bcv-display">Bs 0.00</span></span>
+                    <span class="text-[10px] text-primary/80 font-bold tracking-widest uppercase">* No incluye Delivery ni IVA</span>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-3xl font-black text-white tracking-tighter leading-none" id="cart-subtotal">$0.00</span>
+                    <span class="text-[12px] text-zinc-400 font-bold tracking-wider mt-1" id="cart-subtotal-bs">Bs 0,00</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-[13px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('delivery')">
+                    <span class="material-symbols-outlined text-[22px]">two_wheeler</span> Delivery
+                </button>
+                <button class="w-full bg-white/10 text-white font-[900] py-4 rounded-2xl text-[13px] uppercase border border-white/10 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('pickup')">
+                    <span class="material-symbols-outlined text-[22px]">storefront</span> Pick-Up
+                </button>
+            </div>
+            <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Carrito</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="checkout-modal">
+    <div class="modal-overlay" onclick="closeCheckout()"></div>
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div>
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter" id="checkout-title">Datos</h2>
+            </div>
+            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="closeCheckout()">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-4" id="checkout-scroll-area">
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
+                <div class="relative">
+                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
+                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
+                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
+            </div>
+            <div id="checkout-location-container">
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación Actual</label>
+                <div class="flex gap-2">
+                    <input type="text" id="checkout-location" autocomplete="off" oninput="updateLocationBtnState()" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-0 placeholder:text-white/30 text-base flex-1" placeholder="Buscando tu ubicación...">
+                    <button id="checkout-loc-action-btn" class="w-14 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center active:scale-90 flex-shrink-0" onclick="handleLocationAction()"><span class="material-symbols-outlined text-xl" id="checkout-loc-action-icon">delete_sweep</span></button>
+                </div>
+                <p class="text-[9px] text-zinc-500 mt-2 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">info</span> Borra para escribir manualmente o auto-completar.</p>
+            </div>
+        </div>
+        <div class="pt-6 border-t border-white/10 mt-auto">
+            <button id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="sedes-modal">
+    <div class="modal-overlay" onclick="toggleSedesModal(false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-8"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Seleccionar Sede</h2></div><button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleSedesModal(false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
+        <div class="space-y-4" id="sedes-list-container"></div>
+    </div>
+</div>
+
+<div class="modal" id="horario-modal">
+    <div class="modal-overlay" onclick="toggleModal('horario-modal', false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Horario Semanal</h2></div>
+            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleModal('horario-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
+        </div>
+        <div class="relative mb-6">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white pointer-events-none z-10">storefront</span>
+            <select id="horario-sede-select" class="w-full bg-white/10 border border-white/20 rounded-2xl py-3 pr-10 pl-11 text-white outline-none focus:ring-1 focus:ring-primary focus:border-primary text-xs font-black uppercase tracking-wider appearance-none shadow-lg relative" onchange="changeHorarioSede(this.value)"></select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none z-10">expand_more</span>
+        </div>
+        <div class="space-y-2" id="horario-list-container"></div>
+    </div>
+</div>
+
+<div class="modal" id="mapa-modal">
+    <div class="modal-overlay" onclick="toggleModal('mapa-modal', false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-blue-500 rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Ver Ubicación</h2></div>
+            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleModal('mapa-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
+        </div>
+        <div class="space-y-3" id="mapa-list-container"></div>
+    </div>
+</div>
+
+<div class="modal" id="chat-modal">
+    <div class="modal-overlay" onclick="toggleModal('chat-modal', false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-[#25D366] rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Contactar Sede</h2></div>
+            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleModal('chat-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
+        </div>
+        <div class="space-y-3" id="chat-list-container"></div>
+    </div>
+</div>
+
+<div class="modal" id="categories-modal">
+    <div class="modal-overlay" id="cat-overlay" onclick="toggleCategoriesModal(false)"></div>
+    <div class="modal-content p-6 pb-8">
+        <div class="flex items-center justify-between mb-8"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Categorías</h2></div><button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleCategoriesModal(false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="all-categories-list"></div>
+    </div>
+</div>
+
+<div class="modal" id="product-modal">
+    <div class="modal-overlay" onclick="toggleProductModal(false)"></div>
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden" id="product-content"></div>
+</div>
+
+<script>
+    const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
+    
+    let db = null; 
+    let cart = {}; 
+    let currentType = 'Individual'; 
+    let currentCat = 'TODOS'; 
+    let currentSede = null; 
+    let currentHorarioSede = null; 
+    let checkoutType = 'delivery'; 
+    let checkoutSede = null; 
+    let lastScrollY = window.scrollY; 
+    let tasaBCV = 1; 
+    let audioCtx;
+    let ticking = false;
+    let searchTimer = null; 
+    let initialRenderDone = false;
+    
+    const searchContainer = document.getElementById('search-container');
+
+    // --- LÓGICA PULL-TO-REFRESH ---
+    let ptrStartY = 0;
+    let isPulling = false;
+    
+    document.addEventListener('touchstart', e => {
+        if (window.scrollY <= 0 && !document.body.classList.contains('modal-open')) {
+            ptrStartY = e.touches[0].clientY;
+            isPulling = true;
+            document.getElementById('ptr-pill').style.transition = 'none';
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchmove', e => {
+        if (!isPulling) return;
+        const currentY = e.touches[0].clientY;
+        const pullDistance = currentY - ptrStartY;
+        
+        if (pullDistance > 0 && window.scrollY <= 0) {
+            const ptrPill = document.getElementById('ptr-pill');
+            const ptrIcon = document.getElementById('ptr-icon');
+            const ptrText = document.getElementById('ptr-text');
+            
+            let move = pullDistance * 0.4;
+            if (move > 80) move = 80;
+            
+            ptrPill.style.transform = `translate(-50%, ${move - 60}px)`; 
+            ptrIcon.style.transform = `rotate(${move * 5}deg)`;
+            
+            if (move > 55) {
+                ptrText.innerText = "Suelta para actualizar";
+                ptrIcon.classList.add('text-[#39FF14]'); 
+                ptrIcon.classList.remove('text-primary');
+            } else {
+                ptrText.innerText = "Desliza abajo";
+                ptrIcon.classList.remove('text-[#39FF14]');
+                ptrIcon.classList.add('text-primary');
+            }
+        }
+    }, {passive: true});
+
+    document.addEventListener('touchend', e => {
+        if (!isPulling) return;
+        isPulling = false;
+        
+        const ptrPill = document.getElementById('ptr-pill');
+        const ptrIcon = document.getElementById('ptr-icon');
+        const ptrText = document.getElementById('ptr-text');
+        
+        ptrPill.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        
+        const currentY = e.changedTouches[0].clientY;
+        const pullDistance = currentY - ptrStartY;
+        const move = pullDistance * 0.4;
+        
+        if (move > 55 && window.scrollY <= 0) {
+            ptrPill.style.transform = `translate(-50%, 20px)`;
+            ptrText.innerText = "Actualizando...";
+            ptrIcon.classList.add('animate-spin');
+            
+            // Guardar carrito por seguridad
+            saveCart(); 
+            // Eliminar caché para forzar la carga de datos nuevos
+            localStorage.removeItem('combox_db');
+            
+            if(window.navigator.vibrate) window.navigator.vibrate(20);
+            
+            // Pequeña pausa para que se vea el spinner y recargar
+            setTimeout(() => {
+                window.location.reload();
+            }, 600);
+        } else {
+            ptrPill.style.transform = `translate(-50%, -150%)`;
+        }
+    });
+
+    // --- LÓGICA DE AUDIO Y SCROLL ---
+    function initAudio() {
+        if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    }
+
+    function playClick() {
+        if(!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.04);
+    }
+
+    document.addEventListener('touchstart', initAudio, {once: true, passive: true});
+    document.addEventListener('click', initAudio, {once: true, passive: true});
+    
+    window.addEventListener('scroll', () => {
+        if (document.body.classList.contains('modal-open')) return;
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                const currentScrollY = window.scrollY;
+                const searchValue = document.getElementById('global-search').value.trim();
+
+                if (searchValue !== '') { searchContainer.classList.remove('search-hidden'); } 
+                else if (currentScrollY > 300) {
+                    if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
+                    else searchContainer.classList.remove('search-hidden'); 
+                } else { searchContainer.classList.remove('search-hidden'); }
+                lastScrollY = currentScrollY;
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const inputs = document.querySelectorAll('#checkout-name, #checkout-location');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
+            input.addEventListener('blur', function() {
+                const overlay = document.querySelector('#checkout-modal .modal-overlay');
+                const content = document.querySelector('#checkout-modal .modal-content');
+                if (overlay) { overlay.style.opacity = '0.99'; setTimeout(() => overlay.style.opacity = '1', 50); }
+                if (content) { content.style.opacity = '0.99'; setTimeout(() => content.style.opacity = '1', 50); }
+            });
+        });
+    });
+
+    async function init() {
+        // 1. CARGA CACHÉ LOCAL
+        let loadedFromCache = false;
+        try {
+            const cachedDB = localStorage.getItem('combox_db');
+            if (cachedDB) {
+                db = JSON.parse(cachedDB);
+                loadedFromCache = true;
+            }
+        } catch(e) { console.error("Error cargando caché:", e); }
+
+        // 2. RECUPERA CARRITO PERSISTENTE
+        try {
+            const savedCart = localStorage.getItem('combox_cart');
+            if(savedCart) {
+                const parsed = JSON.parse(savedCart);
+                if (Date.now() - parsed.time < 86400000) { cart = parsed.cart; } 
+                else { localStorage.removeItem('combox_cart'); }
+            }
+        } catch(e) { console.error("Error al cargar carrito:", e); }
+
+        // 3. RENDERIZA RÁPIDO SI HAY CACHÉ
+        if (loadedFromCache) {
+            setupAfterDBLoad(true);
+        }
+
+        // 4. ACTUALIZACIÓN EN SEGUNDO PLANO
+        try {
+            const res = await fetch(API);
+            const freshDB = await res.json();
+            db = freshDB;
+            localStorage.setItem('combox_db', JSON.stringify(db)); // Guarda fresco
+            setupAfterDBLoad(false); 
+        } catch(e) { console.error("Error cargando DB:", e); }
+    }
+
+    function setupAfterDBLoad(isCached) {
+        if(db && db.finanzas && db.finanzas.tasa_usd) {
+            tasaBCV = parseFloat(db.finanzas.tasa_usd);
+            const displayEl = document.getElementById('tasa-bcv-display');
+            if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
+        }
+        if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
+        
+        // ACTUALIZAMOS TOTALES AQUÍ (Garantiza que la barra inferior aparezca)
+        updateOrder();
+        
+        renderPromos();
+        
+        if(!initialRenderDone) {
+            render(); 
+            initialRenderDone = true;
+            
+            setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            if(productId) { setTimeout(() => openProductView(productId), 500); }
+        } else {
+            // Refresca catálogo si hay data nueva de fondo sin borrar vistas
+            render();
+        }
+    }
+
+    function saveCart() {
+        try { localStorage.setItem('combox_cart', JSON.stringify({cart: cart, time: Date.now()})); } 
+        catch(e) { console.error("Error guardando carrito:", e); }
+    }
+
+    function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
+
+    let scrollPosition = 0;
+    function lockScroll(lock) { 
+        const body = document.body;
+        if(lock) { 
+            if(!body.classList.contains('modal-open')) {
+                scrollPosition = window.scrollY;
+                body.style.position = 'fixed';
+                body.style.top = `-${scrollPosition}px`;
+                body.style.width = '100%';
+                body.classList.add('modal-open');
+            }
+        } else { 
+            if(body.classList.contains('modal-open')) {
+                body.style.position = '';
+                body.style.top = '';
+                body.style.width = '';
+                body.classList.remove('modal-open'); 
+                window.scrollTo(0, scrollPosition);
+            }
+        } 
+    }
+    
+    function checkActiveModals() {
+        const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal'];
+        if(!modals.some(id => document.getElementById(id).classList.contains('active'))) lockScroll(false);
+    }
+    
+    function animateModal(modalId) { 
+        requestAnimationFrame(() => { requestAnimationFrame(() => { document.getElementById(modalId).classList.add('active'); lockScroll(true); }); });
+    }
+
+    function toggleModal(modalId, show, renderFn) { 
+        const modal = document.getElementById(modalId); 
+        if(show) { 
+            if(renderFn) {
+                setTimeout(() => { renderFn(); animateModal(modalId); }, 15);
+            } else {
+                animateModal(modalId);
+            }
+        } else { 
+            modal.classList.remove('active'); 
+            setTimeout(() => { checkActiveModals(); }, 300);
+            document.body.style.pointerEvents = 'none';
+            setTimeout(() => document.body.style.pointerEvents = 'auto', 350);
+        } 
+    }
+    
+    function toggleSedesModal(show) { toggleModal('sedes-modal', show, renderSedesModal); }
+    function toggleCategoriesModal(show) { toggleModal('categories-modal', show, renderAllCategories); }
+    function toggleCartModal(show) { toggleModal('cart-modal', show, renderCart); }
+    function toggleProductModal(show) { toggleModal('product-modal', show, null); }
+
+    function formatTimeFromIso(iso) { if(!iso) return null; return new Date(iso).toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}); }
+    
+    function openHorarioModal() {
+        if(!currentSede || !db?.sedes) return;
+        currentHorarioSede = currentSede; 
+        
+        const select = document.getElementById('horario-sede-select');
+        select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}" ${currentHorarioSede.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`).join('');
+        
+        setTimeout(() => { renderHorarioList(); toggleModal('horario-modal', true); }, 15);
+    }
+
+    function changeHorarioSede(id) {
+        if(db?.sedes) currentHorarioSede = db.sedes.find(s => s.ID_SEDE === id) || currentHorarioSede;
+        if(window.navigator.vibrate) window.navigator.vibrate(5); // Vibración mínima
         renderHorarioList(); 
     }
 
@@ -967,7 +2057,7 @@
     function selectLocation(id) { 
         if(db?.sedes) currentSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
         updateHeader(); 
-        if(window.navigator.vibrate) window.navigator.vibrate(5); 
+        if(window.navigator.vibrate) window.navigator.vibrate(10); 
         setTimeout(() => toggleSedesModal(false), 50); 
     }
 
@@ -1310,6 +2400,7 @@
         
         showSkeletons();
         
+        // Timeout simple y seguro para renderizar
         setTimeout(() => {
             renderCatalog();
         }, 150); 

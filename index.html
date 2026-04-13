@@ -11,7 +11,7 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=block" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
     
     <script id="tailwind-config">
@@ -42,15 +42,15 @@
         input::-webkit-calendar-picker-indicator, input::-webkit-listbox, input::-webkit-contacts-auto-fill-button { display: none !important; visibility: hidden !important; pointer-events: none !important; }
         img { -webkit-user-drag: none; pointer-events: none; }
         
-        /* FIX iOS FRANJA NEGRA: Uso de dvh y -webkit-fill-available */
-        html { background-color: #050505; height: 100%; min-height: -webkit-fill-available; overscroll-behavior: none; }
-        body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; }
+        /* Ajuste de color para evitar franjas en iOS */
+        html, body { background-color: #0A0A0B; overscroll-behavior: none; }
+        body { background: #0A0A0B; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; }
         
-        body.modal-open { overflow: hidden !important; position: fixed; width: 100%; height: 100%; } 
+        body.modal-open { overflow: hidden !important; } 
 
-        /* FIX SPLASH FRANJA NEGRA: 100dvh */
-        #splash { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
-        .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; }
+        /* Ajuste DVH para Splash y tipografía estricta para evitar saltos */
+        #splash { position: fixed; inset: 0; top: 0; left: 0; height: 100dvh; width: 100vw; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
+        .pulse-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
         #search-container { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
@@ -126,11 +126,11 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .order-island-hidden { transform: translate(-50%, 160px) !important; }
 
-        .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; }
+        .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
         .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
-        .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
         
         .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; }
         .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; }
@@ -166,9 +166,9 @@
         }
 
         @media (max-width: 395px) {
-            .nav-col { min-width: 62px !important; gap: 0.3rem !important; }
-            .nav-btn-glass { width: 46px !important; height: 46px !important; }
-            .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 24px !important; width: 24px !important; height: 24px !important; }
+            .nav-col { min-width: 60px !important; gap: 0.3rem !important; }
+            .nav-btn-glass { width: 44px !important; height: 44px !important; }
+            .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 22px !important; width: 22px !important; height: 22px !important; }
             .nav-text { font-size: 8px !important; }
             
             .auto-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)) !important; gap: 0.75rem !important; }
@@ -183,7 +183,7 @@
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
     </style>
 </head>
-<body class="pb-32" oncontextmenu="return false;">
+<body class="pb-28" oncontextmenu="return false;">
 
 <div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-40 pointer-events-none transition-transform duration-300" style="transform: translateY(-100%);">
     <div class="bg-black/60 backdrop-blur-xl border border-white/20 text-white rounded-full px-5 py-2.5 flex items-center gap-2 shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
@@ -209,36 +209,36 @@
     </div>
 </header>
 
-<div class="relative -mt-8 px-4 z-20 max-content-width">
-    <div class="flex overflow-x-auto hide-scrollbar py-2 justify-center gap-4 px-1 w-full max-w-md mx-auto">
+<div class="relative -mt-8 px-2 z-20 max-content-width">
+    <div class="flex py-2 justify-center gap-1.5 md:gap-4 w-full mx-auto">
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleSedesModal(true)">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0" style="color: #39FF14;">storefront</span></div>
-            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">SEDES</span>
+        <div class="flex flex-col items-center gap-2 min-w-[60px] md:min-w-[65px] nav-col" onclick="toggleSedesModal(true)">
+            <div class="w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-xl md:text-2xl leading-none m-0 p-0" style="color: #39FF14;">storefront</span></div>
+            <span class="text-[8px] md:text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">SEDES</span>
         </div>
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('mapa-modal', true, renderMapModal)">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">location_on</span></div>
-            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">Mapa</span>
+        <div class="flex flex-col items-center gap-2 min-w-[60px] md:min-w-[65px] nav-col" onclick="toggleModal('mapa-modal', true, renderMapModal)">
+            <div class="w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-xl md:text-2xl leading-none m-0 p-0">location_on</span></div>
+            <span class="text-[8px] md:text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">Mapa</span>
         </div>
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openHorarioModal()">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">schedule</span></div>
-            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">HORARIO</span>
+        <div class="flex flex-col items-center gap-2 min-w-[60px] md:min-w-[65px] nav-col" onclick="openHorarioModal()">
+            <div class="w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-xl md:text-2xl leading-none m-0 p-0">schedule</span></div>
+            <span class="text-[8px] md:text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">HORARIO</span>
         </div>
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('chat-modal', true, renderChatModal)">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-white m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <div class="flex flex-col items-center gap-2 min-w-[60px] md:min-w-[65px] nav-col" onclick="toggleModal('chat-modal', true, renderChatModal)">
+            <div class="w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
+                <svg class="w-5 h-5 md:w-6 md:h-6 fill-white m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             </div>
-            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
+            <span class="text-[8px] md:text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
         </div>
 
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openInstagram()">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        <div class="flex flex-col items-center gap-2 min-w-[60px] md:min-w-[65px] nav-col" onclick="openInstagram()">
+            <div class="w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
+                <svg class="w-5 h-5 md:w-6 md:h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </div>
-            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
+            <span class="text-[8px] md:text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
         </div>
     </div>
 </div>
@@ -277,7 +277,7 @@
 <div id="catalog-anchor" class="pt-4"></div>
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
 
-<div class="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
     <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width">
         <div class="pl-6 flex flex-col relative z-10">
             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
@@ -289,7 +289,7 @@
 
 <div class="modal modal-bottom" id="cart-modal">
     <div class="modal-overlay" onclick="toggleCartModal(false)"></div>
-    <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3">
+    <div class="modal-content flex flex-col max-h-[90dvh] md:max-h-[90dvh] p-5 pt-3">
         <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
         
         <div class="flex items-center justify-between mb-5">
@@ -333,7 +333,7 @@
 
 <div class="modal" id="checkout-modal">
     <div class="modal-overlay" onclick="closeCheckout()"></div>
-    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-8">
+    <div class="modal-content flex flex-col max-h-[85dvh] md:max-h-[85dvh] p-6 pb-8">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
                 <div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div>
@@ -426,7 +426,7 @@
 
 <div class="modal" id="product-modal">
     <div class="modal-overlay" onclick="toggleProductModal(false)"></div>
-    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden" id="product-content"></div>
+    <div class="modal-content flex flex-col max-h-[85dvh] md:max-h-[85dvh] overflow-hidden" id="product-content"></div>
 </div>
 
 <script>
@@ -1141,7 +1141,7 @@
         
         list.innerHTML = items.map(p => { 
             const id = getUnifiedId(p); const price = getProductPrice(p); 
-            // FIX: Añadido "C/u" en color rojo
+            // AGREGADO C/u EN ROJO AL LADO DEL PRECIO UNITARIO
             return `<div class="flex items-center justify-between bg-white/5 p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
@@ -1149,7 +1149,7 @@
                     </div>
                     <div class="flex flex-col min-w-0 flex-1 pr-1">
                         <span class="text-sm md:text-base font-[800] text-white uppercase leading-tight line-clamp-2 w-full">${p.nombre}</span>
-                        <span class="text-sm md:text-base text-primary font-black tracking-wider mt-1">$${price.toFixed(2)} <span class="text-[10px] text-red-500 font-bold ml-1">C/u</span></span>
+                        <span class="text-sm md:text-base text-primary font-black tracking-wider mt-1">$${price.toFixed(2)} <span class="text-[#ff0000] text-[10px] ml-1">C/u</span></span>
                     </div>
                 </div>
                 <div class="flex items-center justify-between bg-white/5 rounded-full p-1 border border-white/10 flex-shrink-0" onclick="event.stopPropagation();">
@@ -1274,10 +1274,9 @@
         
         showSkeletons();
         
-        // FIX AUTO-SCROLL: Llama a scrollToCatalog al cambiar de tipo
         setTimeout(() => {
             renderCatalog();
-            scrollToCatalog();
+            scrollToCatalog(); // AHORA HACE AUTO-SCROLL
         }, 150); 
     }
     
@@ -1325,7 +1324,6 @@
             const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
             const safeName = p.nombre.replace(/'/g, "\\'");
             
-            // FIX CONTORNO IMAGEN S9: Se quitó el .glass-contour y se usó borde sólido con inner shadow
             document.getElementById('product-content').innerHTML = `
                 <div class="absolute inset-0 bg-[#0A0A0B] z-0"></div>
                 <div class="absolute -inset-10 z-10 opacity-35 bg-cover bg-center pointer-events-none" style="background-image: url('${img}'); filter: blur(40px); transform: translateZ(0);"></div>
@@ -1341,29 +1339,9 @@
                 </div>
                 
                 <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
-                    <div class="relative w-full h-full max-w-[280px] max-h-[280px] rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0 flex items-center justify-center border border-white/20" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
+                    <div class="glass-contour relative w-[240px] h-[240px] md:w-[280px] md:h-[280px] rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0 flex items-center justify-center">
                         <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>
                 
-                <div class="relative z-40 p-6 md:p-8 flex flex-col flex-1 overflow-y-auto hide-scrollbar">
-                    <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-tight mb-2 drop-shadow-md">${p.nombre}</h2>
-                    <p class="text-sm text-zinc-300 leading-relaxed overflow-y-auto hide-scrollbar mb-6 drop-shadow-md">${p.descripcion || 'Sin descripción.'}</p>
-                    <div class="mt-auto pt-4 border-t border-white/20 flex items-center justify-between">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-0.5">Precio</span>
-                            <span class="text-3xl font-black text-white tracking-tighter leading-none drop-shadow-lg">$${price.toFixed(2)}</span>
-                        </div>
-                        <button onclick="add('${id}'); toggleProductModal(false);" ${isOut ? 'disabled' : ''} class="bg-primary text-white font-black px-8 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 tracking-widest ${isOut ? 'opacity-50 grayscale' : ''}">
-                            ${isOut ? 'Agotado' : 'Agregar'}
-                        </button>
-                    </div>
-                </div>`;
-            toggleProductModal(true); 
-        }, 15);
-    }
-    
-    init();
-</script>
-</body>
-</html>
+                <div class="relative z-40 p-6 md:p-8 flex flex-col flex-1 overflow-y-auto hide

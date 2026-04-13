@@ -11,7 +11,7 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=block" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
     
     <script id="tailwind-config">
@@ -42,24 +42,21 @@
         input::-webkit-calendar-picker-indicator, input::-webkit-listbox, input::-webkit-contacts-auto-fill-button { display: none !important; visibility: hidden !important; pointer-events: none !important; }
         img { -webkit-user-drag: none; pointer-events: none; }
         
-        /* FIX iOS FRANJA NEGRA: Uso de dvh y -webkit-fill-available */
-        html { background-color: #050505; height: 100%; min-height: -webkit-fill-available; overscroll-behavior: none; }
-        body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; }
-        
-        body.modal-open { overflow: hidden !important; touch-action: none; } 
+        html { background-color: #050505; overscroll-behavior: none; }
+        body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; }
+        body.modal-open { overflow: hidden !important; } 
 
-        /* FIX SPLASH FRANJA NEGRA: 100dvh */
-        #splash { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
+        #splash { position: fixed; inset: 0; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
         #search-container { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
         .search-hidden { transform: translateY(-150%) !important; }
 
-        button, .nav-col, .type-tab, .cat-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        button, .nav-col, .type-tab { transition: transform 0.15s ease, background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
 
         .btn-bounce { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; }
-        .btn-bounce-active, .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
+        .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
 
         .image-container { position: relative; width: 100%; overflow: hidden; background: rgba(255,255,255,0.03); }
         .placeholder-blur { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: blur(12px); transform: scale(1.1); opacity: 1; transition: opacity 0.5s; z-index: 1; }
@@ -71,7 +68,6 @@
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
         .product-card-glass { position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; transition: transform 0.15s ease; content-visibility: auto; contain-intrinsic-size: auto 260px; will-change: transform, opacity; }
-        
         .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(20px) brightness(0.65); transform: scale(1.2); z-index: 0; opacity: 0.7; backface-visibility: hidden; }
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.1); backdrop-filter: blur(8px); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
@@ -126,11 +122,11 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .order-island-hidden { transform: translate(-50%, 160px) !important; }
 
-        .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; }
+        .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
         .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
-        .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
         
         .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 32px; overflow: hidden; }
         .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; }
@@ -140,14 +136,12 @@
         .modal-bottom .modal-content { border-radius: 32px 32px 0 0; transform: translateY(100%) scale(1); max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
         .modal-bottom.active .modal-content { transform: translateY(0) scale(1); }
 
-        .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; }
         .type-tab-active { background: #E30613; color: white; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.4); }
         .type-tab-inactive { color: #a1a1aa; background: transparent; }
 
         .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .skeleton-title { height: 16px; width: 70%; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 10px auto; }
-        .skeleton-pill { height: 32px; width: 90%; background: rgba(255,255,255,0.1); border-radius: 20px; margin: auto; }
 
         .auto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; align-items: stretch; }
         
@@ -183,15 +177,7 @@
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
     </style>
 </head>
-<body class="pb-32" oncontextmenu="return false;">
-
-<div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-40 pointer-events-none transition-transform duration-300" style="transform: translateY(-100%);">
-    <div class="bg-black/60 backdrop-blur-xl border border-white/20 text-white rounded-full px-5 py-2.5 flex items-center gap-2 shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
-        <span class="material-symbols-outlined text-primary text-[20px] transition-transform" id="ptr-icon">sync</span>
-        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-200" id="ptr-text">Jala para actualizar</span>
-    </div>
-</div>
-
+<body class="pb-40" oncontextmenu="return false;">
 <div id="splash">
     <div class="pulse-logo">COMBOX</div>
 </div>
@@ -210,31 +196,31 @@
 </header>
 
 <div class="relative -mt-8 px-4 z-20 max-content-width">
-    <div class="flex overflow-x-auto hide-scrollbar py-2 justify-center gap-4 px-1 w-full max-w-md mx-auto">
+    <div class="flex overflow-x-auto hide-scrollbar py-2 justify-between md:justify-center md:gap-8">
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleSedesModal(true)">
+        <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="toggleSedesModal(true)">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0" style="color: #39FF14;">storefront</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">SEDES</span>
         </div>
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('mapa-modal', true, renderMapModal)">
+        <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="toggleModal('mapa-modal', true, renderMapModal)">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">location_on</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">Mapa</span>
         </div>
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openHorarioModal()">
+        <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="openHorarioModal()">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">schedule</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">HORARIO</span>
         </div>
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('chat-modal', true, renderChatModal)">
+        <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="toggleModal('chat-modal', true, renderChatModal)">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
                 <svg class="w-6 h-6 fill-white m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             </div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
         </div>
-
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openInstagram()">
+        
+        <div class="flex flex-col items-center gap-2 min-w-[70px] nav-col" onclick="openInstagram()">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
                 <svg class="w-6 h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </div>
@@ -263,21 +249,15 @@
     </div>
 </div>
 
-<section class="mt-10 px-4 max-content-width hidden" id="promo-section">
-    <div class="flex items-center justify-between mb-6 px-1">
-        <div class="flex items-center gap-3">
-            <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-            <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
-        </div>
-        <button onclick="selectCategory('TODOS');" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
-    </div>
+<section class="mt-10 px-4 max-content-width" id="promo-section">
+    <div class="flex items-center mb-6 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-orange-500 rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES DE HOY 🔥</h2></div></div>
     <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
 </section>
 
 <div id="catalog-anchor" class="pt-4"></div>
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
 
-<div class="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
     <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width">
         <div class="pl-6 flex flex-col relative z-10">
             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
@@ -417,7 +397,7 @@
 </div>
 
 <div class="modal" id="categories-modal">
-    <div class="modal-overlay" id="cat-overlay" onclick="toggleCategoriesModal(false)"></div>
+    <div class="modal-overlay" onclick="toggleCategoriesModal(false)"></div>
     <div class="modal-content p-6 pb-8">
         <div class="flex items-center justify-between mb-8"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Categorías</h2></div><button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleCategoriesModal(false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="all-categories-list"></div>
@@ -444,77 +424,12 @@
     let tasaBCV = 1; 
     let audioCtx;
     let ticking = false;
-    let searchTimer = null; 
-    let initialRenderDone = false;
-    
     const searchContainer = document.getElementById('search-container');
 
-    let ptrStartY = 0;
-    let ptrCurrentY = 0;
-    let isPtrPulling = false;
-    const ptrContainer = document.getElementById('ptr-container');
-    const ptrIcon = document.getElementById('ptr-icon');
-    const ptrText = document.getElementById('ptr-text');
-
-    document.addEventListener('touchstart', (e) => {
-        if (window.scrollY <= 0 && !document.body.classList.contains('modal-open')) {
-            ptrStartY = e.touches[0].clientY;
-            isPtrPulling = true;
-            ptrContainer.style.transition = 'none';
-        }
-    }, {passive: true});
-
-    document.addEventListener('touchmove', (e) => {
-        if (!isPtrPulling) return;
-        ptrCurrentY = e.touches[0].clientY;
-        let pullDist = ptrCurrentY - ptrStartY;
-        
-        if (pullDist > 0 && window.scrollY <= 0) {
-            let move = Math.min(pullDist * 0.4, 75); 
-            ptrContainer.style.transform = `translateY(calc(-100% + ${move}px))`;
-            
-            if (move > 60) {
-                ptrIcon.classList.remove('animate-spin');
-                ptrIcon.style.transform = `rotate(${pullDist}deg)`;
-                ptrText.innerText = "Suelta para actualizar";
-            } else {
-                ptrIcon.classList.remove('animate-spin');
-                ptrText.innerText = "Jala para actualizar";
-            }
-        }
-    }, {passive: true});
-
-    document.addEventListener('touchend', () => {
-        if (!isPtrPulling) return;
-        isPtrPulling = false;
-        ptrContainer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        
-        let pullDist = ptrCurrentY - ptrStartY;
-        let move = Math.min(pullDist * 0.4, 75);
-        
-        if (move > 60 && window.scrollY <= 0) {
-            ptrContainer.style.transform = `translateY(15px)`;
-            ptrIcon.classList.add('animate-spin');
-            ptrText.innerText = "Actualizando...";
-            
-            if(window.navigator.vibrate) window.navigator.vibrate(15);
-            
-            localStorage.removeItem('combox_db');
-            saveCart(); 
-            
-            setTimeout(() => {
-                window.location.reload(true);
-            }, 600); 
-        } else {
-            ptrContainer.style.transform = `translateY(-100%)`;
-        }
-        
-        ptrStartY = 0;
-        ptrCurrentY = 0;
-    });
-
     function initAudio() {
-        if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        if(!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
     }
 
     function playClick() {
@@ -524,11 +439,14 @@
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
+        
         osc.type = 'sine';
         osc.frequency.setValueAtTime(150, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.04);
+        
         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        
         osc.start(audioCtx.currentTime);
         osc.stop(audioCtx.currentTime + 0.04);
     }
@@ -538,16 +456,20 @@
     
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
+        
         if (!ticking) {
             window.requestAnimationFrame(() => {
                 const currentScrollY = window.scrollY;
                 const searchValue = document.getElementById('global-search').value.trim();
 
-                if (searchValue !== '') { searchContainer.classList.remove('search-hidden'); } 
-                else if (currentScrollY > 300) {
+                if (searchValue !== '') {
+                    searchContainer.classList.remove('search-hidden');
+                } else if (currentScrollY > 300) {
                     if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
                     else searchContainer.classList.remove('search-hidden'); 
-                } else { searchContainer.classList.remove('search-hidden'); }
+                } else {
+                    searchContainer.classList.remove('search-hidden');
+                }
                 lastScrollY = currentScrollY;
                 ticking = false;
             });
@@ -558,7 +480,9 @@
     document.addEventListener("DOMContentLoaded", () => {
         const inputs = document.querySelectorAll('#checkout-name, #checkout-location');
         inputs.forEach(input => {
-            input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
+            input.addEventListener('focus', function() {
+                setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+            });
             input.addEventListener('blur', function() {
                 const overlay = document.querySelector('#checkout-modal .modal-overlay');
                 const content = document.querySelector('#checkout-modal .modal-content');
@@ -569,95 +493,32 @@
     });
 
     async function init() {
-        let loadedFromCache = false;
-        try {
-            const cachedDB = localStorage.getItem('combox_db');
-            if (cachedDB) {
-                db = JSON.parse(cachedDB);
-                loadedFromCache = true;
-            }
-        } catch(e) { console.error("Error cargando caché:", e); }
-
-        try {
-            const savedCart = localStorage.getItem('combox_cart');
-            if(savedCart) {
-                const parsed = JSON.parse(savedCart);
-                if (Date.now() - parsed.time < 86400000) { cart = parsed.cart; } 
-                else { localStorage.removeItem('combox_cart'); }
-            }
-        } catch(e) { console.error("Error al cargar carrito:", e); }
-
-        if (loadedFromCache) {
-            setupAfterDBLoad(true);
-        }
-
+        setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, 1200);
         try {
             const res = await fetch(API);
-            const freshDB = await res.json();
-            db = freshDB;
-            localStorage.setItem('combox_db', JSON.stringify(db)); 
-            setupAfterDBLoad(false); 
-        } catch(e) { console.error("Error cargando DB:", e); }
-    }
-
-    function setupAfterDBLoad(isCached) {
-        if(db && db.finanzas && db.finanzas.tasa_usd) {
-            tasaBCV = parseFloat(db.finanzas.tasa_usd);
-            const displayEl = document.getElementById('tasa-bcv-display');
-            if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
-        }
-        if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
-        
-        renderPromos();
-        
-        if(!initialRenderDone) {
-            render(); 
-            initialRenderDone = true;
-            updateOrder(); 
+            db = await res.json();
             
-            setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
+            if(db && db.finanzas && db.finanzas.tasa_usd) {
+                tasaBCV = parseFloat(db.finanzas.tasa_usd);
+                const displayEl = document.getElementById('tasa-bcv-display');
+                if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
+            }
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id');
-            if(productId) { setTimeout(() => openProductView(productId), 500); }
-        } else {
-            render();
-            updateOrder(); 
-        }
-    }
-
-    function saveCart() {
-        try { localStorage.setItem('combox_cart', JSON.stringify({cart: cart, time: Date.now()})); } 
-        catch(e) { console.error("Error guardando carrito:", e); }
+            if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
+            render(); 
+        } catch(e) { console.error("Error cargando DB:", e); }
     }
 
     function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
 
-    let scrollPos = 0;
-    function lockScroll(lock) { 
-        if(lock) { 
-            scrollPos = window.scrollY;
-            document.body.style.position = 'fixed';
-            document.body.style.top = `-${scrollPos}px`;
-            document.body.style.width = '100%';
-            document.body.classList.add('modal-open');
-        } else { 
-            document.body.style.removeProperty('position');
-            document.body.style.removeProperty('top');
-            document.body.style.removeProperty('width');
-            document.body.classList.remove('modal-open'); 
-            window.scrollTo(0, scrollPos);
-        } 
-    }
+    function lockScroll(lock) { if(lock) document.body.classList.add('modal-open'); else document.body.classList.remove('modal-open'); }
     
     function checkActiveModals() {
         const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal'];
         if(!modals.some(id => document.getElementById(id).classList.contains('active'))) lockScroll(false);
     }
     
-    function animateModal(modalId) { 
-        requestAnimationFrame(() => { requestAnimationFrame(() => { document.getElementById(modalId).classList.add('active'); lockScroll(true); }); });
-    }
+    function animateModal(modalId) { requestAnimationFrame(() => { requestAnimationFrame(() => { document.getElementById(modalId).classList.add('active'); lockScroll(true); }); }); }
 
     function toggleModal(modalId, show, renderFn) { 
         const modal = document.getElementById(modalId); 
@@ -669,9 +530,7 @@
             }
         } else { 
             modal.classList.remove('active'); 
-            setTimeout(() => { checkActiveModals(); }, 300);
-            document.body.style.pointerEvents = 'none';
-            setTimeout(() => document.body.style.pointerEvents = 'auto', 350);
+            checkActiveModals(); 
         } 
     }
     
@@ -689,12 +548,15 @@
         const select = document.getElementById('horario-sede-select');
         select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}" ${currentHorarioSede.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`).join('');
         
-        setTimeout(() => { renderHorarioList(); toggleModal('horario-modal', true); }, 15);
+        setTimeout(() => {
+            renderHorarioList();
+            toggleModal('horario-modal', true);
+        }, 15);
     }
 
     function changeHorarioSede(id) {
         if(db?.sedes) currentHorarioSede = db.sedes.find(s => s.ID_SEDE === id) || currentHorarioSede;
-        if(window.navigator.vibrate) window.navigator.vibrate(10);
+        if(window.navigator.vibrate) window.navigator.vibrate(15);
         renderHorarioList(); 
     }
 
@@ -818,10 +680,7 @@
         if(!navigator.geolocation) { loc.value = ""; loc.placeholder = "GPS no soportado."; return; }
         loc.value = "Obteniendo coordenadas...";
         navigator.geolocation.getCurrentPosition(
-            pos => { 
-                loc.value = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; 
-                updateLocationBtnState(); 
-            },
+            pos => { loc.value = `http://googleusercontent.com/maps.google.com/3{pos.coords.latitude},${pos.coords.longitude}`; updateLocationBtnState(); },
             err => { loc.value = ""; loc.placeholder = "No se pudo obtener. Escribe dirección."; updateLocationBtnState(); }, 
             { enableHighAccuracy: true, timeout: 5000 }
         );
@@ -939,7 +798,7 @@
     function selectLocation(id) { 
         if(db?.sedes) currentSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
         updateHeader(); 
-        if(window.navigator.vibrate) window.navigator.vibrate(10); 
+        if(window.navigator.vibrate) window.navigator.vibrate(15); 
         setTimeout(() => toggleSedesModal(false), 50); 
     }
 
@@ -960,31 +819,15 @@
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
-        
         if (val.length > 0) {
             icon.innerText = 'close';
             icon.classList.add('text-primary');
-            
-            if (currentCat !== 'TODOS') {
-                currentCat = 'TODOS';
-                const menuBtn = document.getElementById('cat-menu-btn');
-                if(menuBtn) {
-                    menuBtn.classList.add('bg-white/10', 'border-white/20');
-                    menuBtn.classList.remove('bg-primary', 'border-primary');
-                }
-            }
         } else {
             icon.innerText = 'search';
             icon.classList.remove('text-primary');
         }
-        
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            requestAnimationFrame(() => {
-                render();
-                if(val.length > 0) scrollToCatalog();
-            });
-        }, 250); 
+        render();
+        scrollToCatalog();
     }
 
     function handleSearchClick() {
@@ -992,6 +835,7 @@
         if (input.value.length > 0) {
             input.value = '';
             onSearchInput(); 
+            setCat('TODOS'); 
         } else {
             input.focus();
         }
@@ -1006,44 +850,29 @@
         }
     }
 
-    function render() { if(!db) return; renderCatalog(); }
+    function render() { if(!db) return; renderPromos(); renderCatalog(); }
     
-    function showSkeletons() {
+    function selectCategory(c) {
+        toggleCategoriesModal(false);
         const grid = document.getElementById('catalog-grid');
-        if(!grid) return;
-        let skeletons = '';
-        for(let i=0; i<6; i++) {
-            skeletons += `
-                <div class="product-card-glass skeleton rounded-3xl" style="height: 280px; width: 100%;">
-                    <div class="mt-auto p-4 w-full text-center">
-                        <div class="skeleton-title"></div>
-                        <div class="skeleton-pill mt-4"></div>
-                    </div>
+        if(grid) {
+            grid.innerHTML = `
+                <div class="w-full py-20 flex flex-col items-center justify-center">
+                    <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Cargando catálogo...</span>
                 </div>`;
         }
-        grid.innerHTML = `<div class="auto-grid px-1 pt-4 pb-4">${skeletons}</div>`;
-    }
-
-    function selectCategory(c) {
-        if (currentCat === c) {
-            toggleCategoriesModal(false);
-            return;
-        }
-        
-        toggleCategoriesModal(false);
-        
         setTimeout(() => {
-            showSkeletons();
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 setCat(c);
-            }, 50);
-        }, 300);
+            });
+        }, 150);
     }
 
     function renderAllCategories() {
         const items = getSourceData();
         const cats = ['TODOS', ...new Set(items.map(p => p.categoria).filter(Boolean))]; 
-        document.getElementById('all-categories-list').innerHTML = cats.map(c => `<button onclick="selectCategory('${c}')" class="cat-btn w-full py-4 rounded-2xl text-[10px] font-black uppercase border ${currentCat === c ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 text-zinc-400 border-white/10'}">${c}</button>`).join('');
+        document.getElementById('all-categories-list').innerHTML = cats.map(c => `<button onclick="selectCategory('${c}')" class="w-full py-4 rounded-2xl text-[10px] font-black uppercase border transition-all ${currentCat === c ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 text-zinc-400 border-white/10'}">${c}</button>`).join('');
     }
     
     function renderPromos() {
@@ -1082,31 +911,13 @@
         const isCarousel = currentCat === 'TODOS' && !search;
         const isFiltered = currentCat !== 'TODOS';
         
-        const htmlString = Object.entries(grouped).map(([cat, products]) => {
+        document.getElementById('catalog-grid').innerHTML = Object.entries(grouped).map(([cat, products]) => {
             const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
-            const headerBtn = isFiltered ? `<button onclick="selectCategory('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
+            const headerBtn = isFiltered ? `<button onclick="setCat('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
             return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">${cat}</h2>${isFiltered ? headerBtn : ''}</div>${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
         }).join('');
-        
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlString;
-        
-        const fragment = document.createDocumentFragment();
-        while(tempDiv.firstChild) {
-            fragment.appendChild(tempDiv.firstChild);
-        }
-        
-        const grid = document.getElementById('catalog-grid');
-        grid.innerHTML = ''; 
-        grid.appendChild(fragment); 
     }
     
-    function triggerTap(el) {
-        if (!el) return;
-        el.classList.add('btn-bounce-active');
-        setTimeout(() => el.classList.remove('btn-bounce-active'), 150);
-    }
-
     function createCard(p, isCarousel) {
         const id = getUnifiedId(p);
         const count = cart[id] || 0; 
@@ -1134,7 +945,7 @@
                 <p class="text-[8px] text-zinc-400/80 font-bold uppercase tracking-widest mb-1 text-center mt-auto">Toca para ver más</p>
                 
                 <div class="flex justify-center w-full pt-1 relative btn-action-area">
-                    ${count > 0 ? `<div class="count-badge">${count}</div>` : ''} <button onclick="event.stopPropagation(); triggerTap(this); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill btn-bounce ${pricePillAnimationClass} w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}">
+                    ${count > 0 ? `<div class="count-badge">${count}</div>` : ''} <button onclick="event.stopPropagation(); add('${id}')" ${isOut ? 'disabled' : ''} class="price-pill btn-bounce ${pricePillAnimationClass} w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}">
                         ${isOut ? 'SIN STOCK' : '$' + price.toFixed(2)}
                     </button>
                 </div>
@@ -1150,7 +961,6 @@
         
         list.innerHTML = items.map(p => { 
             const id = getUnifiedId(p); const price = getProductPrice(p); 
-            // FIX: Añadido "C/u" en color rojo
             return `<div class="flex items-center justify-between bg-white/5 p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
@@ -1158,7 +968,7 @@
                     </div>
                     <div class="flex flex-col min-w-0 flex-1 pr-1">
                         <span class="text-sm md:text-base font-[800] text-white uppercase leading-tight line-clamp-2 w-full">${p.nombre}</span>
-                        <span class="text-sm md:text-base text-primary font-black tracking-wider mt-1">$${price.toFixed(2)} <span class="text-[10px] text-red-500 font-bold ml-1">C/u</span></span>
+                        <span class="text-sm md:text-base text-primary font-black tracking-wider mt-1">$${price.toFixed(2)}</span>
                     </div>
                 </div>
                 <div class="flex items-center justify-between bg-white/5 rounded-full p-1 border border-white/10 flex-shrink-0" onclick="event.stopPropagation();">
@@ -1184,10 +994,9 @@
         
         updateOrder();
         syncCardBadge(id); 
-        saveCart(); 
         
         playClick();
-        if(window.navigator.vibrate) window.navigator.vibrate(5); 
+        if(window.navigator.vibrate) window.navigator.vibrate(10); 
         
         const overlay = document.querySelector('#cart-modal .modal-overlay');
         if(overlay) { overlay.style.transform = 'translateZ(0)'; setTimeout(() => { overlay.style.transform = ''; }, 50); }
@@ -1214,25 +1023,15 @@
         });
     }
 
-    function clearCart() { 
-        if(confirm('¿Vaciar pedido?')) { 
-            cart = {}; 
-            updateOrder(); 
-            toggleCartModal(false); 
-            document.querySelectorAll('.count-badge').forEach(b => b.remove()); 
-            document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active')); 
-            saveCart(); 
-        } 
-    }
+    function clearCart() { if(confirm('¿Vaciar pedido?')) { cart = {}; updateOrder(); toggleCartModal(false); document.querySelectorAll('.count-badge').forEach(b => b.remove()); document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active')); } }
     
     function add(id) { 
         cart[id] = (cart[id] || 0) + 1; 
         updateOrder(); 
         syncCardBadge(id); 
-        saveCart(); 
         
         playClick();
-        if(window.navigator.vibrate) window.navigator.vibrate(8); 
+        if(window.navigator.vibrate) window.navigator.vibrate(20); 
         
         const cartActive = document.getElementById('cart-modal').classList.contains('active'); 
         if(cartActive) renderCart(); 
@@ -1258,8 +1057,8 @@
     }
     
     function setType(type, btn) { 
-        if (currentType === type) return;
-        
+        currentType = type; 
+        currentCat = 'TODOS'; 
         document.querySelectorAll('.type-tab').forEach(b => { b.classList.remove('type-tab-active'); b.classList.add('type-tab-inactive'); }); 
         btn.classList.add('type-tab-active'); 
         btn.classList.remove('type-tab-inactive'); 
@@ -1269,25 +1068,7 @@
             menuBtn.classList.add('bg-white/10', 'border-white/20');
             menuBtn.classList.remove('bg-primary', 'border-primary');
         }
-
-        currentType = type; 
-        currentCat = 'TODOS'; 
-
-        const searchInput = document.getElementById('global-search');
-        if (searchInput) searchInput.value = ''; 
-        const searchIcon = document.getElementById('search-icon');
-        if(searchIcon) {
-            searchIcon.innerText = 'search';
-            searchIcon.classList.remove('text-primary');
-        }
-        
-        showSkeletons();
-        
-        // FIX AUTO-SCROLL: Llama a scrollToCatalog al cambiar de tipo
-        setTimeout(() => {
-            renderCatalog();
-            scrollToCatalog();
-        }, 150); 
+        setTimeout(() => render(), 15); 
     }
     
     function setCat(c) { 
@@ -1303,7 +1084,7 @@
         }
         
         const searchInput = document.getElementById('global-search');
-        if(searchInput) searchInput.value = ''; 
+        searchInput.value = ''; 
         const searchIcon = document.getElementById('search-icon');
         if(searchIcon) {
             searchIcon.innerText = 'search';
@@ -1312,16 +1093,6 @@
         
         render(); 
         scrollToCatalog();
-    }
-
-    function shareProduct(id, name) {
-        const url = window.location.origin + window.location.pathname + '?id=' + id;
-        if (navigator.share) {
-            navigator.share({ title: 'Combox - ' + name, url: url }).catch(console.error);
-        } else {
-            navigator.clipboard.writeText(url);
-            alert('¡Enlace del producto copiado!');
-        }
     }
     
     function openProductView(id) {
@@ -1332,36 +1103,29 @@
             const price = getProductPrice(p);
             const isOut = p.status === 'OUT_OF_STOCK';
             const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
-            const safeName = p.nombre.replace(/'/g, "\\'");
             
-            // FIX CONTORNO IMAGEN S9: Se quitó el .glass-contour y se usó borde sólido con inner shadow
             document.getElementById('product-content').innerHTML = `
-                <div class="absolute inset-0 bg-[#0A0A0B] z-0"></div>
-                <div class="absolute -inset-10 z-10 opacity-35 bg-cover bg-center pointer-events-none" style="background-image: url('${img}'); filter: blur(40px); transform: translateZ(0);"></div>
-                <div class="absolute bottom-0 inset-x-0 h-[65%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/85 to-transparent"></div>
-                
-                <div class="absolute top-4 right-4 z-50 flex items-center gap-2">
-                    <button class="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" onclick="shareProduct('${id}', '${safeName}')">
-                        <span class="material-symbols-outlined text-[18px]">ios_share</span>
-                    </button>
-                    <button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" onclick="toggleProductModal(false)">
+                <div class="absolute top-4 right-4 z-[60]">
+                    <button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg" onclick="toggleProductModal(false)">
                         <span class="material-symbols-outlined text-lg">close</span>
                     </button>
                 </div>
                 
-                <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
-                    <div class="relative w-full h-full max-w-[280px] max-h-[280px] flex-shrink-0 flex items-center justify-center">
-                        <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)]" draggable="false" oncontextmenu="return false;"/>
+                <div class="relative w-full h-[340px] md:h-[400px] bg-black/40 flex-shrink-0 flex items-end justify-center pb-8">
+                    <div class="absolute inset-0 bg-cover bg-center opacity-40 blur-2xl scale-110" style="background-image: url('${img}')"></div>
+                    
+                    <div class="glass-contour relative z-10 w-full max-w-[260px] md:max-w-[1000px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0">
+                        <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>
                 
-                <div class="relative z-40 p-6 md:p-8 flex flex-col flex-1 overflow-y-auto hide-scrollbar">
-                    <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-tight mb-2 drop-shadow-md">${p.nombre}</h2>
-                    <p class="text-sm text-zinc-300 leading-relaxed overflow-y-auto hide-scrollbar mb-6 drop-shadow-md">${p.descripcion || 'Sin descripción.'}</p>
-                    <div class="mt-auto pt-4 border-t border-white/20 flex items-center justify-between">
+                <div class="p-6 md:p-8 flex flex-col flex-1 overflow-y-auto bg-[rgba(10,10,11,0.85)]">
+                    <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-tight mb-2">${p.nombre}</h2>
+                    <p class="text-sm text-zinc-400 leading-relaxed overflow-y-auto hide-scrollbar mb-6">${p.descripcion || 'Sin descripción.'}</p>
+                    <div class="mt-auto pt-4 border-t border-white/10 flex items-center justify-between">
                         <div class="flex flex-col">
-                            <span class="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-0.5">Precio</span>
-                            <span class="text-3xl font-black text-white tracking-tighter leading-none drop-shadow-lg">$${price.toFixed(2)}</span>
+                            <span class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mb-0.5">Precio</span>
+                            <span class="text-3xl font-black text-white tracking-tighter leading-none">$${price.toFixed(2)}</span>
                         </div>
                         <button onclick="add('${id}'); toggleProductModal(false);" ${isOut ? 'disabled' : ''} class="bg-primary text-white font-black px-8 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 tracking-widest ${isOut ? 'opacity-50 grayscale' : ''}">
                             ${isOut ? 'Agotado' : 'Agregar'}

@@ -165,9 +165,6 @@
             margin-bottom: 0.25rem;
         }
 
-        .fade-in { animation: fadeIn 0.4s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
         @media (max-width: 395px) {
             .nav-col { min-width: 62px !important; gap: 0.3rem !important; }
             .nav-btn-glass { width: 46px !important; height: 46px !important; }
@@ -571,41 +568,36 @@
         });
     });
 
-    // OPTIMIZACIÓN: Offline First con LocalStorage para carga inmediata y persistencia del Carrito
     async function init() {
         let loadedFromCache = false;
-        
-        try {
-            const savedCart = localStorage.getItem('combox_cart');
-            if(savedCart) {
-                const parsed = JSON.parse(savedCart);
-                // Si tiene menos de 24 horas (86400000 ms), lo restauramos
-                if (Date.now() - parsed.time < 86400000) { cart = parsed.cart; } 
-                else { localStorage.removeItem('combox_cart'); }
-            }
-        } catch(e) { console.error("Error al cargar carrito:", e); }
-
         try {
             const cachedDB = localStorage.getItem('combox_db');
             if (cachedDB) {
                 db = JSON.parse(cachedDB);
                 loadedFromCache = true;
-                setupAfterDBLoad(true);
             }
         } catch(e) { console.error("Error cargando caché:", e); }
 
         try {
+            const savedCart = localStorage.getItem('combox_cart');
+            if(savedCart) {
+                const parsed = JSON.parse(savedCart);
+                if (Date.now() - parsed.time < 86400000) { cart = parsed.cart; } 
+                else { localStorage.removeItem('combox_cart'); }
+            }
+        } catch(e) { console.error("Error al cargar carrito:", e); }
+
+        if (loadedFromCache) {
+            setupAfterDBLoad(true);
+        }
+
+        try {
             const res = await fetch(API);
             const freshDB = await res.json();
-            
-            // Re-renderizamos solo si no se cargó del caché o hay cambios de fondo importantes
             db = freshDB;
             localStorage.setItem('combox_db', JSON.stringify(db)); 
-            
-            if (!loadedFromCache) {
-                setupAfterDBLoad(false); 
-            }
-        } catch(e) { console.error("Error cargando DB en segundo plano:", e); }
+            setupAfterDBLoad(false); 
+        } catch(e) { console.error("Error cargando DB:", e); }
     }
 
     function setupAfterDBLoad(isCached) {
@@ -625,13 +617,9 @@
             
             setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
 
-            // FIX: Deep Linking (Llamada limpia sin ensuciar la URL en refresh posteriores)
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
-            if(productId) { 
-                setTimeout(() => openProductView(productId), 500); 
-                window.history.replaceState(null, '', window.location.pathname);
-            }
+            if(productId) { setTimeout(() => openProductView(productId), 500); }
         } else {
             render();
             updateOrder(); 
@@ -697,7 +685,7 @@
 
     function changeHorarioSede(id) {
         if(db?.sedes) currentHorarioSede = db.sedes.find(s => s.ID_SEDE === id) || currentHorarioSede;
-        if(window.navigator.vibrate) window.navigator.vibrate(2);
+        if(window.navigator.vibrate) window.navigator.vibrate(10);
         renderHorarioList(); 
     }
 
@@ -1027,25 +1015,20 @@
         grid.innerHTML = `<div class="auto-grid px-1 pt-4 pb-4">${skeletons}</div>`;
     }
 
-    // FIX: Ahora esperamos a que termine la transición del Modal para hacer render
     function selectCategory(c) {
-        if (currentCat === c) { toggleCategoriesModal(false); return; }
+        if (currentCat === c) {
+            toggleCategoriesModal(false);
+            return;
+        }
+        
         toggleCategoriesModal(false);
         
-        const modal = document.getElementById('categories-modal');
-        const proceed = () => {
-            modal.removeEventListener('transitionend', proceed);
-            showSkeletons();
-            setTimeout(() => { setCat(c); }, 50); // Le damos tiempo a la UI de pintar los skeletons
-        };
-        
-        modal.addEventListener('transitionend', proceed);
-        
-        // Fallback por si en algún teléfono falla el evento transitionend
         setTimeout(() => {
-            modal.removeEventListener('transitionend', proceed);
-            if(currentCat !== c) { showSkeletons(); setTimeout(() => setCat(c), 50); }
-        }, 350);
+            showSkeletons();
+            setTimeout(() => {
+                setCat(c);
+            }, 50);
+        }, 300);
     }
 
     function renderAllCategories() {
@@ -1078,7 +1061,6 @@
         else section.classList.add('hidden');
     }
     
-    // OPTIMIZACIÓN: DocumentFragment y ReplaceChildren (Cero Lag)
     function renderCatalog() {
         const search = document.getElementById('global-search').value.toLowerCase();
         let items = getSourceData();
@@ -1091,32 +1073,23 @@
         const isCarousel = currentCat === 'TODOS' && !search;
         const isFiltered = currentCat !== 'TODOS';
         
-        // Creamos un fragmento de documento, esto se construye en memoria y no afecta el CPU pintando en pantalla
-        const fragment = document.createDocumentFragment();
+        const htmlString = Object.entries(grouped).map(([cat, products]) => {
+            const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
+            const headerBtn = isFiltered ? `<button onclick="selectCategory('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
+            return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">${cat}</h2>${isFiltered ? headerBtn : ''}</div>${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
+        }).join('');
         
-        // Si no hay ítems (busqueda vacia o categoria sin productos), mostramos algo para no dejarlo en skeletons
-        if (Object.keys(grouped).length === 0) {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.className = "flex flex-col items-center justify-center py-20 text-zinc-500 fade-in";
-            emptyDiv.innerHTML = `<span class="material-symbols-outlined text-6xl mb-4">search_off</span><p class="font-black uppercase tracking-widest text-[10px]">No se encontraron productos</p>`;
-            fragment.appendChild(emptyDiv);
-        } else {
-            Object.entries(grouped).forEach(([cat, products]) => {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'mb-10 fade-in';
-                
-                const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
-                const headerBtn = isFiltered ? `<button onclick="selectCategory('TODOS')" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
-                
-                categoryDiv.innerHTML = `<div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-xl font-black text-white uppercase tracking-tight">${cat}</h2>${isFiltered ? headerBtn : ''}</div>${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div>`;
-                
-                fragment.appendChild(categoryDiv);
-            });
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlString;
+        
+        const fragment = document.createDocumentFragment();
+        while(tempDiv.firstChild) {
+            fragment.appendChild(tempDiv.firstChild);
         }
         
-        // La magia que elimina el lag: replaceChildren reemplaza de un solo golpe todo el DOM viejo con el nuevo.
         const grid = document.getElementById('catalog-grid');
-        grid.replaceChildren(fragment); 
+        grid.innerHTML = ''; 
+        grid.appendChild(fragment); 
     }
     
     function triggerTap(el) {
@@ -1125,7 +1098,6 @@
         setTimeout(() => el.classList.remove('btn-bounce-active'), 150);
     }
 
-    // OPTIMIZACIÓN: loading="lazy" añadido a las imágenes
     function createCard(p, isCarousel) {
         const id = getUnifiedId(p);
         const count = cart[id] || 0; 
@@ -1145,8 +1117,8 @@
             <div class="glass-overlay">
                 <div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container flex-shrink-0">
                     ${isPromo ? '<div class="absolute top-2 left-2 z-30 bg-black/60 backdrop-blur-md border border-white/10 text-white text-[9px] font-black px-2 py-1 rounded-full shadow-lg tracking-widest flex items-center gap-1">🔥 PROMO!</div>' : ''}
-                    <img class="main-image" src="${img}" loading="lazy" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')" oncontextmenu="return false;" draggable="false"/>
-                    <img class="placeholder-blur" src="${img}" loading="lazy" aria-hidden="true"/>
+                    <img class="main-image" src="${img}" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/>
+                    <img class="placeholder-blur" src="${img}" aria-hidden="true"/>
                 </div>
                 
                 <h3 class="card-title text-white uppercase text-center w-full font-black leading-tight">${p.nombre}</h3>
@@ -1169,6 +1141,7 @@
         
         list.innerHTML = items.map(p => { 
             const id = getUnifiedId(p); const price = getProductPrice(p); 
+            // FIX: Añadido "C/u" en color rojo
             return `<div class="flex items-center justify-between bg-white/5 p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
@@ -1192,7 +1165,6 @@
         }).join('');
     }
 
-    // FIX Vibración: Reducida de 5 a 2
     function changeQty(id, delta) {
         const newQty = Math.max(0, (cart[id] || 0) + delta);
         if(newQty === 0) delete cart[id];
@@ -1206,7 +1178,7 @@
         saveCart(); 
         
         playClick();
-        if(window.navigator.vibrate) window.navigator.vibrate(2); 
+        if(window.navigator.vibrate) window.navigator.vibrate(5); 
         
         const overlay = document.querySelector('#cart-modal .modal-overlay');
         if(overlay) { overlay.style.transform = 'translateZ(0)'; setTimeout(() => { overlay.style.transform = ''; }, 50); }
@@ -1244,7 +1216,6 @@
         } 
     }
     
-    // FIX Vibración: Reducida de 8 a 2
     function add(id) { 
         cart[id] = (cart[id] || 0) + 1; 
         updateOrder(); 
@@ -1252,13 +1223,12 @@
         saveCart(); 
         
         playClick();
-        if(window.navigator.vibrate) window.navigator.vibrate(2); 
+        if(window.navigator.vibrate) window.navigator.vibrate(8); 
         
         const cartActive = document.getElementById('cart-modal').classList.contains('active'); 
         if(cartActive) renderCart(); 
     }
     
-    // FIX: El order island reaparece instantaneamente después de recargar
     function updateOrder() {
         let total = 0, count = 0;
         const all = getAllSourceData();
@@ -1278,7 +1248,6 @@
         else island.classList.add('order-island-hidden');
     }
     
-    // FIX: Limpieza de bugs del skeleton al cambiar Type
     function setType(type, btn) { 
         if (currentType === type) return;
         
@@ -1305,6 +1274,7 @@
         
         showSkeletons();
         
+        // FIX AUTO-SCROLL: Llama a scrollToCatalog al cambiar de tipo
         setTimeout(() => {
             renderCatalog();
             scrollToCatalog();
@@ -1345,7 +1315,6 @@
         }
     }
     
-    // FIX: Imagen más grande en la vista expandida (Aumentado de 280px a 320px y altura a 40vh)
     function openProductView(id) {
         setTimeout(() => {
             const p = getAllSourceData().find(x => getUnifiedId(x) === id);
@@ -1356,6 +1325,7 @@
             const img = p.imagen || 'https://via.placeholder.com/300/111/fff?text=COMBOX';
             const safeName = p.nombre.replace(/'/g, "\\'");
             
+            // FIX CONTORNO IMAGEN S9: Se quitó el .glass-contour y se usó borde sólido con inner shadow
             document.getElementById('product-content').innerHTML = `
                 <div class="absolute inset-0 bg-[#0A0A0B] z-0"></div>
                 <div class="absolute -inset-10 z-10 opacity-35 bg-cover bg-center pointer-events-none" style="background-image: url('${img}'); filter: blur(40px); transform: translateZ(0);"></div>
@@ -1370,8 +1340,8 @@
                     </button>
                 </div>
                 
-                <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-16 mb-4 px-8" style="height: 40vh;">
-                    <div class="relative w-full h-full max-w-[320px] max-h-[320px] rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0 flex items-center justify-center border border-white/20" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
+                <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
+                    <div class="relative w-full h-full max-w-[280px] max-h-[280px] rounded-3xl overflow-hidden shadow-2xl bg-black/20 flex-shrink-0 flex items-center justify-center border border-white/20" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
                         <img src="${img}" class="w-full h-full object-contain pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>

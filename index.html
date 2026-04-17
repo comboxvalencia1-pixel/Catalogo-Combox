@@ -11,7 +11,7 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=block" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800;900&display=block" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
     
     <script id="tailwind-config">
@@ -115,16 +115,17 @@
         .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
-        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transition: background 0.3s ease, backdrop-filter 0.3s ease; transform: translateZ(0); }
+        /* Modales sin delay */
+        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transition: none !important; transform: translateZ(0); }
         .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
         
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); opacity: 0; transition: all 0.15s ease-out; border-radius: 32px; overflow: hidden; }
+        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; opacity: 1 !important; transition: none !important; transform: none !important; border-radius: 32px; overflow: hidden; }
         .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; }
-        .modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+        .modal.active .modal-content { transform: none !important; opacity: 1; }
 
         .modal-bottom { align-items: flex-end; padding: 0; }
-        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; transform: translateY(100%) scale(1); max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
-        .modal-bottom.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; transform: none !important; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+        .modal-bottom.active .modal-content { transform: none !important; }
 
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .type-tab-active { background: #E30613; color: white; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.4); }
@@ -176,13 +177,16 @@
     <span class="text-[13px] font-[900] uppercase tracking-widest leading-tight">Actualizando<br>datos nuevos...</span>
 </div>
 
-<div class="absolute top-0 left-0 w-full z-[100] px-4 pt-2 flex justify-between gap-2 pointer-events-none" style="padding-top: calc(0.5rem + env(safe-area-inset-top));">
-    <button onclick="toggleModal('sugerencias-modal', true)" class="pointer-events-auto bg-transparent text-white text-[10px] font-black uppercase tracking-widest px-2 py-2.5 active:scale-95 transition-transform flex items-center gap-1.5 drop-shadow-md">
-        <div class="flex gap-[1px]"><span class="material-symbols-outlined text-[16px] text-white">star</span><span class="material-symbols-outlined text-[16px] text-white">star</span><span class="material-symbols-outlined text-[16px] text-white">star</span></div> Sugerencias
-    </button>
-    <button onclick="toggleModal('empleo-modal', true)" class="pointer-events-auto bg-transparent text-white text-[10px] font-black uppercase tracking-widest px-2 py-2.5 active:scale-95 transition-transform flex items-center gap-1.5 drop-shadow-md">
-        <span class="material-symbols-outlined text-[20px]">badge</span> Trabaja con nosotros
-    </button>
+<div class="absolute top-0 left-0 w-full z-[100] pt-2 flex justify-center pointer-events-none" style="padding-top: calc(0.5rem + env(safe-area-inset-top));">
+    <div class="flex items-center gap-2 md:gap-3 px-3 py-1.5 pointer-events-auto">
+        <button onclick="toggleModal('sugerencias-modal', true)" class="bg-transparent text-white/90 text-[10px] md:text-[11px] font-medium uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-1.5 drop-shadow-md">
+            <span class="material-symbols-outlined text-[14px] text-white">lightbulb</span> Sugerencias
+        </button>
+        <span class="text-white/30 text-[10px] md:text-[12px] font-light">|</span>
+        <button onclick="toggleModal('empleo-modal', true)" class="bg-transparent text-white/90 text-[10px] md:text-[11px] font-medium uppercase tracking-widest active:scale-95 transition-transform flex items-center gap-1.5 drop-shadow-md">
+            <span class="material-symbols-outlined text-[14px] text-white">work</span> Currículum
+        </button>
+    </div>
 </div>
 
 <div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-40 pointer-events-none transition-transform duration-300" style="transform: translateY(-100%);">
@@ -269,7 +273,7 @@
             <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
             <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
         </div>
-        <button onclick="setCat('TODOS'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
+        <button onclick="setCat('PROMOCIONES'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
     </div>
     <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
 </section>
@@ -432,16 +436,29 @@
 <div class="modal" id="sugerencias-modal">
     <div class="modal-overlay" onclick="toggleModal('sugerencias-modal', false)"></div>
     <div class="modal-content p-6 pb-8">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-                <div class="w-1.5 h-6 bg-yellow-400 rounded-full"></div>
-                <h2 class="text-2xl font-black text-white uppercase tracking-tighter">Sugerencias</h2>
+        
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex flex-col">
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter">COMBOX</h2>
+                <div class="flex gap-0.5 text-yellow-400 mt-0.5">
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                </div>
             </div>
-            <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0" onclick="toggleModal('sugerencias-modal', false)">
-                <span class="material-symbols-outlined text-lg">close</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 transition-transform" onclick="shareSugerencias()">
+                    <span class="material-symbols-outlined text-lg">ios_share</span>
+                </button>
+                <button class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 transition-transform" onclick="toggleModal('sugerencias-modal', false)">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
         </div>
         <p class="text-sm text-zinc-300 mb-6 font-medium leading-relaxed">Nos gustaría leer sus opiniones, tus sugerencias/consejos son importantes para nosotros.</p>
+        
         <div class="space-y-4">
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Nombre (Opcional / Anónimo)</label>
@@ -475,41 +492,41 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Cédula *</label>
-                    <input type="number" id="emp-cedula" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-primary text-sm" placeholder="Ej. 25123456">
+                    <input type="number" id="emp-cedula" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. 25123456">
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Teléfono *</label>
-                    <input type="tel" id="emp-telefono" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-primary text-sm" placeholder="Ej. 0424...">
+                    <input type="tel" id="emp-telefono" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. 0424...">
                 </div>
             </div>
             
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Nombre Completo *</label>
-                <input type="text" id="emp-nombre" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-primary text-sm" placeholder="Ej. María González">
+                <input type="text" id="emp-nombre" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. María González">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Sexo *</label>
-                    <select id="emp-sexo" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-primary text-sm appearance-none">
+                    <select id="emp-sexo" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm appearance-none">
                         <option value="Femenino" class="text-black">Femenino</option>
                         <option value="Masculino" class="text-black">Masculino</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">F. Nacimiento *</label>
-                    <input type="date" id="emp-fecha" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-primary text-sm appearance-none" style="color-scheme: dark;">
+                    <input type="date" id="emp-fecha" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm appearance-none" style="color-scheme: dark;">
                 </div>
             </div>
 
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Dónde Reside *</label>
-                <input type="text" id="emp-domicilio" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-primary text-sm" placeholder="Sector, Municipio...">
+                <input type="text" id="emp-domicilio" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Sector, Municipio...">
             </div>
 
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Discapacidades (Opcional)</label>
-                <input type="text" id="emp-discapacidad" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-primary text-sm" placeholder="Ninguna">
+                <input type="text" id="emp-discapacidad" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ninguna">
             </div>
 
             <div>
@@ -646,7 +663,6 @@
         const domicilio = document.getElementById('emp-domicilio').value.trim();
         const discapacidad = document.getElementById('emp-discapacidad').value.trim() || 'Ninguna';
         
-        // Obtener todos los checkboxes seleccionados
         const cargosChecked = Array.from(document.querySelectorAll('.emp-cargo-cb:checked')).map(cb => cb.value);
         const cargo = cargosChecked.join(', ');
 
@@ -680,7 +696,6 @@
                 body: JSON.stringify(payload)
             });
             
-            // Limpiar formulario tras enviar
             ['emp-cedula', 'emp-nombre', 'emp-fecha', 'emp-telefono', 'emp-domicilio', 'emp-discapacidad'].forEach(id => document.getElementById(id).value = '');
             document.querySelectorAll('.emp-cargo-cb').forEach(cb => cb.checked = false);
             
@@ -847,19 +862,16 @@
             const cachedDBStr = localStorage.getItem('combox_db');
             
             if (cachedDBStr && JSON.stringify(freshDB) !== cachedDBStr) {
-                // Hay cambios nuevos: mostrar ventana oscura
                 const toast = document.getElementById('update-toast');
                 if(toast) {
                     toast.style.opacity = '1';
                     toast.style.transform = 'translate(-50%, -50%) scale(1)';
                     
-                    // Esperar un momento para que el usuario vea el aviso, luego aplicar cambios
                     setTimeout(() => {
                         db = freshDB;
                         localStorage.setItem('combox_db', JSON.stringify(db)); 
-                        setupAfterDBLoad(false); // Re-renderiza sin perder estado
+                        setupAfterDBLoad(false); 
                         
-                        // Ocultar la ventana suavemente
                         setTimeout(() => {
                             toast.style.opacity = '0';
                             toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
@@ -867,7 +879,6 @@
                     }, 1200);
                 }
             } else {
-                // No hay caché previo o no hay cambios, guardar y proceder normal
                 db = freshDB;
                 localStorage.setItem('combox_db', JSON.stringify(db)); 
                 if (!loadedFromCache) {
@@ -908,6 +919,16 @@
         catch(e) { console.error("Error guardando carrito:", e); }
     }
 
+    function shareSugerencias() {
+        const url = window.location.origin + window.location.pathname + '?sugerencias=true';
+        if (navigator.share) {
+            navigator.share({ title: 'Combox - Buzón de Sugerencias', url: url }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(url);
+            alert('¡Enlace de sugerencias copiado!');
+        }
+    }
+
     function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
 
     function lockScroll(lock) { 
@@ -930,24 +951,17 @@
         const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'sugerencias-modal', 'empleo-modal'];
         if(!modals.some(id => document.getElementById(id).classList.contains('active'))) lockScroll(false);
     }
-    
-    function animateModal(modalId) { 
-        requestAnimationFrame(() => { requestAnimationFrame(() => { document.getElementById(modalId).classList.add('active'); lockScroll(true); }); });
-    }
 
+    // Modal más rápida
     function toggleModal(modalId, show, renderFn) { 
         const modal = document.getElementById(modalId); 
         if(show) { 
-            if(renderFn) {
-                setTimeout(() => { renderFn(); animateModal(modalId); }, 15);
-            } else {
-                animateModal(modalId);
-            }
+            if(renderFn) renderFn();
+            modal.classList.add('active'); 
+            lockScroll(true); 
         } else { 
             modal.classList.remove('active'); 
-            setTimeout(() => { checkActiveModals(); }, 300);
-            document.body.style.pointerEvents = 'none';
-            setTimeout(() => document.body.style.pointerEvents = 'auto', 350);
+            checkActiveModals();
         } 
     }
     
@@ -965,7 +979,7 @@
         const select = document.getElementById('horario-sede-select');
         select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}" ${currentHorarioSede.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`).join('');
         
-        setTimeout(() => { renderHorarioList(); toggleModal('horario-modal', true); }, 15);
+        toggleModal('horario-modal', true, renderHorarioList);
     }
 
     function changeHorarioSede(id) {
@@ -1055,9 +1069,7 @@
             submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2";
             accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
             
-            if(localStorage.getItem('combox_loc_granted') === 'true') {
-                getLocation(); 
-            }
+            getLocation(); 
         } else {
             title.innerText = 'Datos de Pick-Up';
             sedeLabel.innerText = 'Sede donde retirarás';
@@ -1100,12 +1112,10 @@
             pos => { 
                 loc.value = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`; 
                 updateLocationBtnState(); 
-                localStorage.setItem('combox_loc_granted', 'true');
             },
             err => { 
                 loc.value = ""; loc.placeholder = "No se pudo obtener. Escribe dirección."; 
                 updateLocationBtnState(); 
-                localStorage.removeItem('combox_loc_granted');
             }, 
             { enableHighAccuracy: true, timeout: 5000 }
         );
@@ -1321,13 +1331,8 @@
         }
         
         toggleCategoriesModal(false);
-        
-        setTimeout(() => {
-            showSkeletons();
-            setTimeout(() => {
-                setCat(c);
-            }, 50);
-        }, 300);
+        showSkeletons();
+        setTimeout(() => setCat(c), 50);
     }
 
     function renderAllCategories() {
@@ -1369,7 +1374,23 @@
         const search = document.getElementById('global-search').value.toLowerCase();
         let items = getSourceData();
         
-        if(currentCat !== 'TODOS') items = items.filter(p => p.categoria === currentCat); 
+        if (currentCat === 'PROMOCIONES') {
+            const today = new Date();
+            const dayNames = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
+            const currentDay = dayNames[today.getDay()];
+            
+            items = items.filter(p => {
+                if(p.promocion?.activa && p.promocion) {
+                    const dateOk = p.promocion.hasta ? new Date(p.promocion.hasta) >= today : true;
+                    const dayOk = p.promocion.dias?.includes(currentDay) || p.promocion.dias?.includes("Todos Los Dias");
+                    return dateOk && dayOk;
+                }
+                return p.precio_promo && parseFloat(p.precio_promo) > 0;
+            });
+        } else if(currentCat !== 'TODOS') {
+            items = items.filter(p => p.categoria === currentCat); 
+        }
+
         if(search) items = items.filter(p => p.nombre?.toLowerCase().includes(search)); 
         
         if(currentSort === 'precio_mayor') items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
@@ -1385,7 +1406,7 @@
 
         const filterUI = isFiltered ? `
             <div class="relative ml-auto">
-                <select onchange="changeSort(this.value)" class="appearance-none bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase rounded-full px-3 py-1.5 pr-6 outline-none focus:border-primary">
+                <select onchange="changeSort(this.value)" class="appearance-none bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase rounded-full px-3 py-1.5 pr-6 outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000]">
                     <option class="text-black" value="default" ${currentSort==='default'?'selected':''}>Últimos Agregados</option>
                     <option class="text-black" value="precio_menor" ${currentSort==='precio_menor'?'selected':''}>Precio: Menor a Mayor</option>
                     <option class="text-black" value="precio_mayor" ${currentSort==='precio_mayor'?'selected':''}>Precio: Mayor a Menor</option>
@@ -1504,9 +1525,6 @@
         
         playClick();
         if(window.navigator.vibrate) window.navigator.vibrate(5); 
-        
-        const overlay = document.querySelector('#cart-modal .modal-overlay');
-        if(overlay) { overlay.style.transform = 'translateZ(0)'; setTimeout(() => { overlay.style.transform = ''; }, 50); }
     }
 
     function syncCardBadge(id) {

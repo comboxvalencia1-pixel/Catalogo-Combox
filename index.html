@@ -11,7 +11,7 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800;900&display=block" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
     
     <script id="tailwind-config">
@@ -42,6 +42,7 @@
         input::-webkit-calendar-picker-indicator, input::-webkit-listbox, input::-webkit-contacts-auto-fill-button { display: none !important; visibility: hidden !important; pointer-events: none !important; }
         img { -webkit-user-drag: none; pointer-events: none; }
         
+        /* FIX iOS FRANJA NEGRA: Uso de dvh y -webkit-fill-available */
         html { background-color: #050505; height: 100%; min-height: -webkit-fill-available; overscroll-behavior: none; }
         body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; }
         
@@ -110,19 +111,18 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .order-island-hidden { transform: translate(-50%, 160px) !important; }
 
-        /* SIN TRANSICIONES NI DELAYS EN MODALES PARA APARICIÓN INSTANTÁNEA */
-        .modal { position: fixed; inset: 0; pointer-events: none; visibility: hidden; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; }
-        .modal.active { pointer-events: auto; visibility: visible; }
+        /* Sincronización de animaciones de ventanas */
+        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0s linear 0.2s; }
+        .modal.active { pointer-events: auto; opacity: 1; visibility: visible; transition: opacity 0.2s ease, visibility 0s linear 0s; }
         
-        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0); transform: translateZ(0); }
-        .modal.active .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-        
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; opacity: 0; border-radius: 32px; overflow: hidden; }
+        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); transition: transform 0.2s ease; border-radius: 32px; overflow: hidden; }
         .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; }
-        .modal.active .modal-content { opacity: 1; }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
 
         .modal-bottom { align-items: flex-end; padding: 0; }
-        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; transform: translateY(100%); max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+        .modal-bottom.active .modal-content { transform: translateY(0); }
 
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .type-tab-active { background: #E30613; color: white; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.4); }
@@ -134,7 +134,6 @@
         .skeleton-pill { height: 32px; width: 90%; background: rgba(255,255,255,0.1); border-radius: 20px; margin: auto; }
 
         .auto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; align-items: stretch; }
-        
         .carousel-card { width: 160px; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
         
         .card-title {
@@ -176,12 +175,12 @@
 
 <div class="absolute top-0 left-0 w-full z-[100] pt-2 flex justify-center pointer-events-none" style="padding-top: calc(0.5rem + env(safe-area-inset-top));">
     <div class="flex items-center gap-2 md:gap-3 px-3 py-1.5 pointer-events-auto">
-        <button onclick="toggleModal('sugerencias-modal', true)" class="bg-transparent text-white/90 text-[9px] sm:text-[10px] font-light tracking-[0.15em] active:scale-95 flex items-center gap-1.5 uppercase">
-            <span class="material-symbols-outlined text-[13px] sm:text-[14px] text-white">lightbulb</span> Sugerencias
+        <button onclick="toggleModal('sugerencias-modal', true)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px] text-white">lightbulb</span> Sugerencias
         </button>
-        <span class="text-white/30 text-[10px] sm:text-[12px] font-thin px-1">|</span>
-        <button onclick="toggleModal('empleo-modal', true)" class="bg-transparent text-white/90 text-[9px] sm:text-[10px] font-light tracking-[0.15em] active:scale-95 flex items-center gap-1.5 uppercase">
-            <span class="material-symbols-outlined text-[13px] sm:text-[14px] text-[#E30613]">work</span> Currículum
+        <span class="text-white/30 text-[10px] md:text-[12px] font-light">|</span>
+        <button onclick="toggleModal('empleo-modal', true)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
+            <span class="material-symbols-outlined text-[13px] text-[#E30613]">work</span> Currículum
         </button>
     </div>
 </div>
@@ -436,7 +435,7 @@
         <div class="flex items-start justify-between mb-4">
             <div class="flex flex-col">
                 <h2 class="text-2xl font-black text-white uppercase tracking-tighter">COMBOX</h2>
-                <div class="flex gap-[2px] text-yellow-400 mt-0.5">
+                <div class="flex gap-0.5 text-yellow-400 mt-0.5">
                     <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
                     <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
                     <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
@@ -457,11 +456,11 @@
         <div class="space-y-4">
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Nombre (Opcional / Anónimo)</label>
-                <input type="text" id="sug-nombre" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
+                <input type="text" id="sug-nombre" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
             </div>
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Sugerencia *</label>
-                <textarea id="sug-texto" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 placeholder:text-white/30 text-base resize-none" placeholder="¿En qué podemos mejorar?"></textarea>
+                <textarea id="sug-texto" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base resize-none" placeholder="¿En qué podemos mejorar?"></textarea>
             </div>
             <button id="btn-enviar-sug" onclick="enviarSugerencia()" class="w-full bg-yellow-400 text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-yellow-400/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all">
                 Enviar Sugerencia <span class="material-symbols-outlined">send</span>
@@ -528,35 +527,35 @@
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Cargos de Interés * (Selecciona uno o varios)</label>
                 <div class="grid grid-cols-2 gap-2" id="emp-cargo-container">
                     <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
-                        <input type="checkbox" value="Delivery" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-[#ff0000] rounded focus:ring-[#ff0000] focus:ring-offset-0">
+                        <input type="checkbox" value="Delivery" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
                         <span class="text-[11px] font-bold text-white leading-tight">Delivery</span>
                     </label>
                     <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
-                        <input type="checkbox" value="Chofer" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-[#ff0000] rounded focus:ring-[#ff0000] focus:ring-offset-0">
+                        <input type="checkbox" value="Chofer" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
                         <span class="text-[11px] font-bold text-white leading-tight">Chofer</span>
                     </label>
                     <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
-                        <input type="checkbox" value="Cajera" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-[#ff0000] rounded focus:ring-[#ff0000] focus:ring-offset-0">
+                        <input type="checkbox" value="Cajera" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
                         <span class="text-[11px] font-bold text-white leading-tight">Cajera</span>
                     </label>
                     <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
-                        <input type="checkbox" value="Despachador" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-[#ff0000] rounded focus:ring-[#ff0000] focus:ring-offset-0">
+                        <input type="checkbox" value="Despachador" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
                         <span class="text-[11px] font-bold text-white leading-tight">Despachador</span>
                     </label>
                     <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
-                        <input type="checkbox" value="Producción (Charcutero)" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-[#ff0000] rounded focus:ring-[#ff0000] focus:ring-offset-0">
+                        <input type="checkbox" value="Producción (Charcutero)" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
                         <span class="text-[11px] font-bold text-white leading-tight">Producción (Charcutero)</span>
                     </label>
                     <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
-                        <input type="checkbox" value="Atención al Cliente" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-[#ff0000] rounded focus:ring-[#ff0000] focus:ring-offset-0">
+                        <input type="checkbox" value="Atención al Cliente" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
                         <span class="text-[11px] font-bold text-white leading-tight">Atención al Cliente</span>
                     </label>
                     <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
-                        <input type="checkbox" value="Community Manager" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-[#ff0000] rounded focus:ring-[#ff0000] focus:ring-offset-0">
+                        <input type="checkbox" value="Community Manager" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
                         <span class="text-[11px] font-bold text-white leading-tight">Community Manager</span>
                     </label>
                     <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
-                        <input type="checkbox" value="Gerencia / Administración" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-[#ff0000] rounded focus:ring-[#ff0000] focus:ring-offset-0">
+                        <input type="checkbox" value="Gerencia / Administración" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
                         <span class="text-[11px] font-bold text-white leading-tight">Gerencia / Administración</span>
                     </label>
                 </div>
@@ -603,10 +602,19 @@
             menuBtn.classList.remove('bg-primary', 'border-primary');
         }
         
+        const searchInput = document.getElementById('global-search');
+        if(searchInput) searchInput.value = '';
+        const searchIcon = document.getElementById('search-icon');
+        if(searchIcon) {
+            searchIcon.innerText = 'search';
+            searchIcon.classList.remove('text-primary');
+        }
+        
         render(); 
         window.scrollTo(0, currentScroll); 
     }
 
+    // --- FUNCIONES PARA ENVIAR DATOS A GOOGLE SHEETS ---
     function generarId() {
         return 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
     }
@@ -639,7 +647,7 @@
             document.getElementById('sug-texto').value = '';
             document.getElementById('sug-nombre').value = '';
             toggleModal('sugerencias-modal', false);
-            setTimeout(() => alert('¡Gracias por tu sugerencia!'), 100);
+            setTimeout(() => alert('¡Gracias por tu sugerencia!'), 300);
         } catch (e) {
             alert('Hubo un error. Intenta de nuevo.');
         } finally {
@@ -694,22 +702,12 @@
             document.querySelectorAll('.emp-cargo-cb').forEach(cb => cb.checked = false);
             
             toggleModal('empleo-modal', false);
-            setTimeout(() => alert('¡Datos enviados con éxito! Te contactaremos pronto.'), 100);
+            setTimeout(() => alert('¡Datos enviados con éxito! Te contactaremos pronto.'), 300);
         } catch (e) {
             alert('Hubo un error al enviar. Intenta de nuevo.');
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Enviar Datos <span class="material-symbols-outlined">send</span>';
-        }
-    }
-
-    function shareSugerencias() {
-        const url = window.location.origin + window.location.pathname + '?sugerencias=true';
-        if (navigator.share) {
-            navigator.share({ title: 'Combox - Buzón de Sugerencias', url: url }).catch(console.error);
-        } else {
-            navigator.clipboard.writeText(url);
-            alert('¡Enlace de sugerencias copiado!');
         }
     }
 
@@ -823,16 +821,17 @@
         const inputs = document.querySelectorAll('#checkout-name, #checkout-location');
         inputs.forEach(input => {
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
-            input.addEventListener('blur', function() {
-                const overlay = document.querySelector('#checkout-modal .modal-overlay');
-                const content = document.querySelector('#checkout-modal .modal-content');
-                if (overlay) { overlay.style.opacity = '0.99'; setTimeout(() => overlay.style.opacity = '1', 50); }
-                if (content) { content.style.opacity = '0.99'; setTimeout(() => content.style.opacity = '1', 50); }
-            });
         });
     });
 
     async function init() {
+        // Limpieza de URL sugerencias
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('sugerencias')) {
+            setTimeout(() => toggleModal('sugerencias-modal', true), 500);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
         let loadedFromCache = false;
         try {
             const cachedDB = localStorage.getItem('combox_db');
@@ -869,12 +868,10 @@
                 if(toast) {
                     toast.style.opacity = '1';
                     toast.style.transform = 'translate(-50%, -50%) scale(1)';
-                    
                     setTimeout(() => {
                         db = freshDB;
                         localStorage.setItem('combox_db', JSON.stringify(db)); 
                         setupAfterDBLoad(false); 
-                        
                         setTimeout(() => {
                             toast.style.opacity = '0';
                             toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
@@ -910,9 +907,7 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
-            const showSugerencias = urlParams.get('sugerencias');
             if(productId) { setTimeout(() => openProductView(productId), 500); }
-            if(showSugerencias) { setTimeout(() => toggleModal('sugerencias-modal', true), 500); }
         } else {
             render();
             updateOrder(); 
@@ -947,7 +942,6 @@
         if(!modals.some(id => document.getElementById(id).classList.contains('active'))) lockScroll(false);
     }
 
-    // Modal sin tiempos de espera, se desaparece todo junto
     function toggleModal(modalId, show, renderFn) { 
         const modal = document.getElementById(modalId); 
         if(show) { 
@@ -1064,9 +1058,7 @@
             submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2";
             accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
             
-            // Ejecutar obtención del GPS en cuanto abra Delivery
             getLocation(); 
-            
         } else {
             title.innerText = 'Datos de Pick-Up';
             sedeLabel.innerText = 'Sede donde retirarás';
@@ -1087,7 +1079,7 @@
         document.getElementById('checkout-scroll-area').scrollTop = 0;
     }
     
-    function closeCheckout() { toggleModal('checkout-modal', false, null); setTimeout(() => toggleCartModal(true), 50); }
+    function closeCheckout() { toggleModal('checkout-modal', false, null); setTimeout(() => toggleCartModal(true), 150); }
     
     function updateCheckoutSede(id) { if(db?.sedes) checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; }
     
@@ -1109,12 +1101,10 @@
             pos => { 
                 loc.value = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`; 
                 updateLocationBtnState(); 
-                localStorage.setItem('combox_loc_granted', 'true');
             },
             err => { 
                 loc.value = ""; loc.placeholder = "No se pudo obtener. Escribe dirección."; 
                 updateLocationBtnState(); 
-                localStorage.removeItem('combox_loc_granted');
             }, 
             { enableHighAccuracy: true, timeout: 5000 }
         );
@@ -1336,7 +1326,7 @@
             setTimeout(() => {
                 setCat(c);
             }, 50);
-        }, 150);
+        }, 300);
     }
 
     function renderAllCategories() {
@@ -1362,6 +1352,7 @@
         
         if(promos.length) { 
             section.classList.remove('hidden'); 
+            document.querySelector('#promo-section button').setAttribute('onclick', "setCat('PROMOCIONES'); scrollToCatalog();");
             const containerClass = 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth';
             document.getElementById('promo-carousel').className = containerClass;
             document.getElementById('promo-carousel').innerHTML = promos.map(p => createCard(p, true)).join(''); 
@@ -1373,12 +1364,26 @@
         currentSort = val;
         renderCatalog();
     }
+
+    // --- Lógica Inteligente para Presentación ---
+    function extractUnitValue(name) {
+        if (!name) return 0;
+        const match = name.match(/([\d.,]+)\s*(KG|GR|G|LT|L|ML|CC|UND|U|PAQ|PQTE)\s*$/i);
+        if (match) {
+            let val = parseFloat(match[1].replace(',', '.'));
+            let unit = match[2].toUpperCase();
+            if (unit === 'KG' || unit === 'LT' || unit === 'L') return val * 1000;
+            if (unit === 'GR' || unit === 'G' || unit === 'ML' || unit === 'CC') return val;
+            if (unit === 'UND' || unit === 'U' || unit === 'PAQ' || unit === 'PQTE') return val; 
+            return val;
+        }
+        return 0;
+    }
     
     function renderCatalog() {
         const search = document.getElementById('global-search').value.toLowerCase();
         let items = getSourceData();
         
-        // Filtro especial para PROMOCIONES
         if (currentCat === 'PROMOCIONES') {
             const today = new Date();
             const dayNames = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
@@ -1395,19 +1400,19 @@
         } else if(currentCat !== 'TODOS') {
             items = items.filter(p => p.categoria === currentCat); 
         }
-
+        
         if(search) items = items.filter(p => p.nombre?.toLowerCase().includes(search)); 
         
         if(currentSort === 'precio_mayor') items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
         else if(currentSort === 'precio_menor') items.sort((a, b) => getProductPrice(a) - getProductPrice(b));
-        else if(currentSort === 'pres_mayor') items.sort((a, b) => (parseFloat(b.presentacion) || 0) - (parseFloat(a.presentacion) || 0));
-        else if(currentSort === 'pres_menor') items.sort((a, b) => (parseFloat(a.presentacion) || 0) - (parseFloat(b.presentacion) || 0));
+        else if(currentSort === 'pres_mayor') items.sort((a, b) => extractUnitValue(b.nombre) - extractUnitValue(a.nombre));
+        else if(currentSort === 'pres_menor') items.sort((a, b) => extractUnitValue(a.nombre) - extractUnitValue(b.nombre));
         else items.sort((a, b) => b._index - a._index);
         
         const grouped = items.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
         
         const isCarousel = currentCat === 'TODOS' && !search;
-        const isFiltered = currentCat !== 'TODOS';
+        const isFiltered = currentCat !== 'TODOS' || search !== '';
 
         const filterUI = isFiltered ? `
             <div class="relative ml-auto">
@@ -1530,6 +1535,9 @@
         
         playClick();
         if(window.navigator.vibrate) window.navigator.vibrate(5); 
+        
+        const overlay = document.querySelector('#cart-modal .modal-overlay');
+        if(overlay) { overlay.style.transform = 'translateZ(0)'; setTimeout(() => { overlay.style.transform = ''; }, 50); }
     }
 
     function syncCardBadge(id) {
@@ -1659,6 +1667,16 @@
         } else {
             navigator.clipboard.writeText(url);
             alert('¡Enlace del producto copiado!');
+        }
+    }
+    
+    function shareSugerencias() {
+        const url = window.location.origin + window.location.pathname + '?sugerencias=true';
+        if (navigator.share) {
+            navigator.share({ title: 'Combox - Buzón de Sugerencias', url: url }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(url);
+            alert('¡Enlace de sugerencias copiado!');
         }
     }
     

@@ -68,10 +68,13 @@
         .nav-btn-glass { position: relative; z-index: 1; }
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
-        /* FIX ANDROID 120FPS SCROLL: Contain y Content-Visibility en lugar de translateZ */
+        /* FIX iOS BUG: Evitar que el fondo sobrepase las esquinas redondeadas */
         .product-card-glass { 
             position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; 
             contain: content; content-visibility: auto; contain-intrinsic-size: auto 260px;
+            isolation: isolate; /* Aislar capa para mejor renderizado */
+            -webkit-mask-image: -webkit-radial-gradient(white, black); /* Hack nativo de iOS para forzar clip del borde */
+            mask-image: radial-gradient(white, black);
         }
         
         .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(15px) brightness(0.6); opacity: 0.8; z-index: 0; }
@@ -114,17 +117,19 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; transform: translate3d(-50%, 0, 0); }
         .order-island-hidden { transform: translate3d(-50%, 160px, 0) !important; }
 
-        /* FIX iOS MODALES: Micro-transición, Overlay blur, Fondo interno sólido */
-        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; opacity: 0; visibility: hidden; transition: opacity 0.15s ease, visibility 0.15s ease; will-change: opacity; }
+        /* FIX MODALES (Android fluidez + Overlay Blur + iOS rápido) */
+        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease; will-change: opacity; }
         .modal.active { pointer-events: auto; opacity: 1; visibility: visible; }
         
-        .modal-overlay { position: fixed; inset: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); cursor: pointer; }
+        /* Blur forzado por hardware para que no falle */
+        .modal-overlay { position: absolute; inset: -10%; width: 120%; height: 120%; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); cursor: pointer; transform: translateZ(0); }
         
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; /* FONDO SÓLIDO */ transform: scale(0.97); opacity: 0; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; }
-        .modal.active .modal-content { transform: scale(1); opacity: 1; }
+        /* Animación suave de deslizamiento en lugar de escala (Zero-lag en Android) */
+        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; transform: translateY(15px); opacity: 0; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; }
+        .modal.active .modal-content { transform: translateY(0); opacity: 1; }
 
         .modal-bottom { align-items: flex-end; padding: 0; }
-        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); transform: translateY(20px); }
+        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); transform: translateY(30px); }
         .modal-bottom.active .modal-content { transform: translateY(0); }
 
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -945,12 +950,11 @@
         }
     }
 
-    // FIX: Modificado el comportamiento de cierre para iOS
     function toggleModal(modalId, show, renderFn) { 
         const modal = document.getElementById(modalId); 
         
         if(show) { 
-            if(document.activeElement) document.activeElement.blur(); // Evita conflictos con el teclado al abrir
+            if(document.activeElement) document.activeElement.blur(); 
             if(renderFn) renderFn();
             modal.classList.add('active'); 
             lockScroll(true); 
@@ -1085,7 +1089,7 @@
         document.getElementById('checkout-scroll-area').scrollTop = 0;
     }
     
-    function closeCheckout() { toggleModal('checkout-modal', false, null); setTimeout(() => toggleCartModal(true), 150); }
+    function closeCheckout() { toggleModal('checkout-modal', false, null); setTimeout(() => toggleModal('cart-modal', true), 150); }
     
     function updateCheckoutSede(id) { if(db?.sedes) checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; }
     

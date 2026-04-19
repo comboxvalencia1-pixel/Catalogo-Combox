@@ -111,18 +111,36 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .order-island-hidden { transform: translate(-50%, 160px) !important; }
 
-        /* Sincronización de animaciones de ventanas */
-        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0s linear 0.2s; }
-        .modal.active { pointer-events: auto; opacity: 1; visibility: visible; transition: opacity 0.2s ease, visibility 0s linear 0s; }
+        /* Ventanas instantáneas y rápidas con Aceleración de Hardware (GPU) */
+        .modal { 
+            position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; opacity: 0; visibility: hidden; 
+            will-change: opacity, visibility;
+            transform: translateZ(0);
+        }
+        .modal.active { pointer-events: auto; opacity: 1; visibility: visible; }
         
-        .modal-overlay { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; transform: translateY(20px) scale(0.98); transition: transform 0.2s ease; border-radius: 32px; overflow: hidden; }
-        .modal-content::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; }
-        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-overlay { 
+            position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); cursor: pointer; 
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            perspective: 1000px;
+        }
+        
+        .modal-content { 
+            position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; 
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .modal-content::before { 
+            content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(10, 10, 11, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: -1; pointer-events: none; 
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+        }
 
         .modal-bottom { align-items: flex-end; padding: 0; }
-        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; transform: translateY(100%); max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
-        .modal-bottom.active .modal-content { transform: translateY(0); }
+        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
 
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .type-tab-active { background: #E30613; color: white; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.4); }
@@ -180,7 +198,7 @@
         </button>
         <span class="text-white/30 text-[10px] md:text-[12px] font-light">|</span>
         <button onclick="toggleModal('empleo-modal', true)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
-            <span class="material-symbols-outlined text-[13px] text-[#E30613]">work</span> Currículum
+            <span class="material-symbols-outlined text-[13px] text-white">work</span> Currículum
         </button>
     </div>
 </div>
@@ -933,7 +951,11 @@
             document.body.style.top = '';
             document.body.style.width = '';
             document.body.classList.remove('modal-open'); 
-            window.scrollTo(0, savedScrollY);
+            
+            // FIX para iOS: Forzamos la devolución del scroll después de limpiar el DOM
+            setTimeout(() => {
+                window.scrollTo(0, savedScrollY);
+            }, 10);
         } 
     }
     

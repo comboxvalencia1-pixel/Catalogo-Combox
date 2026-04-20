@@ -44,8 +44,6 @@
         
         html { background-color: #050505; height: 100%; min-height: -webkit-fill-available; overscroll-behavior: none; scroll-behavior: smooth; }
         body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        
-        body.modal-open { overflow: hidden !important; width: 100%; height: 100%; } 
 
         #splash { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; transform: translateZ(0); }
@@ -68,11 +66,9 @@
         .nav-btn-glass { position: relative; z-index: 1; }
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
-        /* FIX IOS BORDES Y ANDROID 120FPS */
         .product-card-glass { 
             position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; 
             contain: content; content-visibility: auto; contain-intrinsic-size: auto 260px;
-            /* Máscara mágica para evitar que el blur se salga del border-radius en iOS Safari */
             -webkit-mask-image: -webkit-radial-gradient(white, black);
             mask-image: radial-gradient(white, black);
             -webkit-transform: translateZ(0); 
@@ -96,14 +92,8 @@
             75% { transform: translate3d(0, -4px, 0) rotate(1deg); }
         }
 
-        .card-promo { 
-            animation: promoAgitate 2.5s ease-in-out infinite;
-            box-shadow: 0 0 15px rgba(249, 115, 22, 0.5); 
-        }
-        .card-promo::after {
-            padding: 2.5px !important;
-            background: linear-gradient(135deg, rgba(251, 146, 60, 1) 0%, rgba(249, 115, 22, 0.3) 100%) !important;
-        }
+        .card-promo { animation: promoAgitate 2.5s ease-in-out infinite; box-shadow: 0 0 15px rgba(249, 115, 22, 0.5); }
+        .card-promo::after { padding: 2.5px !important; background: linear-gradient(135deg, rgba(251, 146, 60, 1) 0%, rgba(249, 115, 22, 0.3) 100%) !important; }
 
         .price-pill { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: white; transition: all 0.2s; }
         .price-pill.active { background: #ff0000 !important; box-shadow: 0 0 20px rgba(255,0,0,0.4) !important; border-color: rgba(255,255,255,0.15) !important; }
@@ -118,19 +108,34 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; transform: translate3d(-50%, 0, 0); }
         .order-island-hidden { transform: translate3d(-50%, 160px, 0) !important; }
 
-        /* FIX MODALES FLUIDOS: Ajustes en Overlay y Translación en lugar de Escala */
-        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s; will-change: opacity, visibility; }
-        .modal.active { pointer-events: auto; opacity: 1; visibility: visible; }
+        /* FIX BLUR FIRST: El modal se hace visible instantáneamente sin fade-in global */
+        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; visibility: hidden; }
+        .modal.active { pointer-events: auto; visibility: visible; }
         
-        /* FIX BLUR DE FONDO: inset 0 para evitar bugs en Android, aceleración forzada */
-        .modal-overlay { position: fixed; inset: 0; width: 100vw; height: 100dvh; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); cursor: pointer; transform: translateZ(0); will-change: opacity; }
+        /* OVERLAY: Hace el fade-in y el blur de inmediato (en 0.25s) */
+        .modal-overlay { 
+            position: fixed; inset: 0; width: 100vw; height: 100dvh; 
+            background-color: rgba(0, 0, 0, 0.55); 
+            -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); 
+            cursor: pointer; z-index: 1;
+            opacity: 0; transition: opacity 0.25s ease; 
+        }
+        .modal.active .modal-overlay { opacity: 1; }
         
-        /* FIX LAG ANDROID: translate3d suave en lugar de animar scale() */
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; transform: translate3d(0, 15px, 0); opacity: 0; transition: transform 0.25s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.2s ease; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; }
-        .modal.active .modal-content { transform: translate3d(0, 0, 0); opacity: 1; }
+        /* CONTENT: Al cerrarse no tiene delay, pero al abrirse SI tiene un delay de 0.15s para dejar actuar al blur */
+        .modal-content { 
+            position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; 
+            transform: translate3d(0, 15px, 0); opacity: 0; 
+            transition: transform 0.2s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.15s ease; 
+            border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; 
+        }
+        .modal.active .modal-content { 
+            transform: translate3d(0, 0, 0); opacity: 1; 
+            transition: transform 0.4s cubic-bezier(0.1, 0.8, 0.2, 1) 0.15s, opacity 0.3s ease 0.15s; 
+        }
 
         .modal-bottom { align-items: flex-end; padding: 0; }
-        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); transform: translate3d(0, 25px, 0); }
+        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: 2.5rem; transform: translate3d(0, 25px, 0); }
         .modal-bottom.active .modal-content { transform: translate3d(0, 0, 0); }
 
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -145,24 +150,13 @@
         .auto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; align-items: stretch; }
         .carousel-card { width: 160px; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
         
-        .card-title {
-            font-size: 12px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2; 
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: normal;
-            min-height: 2.8rem; 
-            margin-bottom: 0.25rem;
-        }
+        .card-title { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; min-height: 2.8rem; margin-bottom: 0.25rem; }
 
         @media (max-width: 395px) {
             .nav-col { min-width: 62px !important; gap: 0.3rem !important; }
             .nav-btn-glass { width: 46px !important; height: 46px !important; }
             .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 24px !important; width: 24px !important; height: 24px !important; }
             .nav-text { font-size: 8px !important; }
-            
             .auto-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)) !important; gap: 0.75rem !important; }
             .carousel-card { width: 135px !important; }
             .glass-overlay { padding: 0.8rem 0.5rem 0.6rem !important; }
@@ -183,7 +177,7 @@
 </div>
 
 <div class="absolute top-0 left-0 w-full z-[100] pt-2 flex justify-center pointer-events-none" style="padding-top: calc(0.5rem + env(safe-area-inset-top));">
-    <div class="flex items-center gap-2 md:gap-3 px-3 py-1.5 pointer-events-auto">
+    <div class="flex items-center gap-2 md:gap-3 px-3 py-1.5 pointer-events-auto bg-black/20 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
         <button onclick="toggleModal('sugerencias-modal', true)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
             <span class="material-symbols-outlined text-[14px] text-white">lightbulb</span> Sugerencias
         </button>
@@ -249,6 +243,7 @@
             </div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
         </div>
+
     </div>
 </div>
 
@@ -264,7 +259,7 @@
             <button id="search-action-btn" onclick="handleSearchClick()" class="text-zinc-400 mr-2 flex items-center justify-center outline-none active:scale-90 transition-all">
                 <span id="search-icon" class="material-symbols-outlined text-[22px]">search</span>
             </button>
-            <input class="flex-1 bg-transparent border-none py-2 text-[15px] text-white outline-none focus:ring-0 placeholder:text-zinc-500" id="global-search" oninput="onSearchInput()" placeholder="¿Qué buscas?" type="text"/>
+            <input class="flex-1 bg-transparent border-none py-2 text-[15px] text-white outline-none focus:ring-0 placeholder:text-zinc-500" id="global-search" oninput="onSearchInput()" onkeypress="handleSearchEnter(event)" placeholder="¿Qué buscas?" type="text"/>
             <button id="cat-menu-btn" class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all ml-2 flex-shrink-0" onclick="toggleCategoriesModal(true)">
                 <span class="material-symbols-outlined text-[20px]">menu</span>
             </button>
@@ -292,7 +287,9 @@
             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
             <span class="font-black text-2xl text-white tracking-tighter" id="order-total">$0.00</span>
         </div>
-        <button class="bg-primary text-white font-black px-8 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 transition-transform tracking-widest relative z-10" onclick="toggleCartModal(true)">Ver Pedido</button>
+        <button class="bg-primary text-white font-black px-6 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 transition-transform tracking-widest relative z-10 flex items-center justify-center gap-2" onclick="toggleCartModal(true)">
+            <span class="material-symbols-outlined text-[18px]">shopping_cart</span> Ver Pedido
+        </button>
     </div>
 </div>
 
@@ -595,9 +592,9 @@
     let tasaBCV = 1; 
     let audioCtx;
     let ticking = false;
-    let searchTimer = null; 
+    let searchRenderTimer = null; 
+    let searchScrollTimer = null;
     let initialRenderDone = false;
-    let savedScrollY = 0;
     
     const searchContainer = document.getElementById('search-container');
 
@@ -811,13 +808,20 @@
         if (!ticking) {
             window.requestAnimationFrame(() => {
                 const currentScrollY = window.scrollY;
-                const searchValue = document.getElementById('global-search').value.trim();
+                const searchInput = document.getElementById('global-search');
+                const searchValue = searchInput ? searchInput.value.trim() : '';
+                const isFocused = document.activeElement === searchInput;
 
-                if (searchValue !== '') { searchContainer.classList.remove('search-hidden'); } 
+                if (searchValue !== '' || isFocused) { 
+                    searchContainer.classList.remove('search-hidden'); 
+                } 
                 else if (currentScrollY > 300) {
                     if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
                     else searchContainer.classList.remove('search-hidden'); 
-                } else { searchContainer.classList.remove('search-hidden'); }
+                } else { 
+                    searchContainer.classList.remove('search-hidden'); 
+                }
+                
                 lastScrollY = currentScrollY;
                 ticking = false;
             });
@@ -830,6 +834,17 @@
         inputs.forEach(input => {
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
         });
+
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) {
+            searchInput.addEventListener('focus', function() {
+                const searchCont = document.getElementById('search-container');
+                const y = searchCont.offsetTop - 15;
+                if (window.scrollY < y) {
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            });
+        }
     });
 
     async function init() {
@@ -930,17 +945,13 @@
 
     function lockScroll(lock) { 
         if(lock) { 
-            savedScrollY = window.scrollY;
-            document.body.style.position = 'fixed';
-            document.body.style.top = `-${savedScrollY}px`;
-            document.body.style.width = '100%';
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
             document.body.classList.add('modal-open');
         } else { 
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.width = '';
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
             document.body.classList.remove('modal-open'); 
-            window.scrollTo({ top: savedScrollY, left: 0, behavior: 'instant' });
         } 
     }
     
@@ -1273,13 +1284,28 @@
             icon.classList.remove('text-primary');
         }
         
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
+        clearTimeout(searchRenderTimer);
+        clearTimeout(searchScrollTimer);
+
+        searchRenderTimer = setTimeout(() => {
             window.requestAnimationFrame(() => {
                 render();
-                if(val.length > 0) scrollToCatalog();
             });
-        }, 250); 
+        }, 200); 
+
+        if (val.length > 0) {
+            searchScrollTimer = setTimeout(() => {
+                scrollToCatalog();
+            }, 1000); 
+        }
+    }
+    
+    function handleSearchEnter(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(searchScrollTimer);
+            if(document.activeElement) document.activeElement.blur(); 
+            scrollToCatalog();
+        }
     }
 
     function handleSearchClick() {
@@ -1297,8 +1323,6 @@
         if (grid) {
             const offset = 80; 
             const y = grid.getBoundingClientRect().top + window.scrollY - offset;
-            
-            searchContainer.classList.add('search-hidden');
             
             window.scrollTo({ top: y, behavior: 'smooth' });
             

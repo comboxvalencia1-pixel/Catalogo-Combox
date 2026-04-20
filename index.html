@@ -108,35 +108,34 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; transform: translate3d(-50%, 0, 0); }
         .order-island-hidden { transform: translate3d(-50%, 160px, 0) !important; }
 
-        /* MODALES: Estructura corregida para forzar el Blur perfecto en Android/iOS */
-        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s; }
-        .modal.active { pointer-events: auto; opacity: 1; visibility: visible; }
+        /* FIX BLUR FIRST: El modal se hace visible instantáneamente sin fade-in global */
+        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; visibility: hidden; }
+        .modal.active { pointer-events: auto; visibility: visible; }
         
-        /* OVERLAY: Fondo sólido con blur activado sin transiciones que lo rompan */
+        /* OVERLAY: Hace el fade-in y el blur de inmediato (en 0.25s) */
         .modal-overlay { 
-            position: fixed; 
-            inset: 0; 
-            width: 100vw; 
-            height: 100dvh; 
+            position: fixed; inset: 0; width: 100vw; height: 100dvh; 
             background-color: rgba(0, 0, 0, 0.55); 
-            -webkit-backdrop-filter: blur(14px); 
-            backdrop-filter: blur(14px); 
-            cursor: pointer; 
-            z-index: 1;
+            -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); 
+            cursor: pointer; z-index: 1;
+            opacity: 0; transition: opacity 0.25s ease; 
         }
+        .modal.active .modal-overlay { opacity: 1; }
         
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; transform: translate3d(0, 15px, 0); opacity: 0; transition: transform 0.25s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.2s ease; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; }
-        .modal.active .modal-content { transform: translate3d(0, 0, 0); opacity: 1; }
+        /* CONTENT: Al cerrarse no tiene delay, pero al abrirse SI tiene un delay de 0.15s para dejar actuar al blur */
+        .modal-content { 
+            position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; 
+            transform: translate3d(0, 15px, 0); opacity: 0; 
+            transition: transform 0.2s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.15s ease; 
+            border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; 
+        }
+        .modal.active .modal-content { 
+            transform: translate3d(0, 0, 0); opacity: 1; 
+            transition: transform 0.4s cubic-bezier(0.1, 0.8, 0.2, 1) 0.15s, opacity 0.3s ease 0.15s; 
+        }
 
         .modal-bottom { align-items: flex-end; padding: 0; }
-        .modal-bottom .modal-content { 
-            border-radius: 32px 32px 0 0; 
-            max-width: 600px; 
-            width: 100%; 
-            margin: 0 auto; 
-            padding-bottom: 2.5rem;
-            transform: translate3d(0, 25px, 0); 
-        }
+        .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: 2.5rem; transform: translate3d(0, 25px, 0); }
         .modal-bottom.active .modal-content { transform: translate3d(0, 0, 0); }
 
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -177,8 +176,8 @@
     <span class="text-[13px] font-[900] uppercase tracking-widest leading-tight">Actualizando<br>datos nuevos...</span>
 </div>
 
-<div class="absolute top-0 left-0 w-full z-[100] pt-2 flex justify-center pointer-events-none" style="padding-top: calc(0.5rem + env(safe-area-inset-top));">
-    <div class="flex items-center gap-2 md:gap-3 px-3 py-1.5 pointer-events-auto">
+<div class="absolute top-0 left-0 w-full z-[100] pt-2 px-4 flex justify-between items-start pointer-events-none" style="padding-top: calc(0.5rem + env(safe-area-inset-top));">
+    <div class="flex items-center gap-2 md:gap-3 px-3 py-1.5 pointer-events-auto bg-black/20 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
         <button onclick="toggleModal('sugerencias-modal', true)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
             <span class="material-symbols-outlined text-[14px] text-white">lightbulb</span> Sugerencias
         </button>
@@ -187,6 +186,10 @@
             <span class="material-symbols-outlined text-[13px] text-white">work</span> Currículum
         </button>
     </div>
+    
+    <button onclick="openInstagram()" class="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white active:scale-90 pointer-events-auto transition-transform shadow-lg relative z-50">
+        <svg class="w-[18px] h-[18px] fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+    </button>
 </div>
 
 <div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-40 pointer-events-none transition-transform duration-300" style="transform: translateY(-100%); will-change: transform;">
@@ -238,12 +241,6 @@
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
         </div>
 
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openInstagram()">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-            </div>
-            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
-        </div>
     </div>
 </div>
 
@@ -287,7 +284,9 @@
             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
             <span class="font-black text-2xl text-white tracking-tighter" id="order-total">$0.00</span>
         </div>
-        <button class="bg-primary text-white font-black px-8 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 transition-transform tracking-widest relative z-10" onclick="toggleCartModal(true)">Ver Pedido</button>
+        <button class="bg-primary text-white font-black px-6 py-3.5 rounded-full text-xs uppercase shadow-lg shadow-primary/40 active:scale-95 transition-transform tracking-widest relative z-10 flex items-center justify-center gap-2" onclick="toggleCartModal(true)">
+            <span class="material-symbols-outlined text-[18px]">shopping_cart</span> Ver Pedido
+        </button>
     </div>
 </div>
 
@@ -801,7 +800,6 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
-    // SCROLL MEJORADO: Verifica si hay texto o el input está activo para no esconder la isla
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
         if (!ticking) {
@@ -833,6 +831,18 @@
         inputs.forEach(input => {
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
         });
+
+        // NUEVO: Anclaje de la barra de búsqueda al hacer clic en ella
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) {
+            searchInput.addEventListener('focus', function() {
+                const searchCont = document.getElementById('search-container');
+                const y = searchCont.offsetTop - 15;
+                if (window.scrollY < y) {
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            });
+        }
     });
 
     async function init() {
@@ -1251,7 +1261,6 @@
     
     function getUnifiedId(p) { return (p.id || p.id_producto || p.ID_PRODUCTO_VENTA || '').toString(); }
 
-    // BÚSQUEDA MEJORADA: Filtra al momento pero NO scrollea hasta que dejes de escribir
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
@@ -1276,14 +1285,12 @@
         clearTimeout(searchRenderTimer);
         clearTimeout(searchScrollTimer);
 
-        // Renderiza los resultados rápido (para ver mientras escribes)
         searchRenderTimer = setTimeout(() => {
             window.requestAnimationFrame(() => {
                 render();
             });
         }, 200); 
 
-        // Solo hace scroll si dejas de escribir por 1 segundo
         if (val.length > 0) {
             searchScrollTimer = setTimeout(() => {
                 scrollToCatalog();
@@ -1294,7 +1301,7 @@
     function handleSearchEnter(e) {
         if (e.key === 'Enter') {
             clearTimeout(searchScrollTimer);
-            if(document.activeElement) document.activeElement.blur(); // Cierra el teclado
+            if(document.activeElement) document.activeElement.blur(); 
             scrollToCatalog();
         }
     }
@@ -1314,8 +1321,6 @@
         if (grid) {
             const offset = 80; 
             const y = grid.getBoundingClientRect().top + window.scrollY - offset;
-            
-            // ELIMINADO: Ya no ocultamos la barra al auto-scrollear
             
             window.scrollTo({ top: y, behavior: 'smooth' });
             

@@ -14,13 +14,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
     
-    <script>
-        // Detección rápida de Android para anular transiciones
-        if (/Android/i.test(navigator.userAgent)) {
-            document.documentElement.classList.add('is-android');
-        }
-    </script>
-
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -51,15 +44,6 @@
         
         html { background-color: #050505; height: 100%; min-height: -webkit-fill-available; overscroll-behavior: none; scroll-behavior: smooth; }
         body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-
-        /* Sin transiciones en Android para máxima fluidez */
-        .is-android .modal-content, 
-        .is-android .modal-overlay, 
-        .is-android .modal {
-            transition: none !important;
-            animation: none !important;
-            will-change: auto !important;
-        }
 
         #splash { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; transform: translateZ(0); }
@@ -93,20 +77,12 @@
         .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(15px) brightness(0.6); opacity: 0.8; z-index: 0; }
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
-        /* Contorno tipo vidrio más brillante para mejor contraste */
-        .glass-contour { position: relative; border-color: transparent !important; }
+        .glass-contour { position: relative; border-color: transparent !important; border: none; }
         .glass-contour::after {
             content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 100%);
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
-        }
-
-        /* Glass para botones superiores de búsqueda (island glass) */
-        .island-glass {
-            background: rgba(30, 30, 35, 0.75) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.08) !important;
         }
 
         @keyframes promoAgitate {
@@ -159,6 +135,13 @@
         .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: 2.5rem; transform: translate3d(0, 25px, 0); }
         .modal-bottom.active .modal-content { transform: translate3d(0, 0, 0); }
 
+        /* Anulación de transiciones para Android */
+        html.is-android .modal-overlay,
+        html.is-android .modal-content {
+            transition: none !important;
+            transform: translate3d(0,0,0) !important;
+        }
+
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .type-tab-active { background: #E30613; color: white; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.4); }
         .type-tab-inactive { color: #a1a1aa; background: transparent; }
@@ -173,13 +156,12 @@
         
         .card-title { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; min-height: 2.8rem; margin-bottom: 0.25rem; }
 
-        @media (max-width: 400px) {
-            .nav-col { min-width: 52px !important; gap: 0.2rem !important; }
-            .nav-btn-glass { width: 42px !important; height: 42px !important; }
-            .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 20px !important; width: 20px !important; height: 20px !important; }
-            .nav-text { font-size: 7.5px !important; }
-            .header-buttons-container { gap: 0.35rem !important; } /* Ajuste de espacio entre botones */
-            
+        @media (max-width: 395px) {
+            .nav-container { gap: 0.25rem !important; justify-content: space-between !important; width: 100%; padding: 0 0.5rem !important; }
+            .nav-col { min-width: 58px !important; gap: 0.3rem !important; }
+            .nav-btn-glass { width: 46px !important; height: 46px !important; }
+            .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 24px !important; width: 24px !important; height: 24px !important; }
+            .nav-text { font-size: 8px !important; }
             .auto-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)) !important; gap: 0.75rem !important; }
             .carousel-card { width: 135px !important; }
             .glass-overlay { padding: 0.8rem 0.5rem 0.6rem !important; }
@@ -214,7 +196,7 @@
 <div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-40 pointer-events-none transition-transform duration-300" style="transform: translateY(-100%); will-change: transform;">
     <div class="bg-black/60 backdrop-blur-xl border border-white/20 text-white rounded-full px-5 py-2.5 flex items-center gap-2 shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <span class="material-symbols-outlined text-primary text-[20px] transition-transform" id="ptr-icon">sync</span>
-        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-200" id="ptr-text">Jala para actualizar</span>
+        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-200" id="ptr-text">Estira más para actualizar</span>
     </div>
 </div>
 
@@ -228,15 +210,15 @@
     <div class="relative z-10 flex flex-col items-center text-center">
         <span class="text-white/60 text-[11px] font-bold tracking-[0.3em] uppercase mb-2" id="current-location-label">Cargando sede...</span>
         <h1 class="text-white font-[900] text-6xl md:text-8xl tracking-tighter leading-none mb-3">COMBOX</h1>
-        <div class="flex items-center gap-2 px-4 py-1.5 mt-1">
+        <div class="flex items-center gap-2 px-4 py-1.5">
             <span id="header-status-dot" class="w-1.5 h-1.5 rounded-full bg-white/20"></span>
-            <span id="header-status-text" class="text-white/90 text-[10px] font-bold uppercase tracking-wider">Consultando...</span>
+            <span id="header-status-text" class="text-white/90 text-[10px] font-bold uppercase tracking-wider drop-shadow-md">Consultando...</span>
         </div>
     </div>
 </header>
 
 <div class="relative -mt-8 px-4 z-20 max-content-width">
-    <div class="flex overflow-x-auto hide-scrollbar py-2 justify-start md:justify-center gap-4 header-buttons-container px-2 w-full mx-auto" style="max-width: fit-content;">
+    <div class="flex overflow-x-auto hide-scrollbar py-2 justify-center gap-2 md:gap-4 px-2 w-full mx-auto nav-container" style="max-width: fit-content;">
         
         <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleSedesModal(true)">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0" style="color: #39FF14;">storefront</span></div>
@@ -272,13 +254,13 @@
 
 <div class="sticky z-50 px-4 mt-8" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
     <div class="flex flex-col items-center gap-3 max-w-2xl mx-auto island-width">
-        <div class="flex island-glass p-1.5 rounded-full shadow-2xl" id="type-tabs-container">
+        <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full glass-contour shadow-2xl" id="type-tabs-container">
             <button class="type-tab type-tab-active" onclick="setType('Individual', this)">Individual</button>
             <button class="type-tab type-tab-inactive" onclick="setType('Combos', this)">Combos</button>
             <button class="type-tab type-tab-inactive" onclick="setType('Servicios', this)">Servicios</button>
         </div>
 
-        <div class="w-full island-glass rounded-full flex items-center px-4 shadow-2xl transition-all h-[54px]" id="search-island">
+        <div class="w-full bg-[rgba(15,15,18,0.75)] backdrop-blur-xl rounded-full glass-contour flex items-center px-4 shadow-2xl transition-all h-[54px]" id="search-island">
             <button id="search-action-btn" onclick="handleSearchClick()" class="text-zinc-400 mr-2 flex items-center justify-center outline-none active:scale-90 transition-all">
                 <span id="search-icon" class="material-symbols-outlined text-[22px]">search</span>
             </button>
@@ -305,7 +287,7 @@
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
 
 <div class="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-[50%] w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
-    <div class="island-glass rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width">
+    <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width glass-contour">
         <div class="pl-6 flex flex-col relative z-10">
             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
             <span class="font-black text-2xl text-white tracking-tighter" id="order-total">$0.00</span>
@@ -316,9 +298,18 @@
     </div>
 </div>
 
+<div class="modal" id="custom-dialog-modal">
+    <div class="modal-overlay" onclick="closeCustomDialog()"></div>
+    <div class="modal-content glass-contour p-6 flex flex-col items-center text-center mx-4" style="max-width: 320px; margin: auto; background: rgba(15,15,18,0.85); backdrop-filter: blur(16px);">
+        <h3 class="text-white font-black text-xl uppercase tracking-widest mb-3" id="dialog-title">Aviso</h3>
+        <p class="text-zinc-300 text-sm mb-6 leading-relaxed font-medium" id="dialog-msg"></p>
+        <div class="flex gap-3 w-full" id="dialog-buttons"></div>
+    </div>
+</div>
+
 <div class="modal modal-bottom" id="cart-modal">
     <div class="modal-overlay" onclick="toggleModal('cart-modal', false)"></div>
-    <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3">
+    <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3 glass-contour" style="background: rgba(10,10,11,0.95);">
         <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
         
         <div class="flex items-center justify-between mb-5">
@@ -355,14 +346,14 @@
                     <span class="material-symbols-outlined text-[22px]">storefront</span> Pick-Up
                 </button>
             </div>
-            <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="triggerClearCart()">Vaciar Carrito</button>
+            <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Pedido</button>
         </div>
     </div>
 </div>
 
 <div class="modal" id="checkout-modal">
     <div class="modal-overlay" onclick="closeCheckout()"></div>
-    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-8">
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
                 <div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div>
@@ -401,7 +392,7 @@
 
 <div class="modal" id="sedes-modal">
     <div class="modal-overlay" onclick="toggleModal('sedes-modal', false)"></div>
-    <div class="modal-content p-6 pb-8">
+    <div class="modal-content p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
         <div class="flex items-center justify-between mb-8"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Seleccionar Sede</h2></div><button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('sedes-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
         <div class="space-y-4" id="sedes-list-container"></div>
     </div>
@@ -409,7 +400,7 @@
 
 <div class="modal" id="horario-modal">
     <div class="modal-overlay" onclick="toggleModal('horario-modal', false)"></div>
-    <div class="modal-content p-6 pb-8">
+    <div class="modal-content p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Horario Semanal</h2></div>
             <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('horario-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
@@ -425,7 +416,7 @@
 
 <div class="modal" id="mapa-modal">
     <div class="modal-overlay" onclick="toggleModal('mapa-modal', false)"></div>
-    <div class="modal-content p-6 pb-8">
+    <div class="modal-content p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-blue-500 rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Ver Ubicación</h2></div>
             <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('mapa-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
@@ -436,7 +427,7 @@
 
 <div class="modal" id="chat-modal">
     <div class="modal-overlay" onclick="toggleModal('chat-modal', false)"></div>
-    <div class="modal-content p-6 pb-8">
+    <div class="modal-content p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-[#25D366] rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Contactar Sede</h2></div>
             <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('chat-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
@@ -447,7 +438,7 @@
 
 <div class="modal" id="categories-modal">
     <div class="modal-overlay" id="cat-overlay" onclick="toggleModal('categories-modal', false)"></div>
-    <div class="modal-content p-6 pb-8">
+    <div class="modal-content p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
         <div class="flex items-center justify-between mb-8"><div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-primary rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Categorías</h2></div><button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('categories-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button></div>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="all-categories-list"></div>
     </div>
@@ -455,35 +446,159 @@
 
 <div class="modal" id="product-modal">
     <div class="modal-overlay" onclick="toggleModal('product-modal', false)"></div>
-    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden" id="product-content"></div>
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden glass-contour" id="product-content"></div>
 </div>
 
-<div class="modal" id="custom-alert-modal" style="z-index: 10000;">
-    <div class="modal-overlay" onclick="closeCustomAlert()"></div>
-    <div class="modal-content p-6 pb-8 text-center max-w-[320px] mx-auto border-t border-t-primary/50 shadow-[0_0_40px_rgba(227,6,19,0.15)]">
-        <span class="material-symbols-outlined text-[42px] text-primary mb-3">error</span>
-        <h3 class="text-xl font-black text-white uppercase tracking-wider mb-2">Aviso</h3>
-        <p class="text-sm text-zinc-300 font-medium leading-relaxed mb-6" id="alert-text"></p>
-        <button class="w-full bg-white/10 hover:bg-white/15 text-white font-[900] py-3.5 rounded-2xl text-sm uppercase active:scale-95 transition-transform" onclick="closeCustomAlert()">Entendido</button>
+<div class="modal" id="sugerencias-modal">
+    <div class="modal-overlay" onclick="toggleModal('sugerencias-modal', false)"></div>
+    <div class="modal-content p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex flex-col">
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter">COMBOX</h2>
+                <div class="flex gap-0.5 text-yellow-400 mt-0.5">
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="shareSugerencias()">
+                    <span class="material-symbols-outlined text-lg">ios_share</span>
+                </button>
+                <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('sugerencias-modal', false)">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
+        </div>
+        <p class="text-sm text-zinc-300 mb-6 font-medium leading-relaxed">Nos gustaría leer sus opiniones, tus sugerencias/consejos son importantes para nosotros.</p>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Nombre (Opcional / Anónimo)</label>
+                <input type="text" id="sug-nombre" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Sugerencia *</label>
+                <textarea id="sug-texto" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base resize-none" placeholder="¿En qué podemos mejorar?"></textarea>
+            </div>
+            <button type="button" id="btn-enviar-sug" onclick="enviarSugerencia()" class="w-full bg-yellow-400 text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-yellow-400/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all">
+                Enviar Sugerencia <span class="material-symbols-outlined">send</span>
+            </button>
+        </div>
     </div>
 </div>
 
-<div class="modal" id="custom-confirm-modal" style="z-index: 10000;">
-    <div class="modal-overlay" onclick="closeCustomConfirm()"></div>
-    <div class="modal-content p-6 pb-8 text-center max-w-[320px] mx-auto border-t border-t-primary/50 shadow-[0_0_40px_rgba(227,6,19,0.15)]">
-        <span class="material-symbols-outlined text-[42px] text-primary mb-3">warning</span>
-        <h3 class="text-xl font-black text-white uppercase tracking-wider mb-2" id="confirm-title"></h3>
-        <p class="text-sm text-zinc-300 font-medium leading-relaxed mb-6" id="confirm-text">Se eliminarán todos los productos seleccionados.</p>
-        <div class="flex gap-3">
-            <button class="flex-1 bg-white/10 hover:bg-white/15 text-white font-[900] py-3.5 rounded-2xl text-xs uppercase active:scale-95 transition-transform" onclick="closeCustomConfirm()">Cancelar</button>
-            <button class="flex-1 bg-primary text-white font-[900] py-3.5 rounded-2xl text-xs uppercase shadow-lg shadow-primary/30 active:scale-95 transition-transform" id="confirm-yes-btn">Confirmar</button>
+<div class="modal" id="empleo-modal">
+    <div class="modal-overlay" onclick="toggleModal('empleo-modal', false)"></div>
+    <div class="modal-content flex flex-col max-h-[85vh] p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
+        <div class="flex items-center justify-between mb-6 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-primary rounded-full"></div>
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter">Únete al equipo</h2>
+            </div>
+            <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('empleo-modal', false)">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        
+        <div class="space-y-4 overflow-y-auto hide-scrollbar pb-4 pr-1">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Cédula *</label>
+                    <input type="number" id="emp-cedula" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. 25123456">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Teléfono *</label>
+                    <input type="tel" id="emp-telefono" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. 0424...">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Nombre Completo *</label>
+                <input type="text" id="emp-nombre" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. María González">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Sexo *</label>
+                    <select id="emp-sexo" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm appearance-none">
+                        <option value="Femenino" class="text-black">Femenino</option>
+                        <option value="Masculino" class="text-black">Masculino</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">F. Nacimiento *</label>
+                    <input type="date" id="emp-fecha" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm appearance-none" style="color-scheme: dark;">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Dónde Reside *</label>
+                <input type="text" id="emp-domicilio" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Sector, Municipio...">
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Discapacidades (Opcional)</label>
+                <input type="text" id="emp-discapacidad" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ninguna">
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Cargos de Interés * (Selecciona uno o varios)</label>
+                <div class="grid grid-cols-2 gap-2" id="emp-cargo-container">
+                    <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                        <input type="checkbox" value="Delivery" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
+                        <span class="text-[11px] font-bold text-white leading-tight">Delivery</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                        <input type="checkbox" value="Chofer" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
+                        <span class="text-[11px] font-bold text-white leading-tight">Chofer</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                        <input type="checkbox" value="Cajera" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
+                        <span class="text-[11px] font-bold text-white leading-tight">Cajera</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                        <input type="checkbox" value="Despachador" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
+                        <span class="text-[11px] font-bold text-white leading-tight">Despachador</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                        <input type="checkbox" value="Producción (Charcutero)" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
+                        <span class="text-[11px] font-bold text-white leading-tight">Producción (Charcutero)</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                        <input type="checkbox" value="Atención al Cliente" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
+                        <span class="text-[11px] font-bold text-white leading-tight">Atención al Cliente</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                        <input type="checkbox" value="Community Manager" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
+                        <span class="text-[11px] font-bold text-white leading-tight">Community Manager</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                        <input type="checkbox" value="Gerencia / Administración" class="emp-cargo-cb w-4 h-4 text-primary bg-black/50 border-white/20 rounded focus:ring-primary focus:ring-offset-0">
+                        <span class="text-[11px] font-bold text-white leading-tight">Gerencia / Administración</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0">
+            <button type="button" id="btn-enviar-emp" onclick="enviarCurriculum()" class="w-full bg-primary text-white font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all">
+                Enviar Datos <span class="material-symbols-outlined">send</span>
+            </button>
         </div>
     </div>
 </div>
 
 <script>
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
+    const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
     
+    // Detector de Android para quitar animaciones
+    if (/android/i.test(navigator.userAgent)) {
+        document.documentElement.classList.add('is-android');
+    }
+
     let db = null; 
     let cart = {}; 
     let currentType = 'Individual'; 
@@ -500,24 +615,33 @@
     let searchRenderTimer = null; 
     let searchScrollTimer = null;
     let initialRenderDone = false;
+    let cachedDataString = null;
     
     const searchContainer = document.getElementById('search-container');
 
-    // Manejo de alertas y confirms custom
-    function customAlert(msg) {
-        document.getElementById('alert-text').innerText = msg;
-        toggleModal('custom-alert-modal', true);
+    /* ----- Custom Alerts / Confirms ----- */
+    function customAlert(msg, title = 'Aviso') {
+        document.getElementById('dialog-title').innerText = title;
+        document.getElementById('dialog-msg').innerText = msg;
+        document.getElementById('dialog-buttons').innerHTML = `<button class="w-full bg-primary text-white font-black py-3 rounded-xl text-xs uppercase shadow-lg shadow-primary/30" onclick="closeCustomDialog()">Entendido</button>`;
+        toggleModal('custom-dialog-modal', true);
     }
-    function closeCustomAlert() { toggleModal('custom-alert-modal', false); }
 
-    function customConfirm(title, msg, onConfirm) {
-        document.getElementById('confirm-title').innerText = title;
-        document.getElementById('confirm-text').innerText = msg;
-        const btn = document.getElementById('confirm-yes-btn');
-        btn.onclick = () => { closeCustomConfirm(); if(onConfirm) onConfirm(); };
-        toggleModal('custom-confirm-modal', true);
+    function customConfirm(msg, onConfirm, title = 'Confirmar') {
+        document.getElementById('dialog-title').innerText = title;
+        document.getElementById('dialog-msg').innerText = msg;
+        window._pendingConfirm = onConfirm;
+        document.getElementById('dialog-buttons').innerHTML = `
+            <button class="w-full bg-white/10 text-white font-black py-3 rounded-xl text-xs uppercase" onclick="closeCustomDialog()">Cancelar</button>
+            <button class="w-full bg-primary text-white font-black py-3 rounded-xl text-xs uppercase shadow-lg shadow-primary/30" onclick="closeCustomDialog(); if(window._pendingConfirm) window._pendingConfirm();">Aceptar</button>
+        `;
+        toggleModal('custom-dialog-modal', true);
     }
-    function closeCustomConfirm() { toggleModal('custom-confirm-modal', false); }
+
+    function closeCustomDialog() {
+        toggleModal('custom-dialog-modal', false);
+        window._pendingConfirm = null;
+    }
 
     function clearCategoryAndKeepScroll() {
         const currentScroll = window.scrollY; 
@@ -541,6 +665,102 @@
         window.scrollTo(0, currentScroll); 
     }
 
+    function generarId() {
+        return 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    }
+
+    async function enviarSugerencia() {
+        const texto = document.getElementById('sug-texto').value.trim();
+        if (!texto) { customAlert('Por favor, escribe una sugerencia.'); return; }
+        
+        const nombre = document.getElementById('sug-nombre').value.trim() || 'Anónimo';
+        const btn = document.getElementById('btn-enviar-sug');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Enviando...';
+
+        const payload = {
+            action: 'nueva_sugerencia',
+            id_sugerencia: generarId(),
+            nombre_cliente: nombre,
+            sugerencia: texto
+        };
+
+        try {
+            await fetch(API, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            document.getElementById('sug-texto').value = '';
+            document.getElementById('sug-nombre').value = '';
+            toggleModal('sugerencias-modal', false);
+            setTimeout(() => customAlert('¡Gracias por tu sugerencia!'), 300);
+        } catch (e) {
+            customAlert('Hubo un error. Intenta de nuevo.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Enviar Sugerencia <span class="material-symbols-outlined">send</span>';
+        }
+    }
+
+    async function enviarCurriculum() {
+        const cedula = document.getElementById('emp-cedula').value.trim();
+        const nombre = document.getElementById('emp-nombre').value.trim();
+        const sexo = document.getElementById('emp-sexo').value;
+        const fecha = document.getElementById('emp-fecha').value;
+        const telefono = document.getElementById('emp-telefono').value.trim();
+        const domicilio = document.getElementById('emp-domicilio').value.trim();
+        const discapacidad = document.getElementById('emp-discapacidad').value.trim() || 'Ninguna';
+        
+        const cargosChecked = Array.from(document.querySelectorAll('.emp-cargo-cb:checked')).map(cb => cb.value);
+        const cargo = cargosChecked.join(', ');
+
+        if (!cedula || !nombre || !fecha || !telefono || !domicilio || cargosChecked.length === 0) {
+            customAlert('Por favor, completa todos los campos obligatorios (*) y selecciona al menos un cargo.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-enviar-emp');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Enviando...';
+
+        const payload = {
+            action: 'nuevo_curriculum',
+            id_curriculum: generarId(),
+            Cedula: cedula,
+            Nombre: nombre,
+            Fecha_nac: fecha,
+            telefono: telefono,
+            Domicilio: domicilio,
+            Discapacidad: discapacidad,
+            Cargos_interesado: cargo,
+            Sexo: sexo
+        };
+
+        try {
+            await fetch(API, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            ['emp-cedula', 'emp-nombre', 'emp-fecha', 'emp-telefono', 'emp-domicilio', 'emp-discapacidad'].forEach(id => document.getElementById(id).value = '');
+            document.querySelectorAll('.emp-cargo-cb').forEach(cb => cb.checked = false);
+            
+            toggleModal('empleo-modal', false);
+            setTimeout(() => customAlert('¡Datos enviados con éxito! Te contactaremos pronto.', 'Genial'), 300);
+        } catch (e) {
+            customAlert('Hubo un error al enviar. Intenta de nuevo.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Enviar Datos <span class="material-symbols-outlined">send</span>';
+        }
+    }
+
     let ptrStartY = 0;
     let ptrCurrentY = 0;
     let isPtrPulling = false;
@@ -562,18 +782,16 @@
         let pullDist = ptrCurrentY - ptrStartY;
         
         if (pullDist > 0 && window.scrollY <= 0) {
-            // Modificación: menor multiplicador para que haya que jalar más
-            let move = Math.min(pullDist * 0.3, 100); 
+            let move = Math.min(pullDist * 0.25, 120); 
             ptrContainer.style.transform = `translate3d(0, calc(-100% + ${move}px), 0)`;
             
-            // Mayor umbral para activar
-            if (move > 85) {
+            if (move > 100) {
                 ptrIcon.classList.remove('animate-spin');
                 ptrIcon.style.transform = `rotate(${pullDist}deg)`;
                 ptrText.innerText = "Suelta para actualizar";
             } else {
                 ptrIcon.classList.remove('animate-spin');
-                ptrText.innerText = "Jala para actualizar";
+                ptrText.innerText = "Estira más para actualizar";
             }
         }
     }, {passive: true});
@@ -584,17 +802,16 @@
         ptrContainer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
         
         let pullDist = ptrCurrentY - ptrStartY;
-        let move = Math.min(pullDist * 0.3, 100);
+        let move = Math.min(pullDist * 0.25, 120);
         
-        if (move > 85 && window.scrollY <= 0) {
+        if (move > 100 && window.scrollY <= 0) {
             ptrContainer.style.transform = `translate3d(0, 15px, 0)`;
             ptrIcon.classList.add('animate-spin');
             ptrText.innerText = "Actualizando...";
             
             if(window.navigator.vibrate) window.navigator.vibrate(15);
             
-            localStorage.removeItem('combox_db');
-            localStorage.removeItem('combox_db_time');
+            localStorage.removeItem('combox_db_v2');
             saveCart(); 
             
             setTimeout(() => {
@@ -657,21 +874,44 @@
         }
     }, { passive: true });
 
+    document.addEventListener("DOMContentLoaded", () => {
+        const inputs = document.querySelectorAll('#checkout-name, #checkout-location');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
+        });
+
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) {
+            searchInput.addEventListener('focus', function() {
+                const searchCont = document.getElementById('search-container');
+                const y = searchCont.offsetTop - 15;
+                if (window.scrollY < y) {
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            });
+        }
+    });
+
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('sugerencias')) {
+            setTimeout(() => toggleModal('sugerencias-modal', true), 500);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         
         let loadedFromCache = false;
         try {
-            const cachedDBStr = localStorage.getItem('combox_db');
-            const dbTime = localStorage.getItem('combox_db_time');
-            
-            // Caché vence cada 6 horas (21600000 ms)
-            if (cachedDBStr && dbTime && (Date.now() - dbTime < 21600000)) {
-                db = JSON.parse(cachedDBStr);
-                loadedFromCache = true;
-            } else {
-                localStorage.removeItem('combox_db');
-                localStorage.removeItem('combox_db_time');
+            const cachedObjStr = localStorage.getItem('combox_db_v2');
+            if (cachedObjStr) {
+                const parsed = JSON.parse(cachedObjStr);
+                // Caché vence en 6 horas (21600000 ms)
+                if (Date.now() - parsed.time < 21600000) {
+                    db = parsed.data;
+                    cachedDataString = JSON.stringify(db);
+                    loadedFromCache = true;
+                } else {
+                    localStorage.removeItem('combox_db_v2');
+                }
             }
         } catch(e) { console.error("Error cargando caché:", e); }
 
@@ -696,35 +936,26 @@
             if(freshDB.catalogo) freshDB.catalogo.forEach((p, i) => p._index = i);
             if(freshDB.combos) freshDB.combos.forEach((p, i) => p._index = i);
             
-            const cachedDBStr = localStorage.getItem('combox_db');
+            const isDifferent = JSON.stringify(freshDB) !== cachedDataString;
             
-            if (cachedDBStr) {
-                // Hay caché previo, revisar si la DB cambió
-                if (JSON.stringify(freshDB) !== cachedDBStr) {
-                    const toast = document.getElementById('update-toast');
-                    if(toast) {
-                        toast.style.opacity = '1';
-                        toast.style.transform = 'translate(-50%, -50%) scale(1)';
+            if (loadedFromCache && isDifferent) {
+                const toast = document.getElementById('update-toast');
+                if(toast) {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translate(-50%, -50%) scale(1)';
+                    setTimeout(() => {
+                        db = freshDB;
+                        localStorage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
+                        setupAfterDBLoad(false); 
                         setTimeout(() => {
-                            db = freshDB;
-                            localStorage.setItem('combox_db', JSON.stringify(db)); 
-                            localStorage.setItem('combox_db_time', Date.now());
-                            setupAfterDBLoad(false); 
-                            setTimeout(() => {
-                                toast.style.opacity = '0';
-                                toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
-                            }, 800);
-                        }, 1200);
-                    }
-                } else {
-                    // Datos iguales, extender tiempo
-                    localStorage.setItem('combox_db_time', Date.now());
+                            toast.style.opacity = '0';
+                            toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                        }, 800);
+                    }, 1200);
                 }
             } else {
-                // Primera vez que entra, sin ventana molesta
                 db = freshDB;
-                localStorage.setItem('combox_db', JSON.stringify(db));
-                localStorage.setItem('combox_db_time', Date.now());
+                localStorage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
                 if (!loadedFromCache) {
                     setupAfterDBLoad(false); 
                 }
@@ -778,7 +1009,7 @@
     }
     
     function checkActiveModals() {
-        const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'custom-alert-modal', 'custom-confirm-modal'];
+        const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'sugerencias-modal', 'empleo-modal', 'custom-dialog-modal'];
         if(!modals.some(id => document.getElementById(id).classList.contains('active'))) {
             lockScroll(false);
         }
@@ -823,6 +1054,7 @@
 
     function renderHorarioList() {
         if(!currentHorarioSede) return;
+        
         const days = ["LUNES","MARTES","MIERCOLES","JUEVES","VIERNES","SABADO","DOMINGO"];
         const names = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
         const now = new Date();
@@ -831,6 +1063,7 @@
         document.getElementById('horario-list-container').innerHTML = days.map((d,i) => {
             const open = currentHorarioSede[`${d}_APERTURA`], close = currentHorarioSede[`${d}_CIERRE`];
             const isToday = i === todayIdx;
+            
             let timeHtml = '<span class="text-zinc-500">Cerrado</span>';
             if (open && close) {
                 timeHtml = `
@@ -845,6 +1078,7 @@
                     </span>
                 `;
             }
+            
             return `<div onclick="void(0)" class="flex justify-between items-center p-3.5 rounded-2xl ${isToday ? 'bg-white/10 border border-white/40 shadow-lg' : 'bg-white/5 border border-white/10'}">
                 <span class="${isToday ? 'text-white font-black' : 'text-white font-bold'} text-sm">${names[i]}</span>
                 <span class="text-xs tracking-wide flex items-center">${timeHtml}</span>
@@ -1317,21 +1551,16 @@
         const contourClass = isPromo ? 'card-promo' : '';
         const pricePillAnimationClass = '';
         
-        // Manejo de imagen vacía (Fondo Negro con texto Gris)
-        const hasImg = p.imagen && p.imagen.trim() !== '';
-        const imgHtml = hasImg 
-            ? `<img class="main-image" src="${p.imagen}" decoding="async" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/><img class="placeholder-blur" src="${p.imagen}" aria-hidden="true" decoding="async"/>`
-            : `<div class="absolute inset-0 flex flex-col items-center justify-center bg-black z-10"><span class="material-symbols-outlined text-zinc-600 text-3xl mb-1">image_not_supported</span><span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Sin Imagen</span></div>`;
-
-        const bgBlurStyle = hasImg ? `style="background-image: url('${p.imagen}')"` : `style="background-color: #0A0A0B;"`;
+        const img = p.imagen || DEFAULT_IMG;
         
         return `<div class="product-card-glass glass-contour ${isOut ? 'out-of-stock' : ''} ${cardClass} ${contourClass}" data-id="${id}" onclick="openProductView('${id}')">
-            <div class="bg-blur-image" ${bgBlurStyle}></div>
+            <div class="bg-blur-image" style="background-image: url('${img}')"></div>
             
             <div class="glass-overlay">
                 <div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container flex-shrink-0">
                     ${isPromo ? '<div class="absolute top-2 left-2 z-30 bg-black/60 backdrop-blur-md border border-white/10 text-white text-[9px] font-black px-2 py-1 rounded-full shadow-lg tracking-widest flex items-center gap-1">🔥 PROMO!</div>' : ''}
-                    ${imgHtml}
+                    <img class="main-image" src="${img}" decoding="async" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/>
+                    <img class="placeholder-blur" src="${img}" aria-hidden="true" decoding="async"/>
                 </div>
                 
                 <h3 class="card-title text-white uppercase text-center w-full font-black leading-tight">${p.nombre}</h3>
@@ -1355,16 +1584,12 @@
         list.innerHTML = items.map(p => { 
             const id = getUnifiedId(p); const price = getProductPrice(p); 
             const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITAR PRECIO</span>' : `$${price.toFixed(2)} <span class="text-[10px] text-red-500 font-bold ml-1">C/u</span>`;
-            
-            const hasImg = p.imagen && p.imagen.trim() !== '';
-            const imgHtml = hasImg 
-                ? `<img src="${p.imagen}" decoding="async" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">`
-                : `<div class="w-full h-full bg-black flex items-center justify-center"><span class="material-symbols-outlined text-zinc-600 text-2xl">image_not_supported</span></div>`;
+            const img = p.imagen || DEFAULT_IMG;
 
             return `<div class="flex items-center justify-between bg-white/5 p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
-                        ${imgHtml}
+                        <img src="${img}" decoding="async" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">
                     </div>
                     <div class="flex flex-col min-w-0 flex-1 pr-1">
                         <span class="text-sm md:text-base font-[800] text-white uppercase leading-tight line-clamp-2 w-full">${p.nombre}</span>
@@ -1421,15 +1646,15 @@
         });
     }
 
-    function triggerClearCart() {
-        customConfirm('¿Vaciar Pedido?', 'Se eliminarán todos los productos de tu carrito.', () => {
+    function clearCart() { 
+        customConfirm('¿Seguro que deseas vaciar todo el pedido?', () => {
             cart = {}; 
             updateOrder(); 
             toggleModal('cart-modal', false); 
             document.querySelectorAll('.count-badge').forEach(b => b.remove()); 
             document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active')); 
             saveCart(); 
-        });
+        }, 'Vaciar Pedido');
     }
     
     function add(id) { 
@@ -1526,7 +1751,17 @@
             navigator.share({ title: 'Combox - ' + name, url: url }).catch(console.error);
         } else {
             navigator.clipboard.writeText(url);
-            customAlert('¡Enlace del producto copiado!');
+            customAlert('¡Enlace del producto copiado con éxito!');
+        }
+    }
+    
+    function shareSugerencias() {
+        const url = window.location.origin + window.location.pathname + '?sugerencias=true';
+        if (navigator.share) {
+            navigator.share({ title: 'Combox - Buzón de Sugerencias', url: url }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(url);
+            customAlert('¡Enlace de sugerencias copiado!');
         }
     }
     
@@ -1537,20 +1772,13 @@
             
             const price = getProductPrice(p);
             const isOut = p.status === 'OUT_OF_STOCK';
+            const img = p.imagen || DEFAULT_IMG;
             const safeName = p.nombre.replace(/'/g, "\\'");
             const priceDisplay = price === 0 ? 'Por cotizar' : '$' + price.toFixed(2);
             
-            const hasImg = p.imagen && p.imagen.trim() !== '';
-            const imgHtmlModal = hasImg 
-                ? `<img src="${p.imagen}" decoding="async" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>` 
-                : `<div class="w-full h-full bg-black flex flex-col items-center justify-center rounded-3xl border border-white/10"><span class="material-symbols-outlined text-zinc-600 text-5xl mb-2">image_not_supported</span><span class="text-xs text-zinc-500 font-bold uppercase tracking-widest">Sin Imagen</span></div>`;
-            const blurBgModal = hasImg 
-                ? `<div class="absolute -inset-10 z-10 opacity-35 bg-cover bg-center pointer-events-none" style="background-image: url('${p.imagen}'); filter: blur(40px); transform: translateZ(0);"></div>` 
-                : '';
-
             document.getElementById('product-content').innerHTML = `
                 <div class="absolute inset-0 bg-[#0A0A0B] z-0"></div>
-                ${blurBgModal}
+                <div class="absolute -inset-10 z-10 opacity-35 bg-cover bg-center pointer-events-none" style="background-image: url('${img}'); filter: blur(40px); transform: translateZ(0);"></div>
                 <div class="absolute bottom-0 inset-x-0 h-[65%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/85 to-transparent"></div>
                 
                 <div class="absolute top-4 right-4 z-50 flex items-center gap-2">
@@ -1563,8 +1791,8 @@
                 </div>
                 
                 <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
-                    <div class="relative w-full max-w-[280px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 border border-white/20" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
-                        ${imgHtmlModal}
+                    <div class="relative w-full max-w-[280px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 border border-white/20 glass-contour" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
+                        <img src="${img}" decoding="async" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>
                 

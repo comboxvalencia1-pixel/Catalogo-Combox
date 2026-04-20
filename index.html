@@ -108,31 +108,33 @@
         #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; transform: translate3d(-50%, 0, 0); }
         .order-island-hidden { transform: translate3d(-50%, 160px, 0) !important; }
 
-        /* FIX BLUR DE FONDO: Ahora se desenfoca perfecto porque eliminamos el transform */
-        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s; will-change: opacity, visibility; }
+        /* MODALES: Estructura corregida para forzar el Blur perfecto en Android/iOS */
+        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s; }
         .modal.active { pointer-events: auto; opacity: 1; visibility: visible; }
         
+        /* OVERLAY: Fondo sólido con blur activado sin transiciones que lo rompan */
         .modal-overlay { 
-            position: absolute; 
-            top: 0; left: 0; right: 0; bottom: 0; 
-            width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.55); 
-            backdrop-filter: blur(14px); 
+            position: fixed; 
+            inset: 0; 
+            width: 100vw; 
+            height: 100dvh; 
+            background-color: rgba(0, 0, 0, 0.55); 
             -webkit-backdrop-filter: blur(14px); 
+            backdrop-filter: blur(14px); 
             cursor: pointer; 
+            z-index: 1;
         }
         
         .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; transform: translate3d(0, 15px, 0); opacity: 0; transition: transform 0.25s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.2s ease; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; }
         .modal.active .modal-content { transform: translate3d(0, 0, 0); opacity: 1; }
 
-        /* FIX TOOLBAR MARGIN: Ignora por completo el env() de iOS usando padding estático. No saltará más. */
         .modal-bottom { align-items: flex-end; padding: 0; }
         .modal-bottom .modal-content { 
             border-radius: 32px 32px 0 0; 
             max-width: 600px; 
             width: 100%; 
             margin: 0 auto; 
-            padding-bottom: 2.5rem; /* Relleno estático duro, ignorando el Toolbar */
+            padding-bottom: 2.5rem;
             transform: translate3d(0, 25px, 0); 
         }
         .modal-bottom.active .modal-content { transform: translate3d(0, 0, 0); }
@@ -257,7 +259,7 @@
             <button id="search-action-btn" onclick="handleSearchClick()" class="text-zinc-400 mr-2 flex items-center justify-center outline-none active:scale-90 transition-all">
                 <span id="search-icon" class="material-symbols-outlined text-[22px]">search</span>
             </button>
-            <input class="flex-1 bg-transparent border-none py-2 text-[15px] text-white outline-none focus:ring-0 placeholder:text-zinc-500" id="global-search" oninput="onSearchInput()" placeholder="¿Qué buscas?" type="text"/>
+            <input class="flex-1 bg-transparent border-none py-2 text-[15px] text-white outline-none focus:ring-0 placeholder:text-zinc-500" id="global-search" oninput="onSearchInput()" onkeypress="handleSearchEnter(event)" placeholder="¿Qué buscas?" type="text"/>
             <button id="cat-menu-btn" class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all ml-2 flex-shrink-0" onclick="toggleCategoriesModal(true)">
                 <span class="material-symbols-outlined text-[20px]">menu</span>
             </button>
@@ -588,7 +590,8 @@
     let tasaBCV = 1; 
     let audioCtx;
     let ticking = false;
-    let searchTimer = null; 
+    let searchRenderTimer = null; 
+    let searchScrollTimer = null;
     let initialRenderDone = false;
     
     const searchContainer = document.getElementById('search-container');
@@ -798,18 +801,26 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
+    // SCROLL MEJORADO: Verifica si hay texto o el input está activo para no esconder la isla
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
         if (!ticking) {
             window.requestAnimationFrame(() => {
                 const currentScrollY = window.scrollY;
-                const searchValue = document.getElementById('global-search').value.trim();
+                const searchInput = document.getElementById('global-search');
+                const searchValue = searchInput ? searchInput.value.trim() : '';
+                const isFocused = document.activeElement === searchInput;
 
-                if (searchValue !== '') { searchContainer.classList.remove('search-hidden'); } 
+                if (searchValue !== '' || isFocused) { 
+                    searchContainer.classList.remove('search-hidden'); 
+                } 
                 else if (currentScrollY > 300) {
                     if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
                     else searchContainer.classList.remove('search-hidden'); 
-                } else { searchContainer.classList.remove('search-hidden'); }
+                } else { 
+                    searchContainer.classList.remove('search-hidden'); 
+                }
+                
                 lastScrollY = currentScrollY;
                 ticking = false;
             });
@@ -920,8 +931,6 @@
 
     function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
 
-    /* FIX LAYOUT SHIFT (Salto al abrir ventanas): 
-       Eliminamos todo el JS de positions y tops. Usamos puro CSS estricto para evitar saltos. */
     function lockScroll(lock) { 
         if(lock) { 
             document.documentElement.style.overflow = 'hidden';
@@ -1242,6 +1251,7 @@
     
     function getUnifiedId(p) { return (p.id || p.id_producto || p.ID_PRODUCTO_VENTA || '').toString(); }
 
+    // BÚSQUEDA MEJORADA: Filtra al momento pero NO scrollea hasta que dejes de escribir
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
@@ -1263,13 +1273,30 @@
             icon.classList.remove('text-primary');
         }
         
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
+        clearTimeout(searchRenderTimer);
+        clearTimeout(searchScrollTimer);
+
+        // Renderiza los resultados rápido (para ver mientras escribes)
+        searchRenderTimer = setTimeout(() => {
             window.requestAnimationFrame(() => {
                 render();
-                if(val.length > 0) scrollToCatalog();
             });
-        }, 250); 
+        }, 200); 
+
+        // Solo hace scroll si dejas de escribir por 1 segundo
+        if (val.length > 0) {
+            searchScrollTimer = setTimeout(() => {
+                scrollToCatalog();
+            }, 1000); 
+        }
+    }
+    
+    function handleSearchEnter(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(searchScrollTimer);
+            if(document.activeElement) document.activeElement.blur(); // Cierra el teclado
+            scrollToCatalog();
+        }
     }
 
     function handleSearchClick() {
@@ -1288,7 +1315,7 @@
             const offset = 80; 
             const y = grid.getBoundingClientRect().top + window.scrollY - offset;
             
-            searchContainer.classList.add('search-hidden');
+            // ELIMINADO: Ya no ocultamos la barra al auto-scrollear
             
             window.scrollTo({ top: y, behavior: 'smooth' });
             

@@ -77,9 +77,29 @@
         .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(15px) brightness(0.6); opacity: 0.8; z-index: 0; }
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
+        /* Contorno original */
         .glass-contour { position: relative; border-color: transparent !important; border: none; }
         .glass-contour::after {
             content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
+        }
+
+        /* Contorno delgado para islas */
+        .glass-contour-thin { position: relative; border-color: transparent !important; border: none; }
+        .glass-contour-thin::after {
+            content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 0.75px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
+        }
+
+        /* Contorno superior para carrito */
+        .glass-contour-top { position: relative; border-color: transparent !important; border: none; }
+        .glass-contour-top::after {
+            content: ""; position: absolute; inset: 0; border-radius: inherit; 
+            padding: 1.5px 1.5px 0px 1.5px; 
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 100%);
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
@@ -134,6 +154,8 @@
         .modal-bottom { align-items: flex-end; padding: 0; }
         .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: 2.5rem; transform: translate3d(0, 25px, 0); }
         .modal-bottom.active .modal-content { transform: translate3d(0, 0, 0); }
+
+        #custom-dialog-modal { z-index: 9999 !important; }
 
         /* Anulación de transiciones para Android */
         html.is-android .modal-overlay,
@@ -254,13 +276,13 @@
 
 <div class="sticky z-50 px-4 mt-8" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
     <div class="flex flex-col items-center gap-3 max-w-2xl mx-auto island-width">
-        <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full glass-contour shadow-2xl" id="type-tabs-container">
+        <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full glass-contour-thin shadow-2xl" id="type-tabs-container">
             <button class="type-tab type-tab-active" onclick="setType('Individual', this)">Individual</button>
             <button class="type-tab type-tab-inactive" onclick="setType('Combos', this)">Combos</button>
             <button class="type-tab type-tab-inactive" onclick="setType('Servicios', this)">Servicios</button>
         </div>
 
-        <div class="w-full bg-[rgba(15,15,18,0.75)] backdrop-blur-xl rounded-full glass-contour flex items-center px-4 shadow-2xl transition-all h-[54px]" id="search-island">
+        <div class="w-full bg-[rgba(15,15,18,0.75)] backdrop-blur-xl rounded-full glass-contour-thin flex items-center px-4 shadow-2xl transition-all h-[54px]" id="search-island">
             <button id="search-action-btn" onclick="handleSearchClick()" class="text-zinc-400 mr-2 flex items-center justify-center outline-none active:scale-90 transition-all">
                 <span id="search-icon" class="material-symbols-outlined text-[22px]">search</span>
             </button>
@@ -287,7 +309,7 @@
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
 
 <div class="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-[50%] w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
-    <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width glass-contour">
+    <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width glass-contour-thin">
         <div class="pl-6 flex flex-col relative z-10">
             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
             <span class="font-black text-2xl text-white tracking-tighter" id="order-total">$0.00</span>
@@ -309,7 +331,7 @@
 
 <div class="modal modal-bottom" id="cart-modal">
     <div class="modal-overlay" onclick="toggleModal('cart-modal', false)"></div>
-    <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3 glass-contour" style="background: rgba(10,10,11,0.95);">
+    <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3 glass-contour-top" style="background: rgba(10,10,11,0.95);">
         <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
         
         <div class="flex items-center justify-between mb-5">
@@ -839,7 +861,7 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(150, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.04);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.setValueAtTime(1.2, audioCtx.currentTime); // Volumen aumentado
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
         osc.start(audioCtx.currentTime);
         osc.stop(audioCtx.currentTime + 0.04);
@@ -1148,6 +1170,12 @@
             select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}" ${currentSede?.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`).join('');
             checkoutSede = currentSede;
         }
+
+        // Buscar el nombre guardado en caché y rellenar el input automáticamente
+        const savedName = localStorage.getItem('combox_cliente_nombre');
+        if(savedName) {
+            document.getElementById('checkout-name').value = savedName;
+        }
         
         document.getElementById('cart-modal').classList.remove('active');
         toggleModal('checkout-modal', true, null);
@@ -1188,6 +1216,9 @@
     function submitOrder() {
         const name = document.getElementById('checkout-name').value.trim();
         if(!name) { customAlert('Ingresa tu nombre.'); document.getElementById('checkout-name').focus(); return; }
+        
+        // Guardar el nombre en caché de forma permanente al enviar el pedido
+        localStorage.setItem('combox_cliente_nombre', name);
         
         if(checkoutType === 'delivery') {
             const loc = document.getElementById('checkout-location').value.trim();
@@ -1583,7 +1614,8 @@
         
         list.innerHTML = items.map(p => { 
             const id = getUnifiedId(p); const price = getProductPrice(p); 
-            const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITAR PRECIO</span>' : `$${price.toFixed(2)} <span class="text-[10px] text-red-500 font-bold ml-1">C/u</span>`;
+            // Modificación: Color de "C/u" cambiado a text-primary
+            const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITAR PRECIO</span>' : `$${price.toFixed(2)} <span class="text-[10px] text-primary font-bold ml-1">C/u</span>`;
             const img = p.imagen || DEFAULT_IMG;
 
             return `<div class="flex items-center justify-between bg-white/5 p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')">

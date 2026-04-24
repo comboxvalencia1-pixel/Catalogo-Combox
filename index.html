@@ -46,7 +46,7 @@
         html { background-color: #050505; height: 100%; min-height: -webkit-fill-available; overscroll-behavior: none; scroll-behavior: smooth; }
         body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-        #splash { position: fixed; inset: 0; width: 100%; height: 100%; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; }
+        #splash { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; transform: translateZ(0); }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
@@ -75,7 +75,6 @@
             -webkit-transform: translateZ(0); 
         }
         
-        /* CORRECCIÓN: Background zoom estricto a la izquierda para capturar solo el color */
         .bg-blur-image { 
             position: absolute; inset: 0; background-size: cover; background-position: left center; 
             filter: blur(35px) brightness(0.6); opacity: 0.8; z-index: 0; 
@@ -217,7 +216,7 @@
     </div>
 </div>
 
-<div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-40 pointer-events-none transition-transform duration-300" style="transform: translateY(-100%); will-change: transform;">
+<div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-[110] pointer-events-none transition-transform duration-300" style="transform: translateY(-100%); will-change: transform;">
     <div class="bg-black/60 backdrop-blur-xl border border-white/20 text-white rounded-full px-5 py-2.5 flex items-center gap-2 shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <span class="material-symbols-outlined text-primary text-[20px] transition-transform" id="ptr-icon">sync</span>
         <span class="text-[10px] font-black uppercase tracking-widest text-zinc-200" id="ptr-text">Estira más para actualizar</span>
@@ -431,7 +430,7 @@
         </div>
         <div class="relative mb-6">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white pointer-events-none z-10">storefront</span>
-            <select id="horario-sede-select" class="w-full bg-white/10 border border-white/20 rounded-2xl py-3 pr-10 pl-11 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-xs font-black uppercase tracking-wider appearance-none shadow-lg relative" onchange="changeHorarioSede(this.value)"></select>
+            <select id="horario-sede-select" class="w-full bg-zinc-800/90 border border-zinc-500 rounded-2xl py-3 pr-10 pl-11 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-xs font-black uppercase tracking-wider appearance-none shadow-lg relative" onchange="changeHorarioSede(this.value)"></select>
             <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none z-10">expand_more</span>
         </div>
         <div class="space-y-2" id="horario-list-container"></div>
@@ -744,6 +743,12 @@
     }
 
     async function enviarSugerencia() {
+        const lastSugTime = localStorage.getItem('last_sug_time');
+        if (lastSugTime && (Date.now() - parseInt(lastSugTime)) < 60000) {
+            customAlert('Por favor, espera 1 minuto antes de enviar otra sugerencia.');
+            return;
+        }
+
         const texto = document.getElementById('sug-texto').value.trim();
         if (!texto) { customAlert('Por favor, escribe una sugerencia.'); return; }
         
@@ -753,6 +758,8 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Enviando...';
 
+        localStorage.setItem('last_sug_time', Date.now());
+
         const payload = {
             action: 'nueva_sugerencia',
             id_sugerencia: generarId(),
@@ -761,7 +768,7 @@
         };
 
         try {
-            await fetchWithRetry(API, {
+            await fetch(API, {
                 method: 'POST',
                 mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
@@ -773,7 +780,7 @@
             toggleModal('sugerencias-modal', false);
             setTimeout(() => customAlert('¡Gracias por tu sugerencia!'), 300);
         } catch (e) {
-            customAlert('Hubo un error. Intenta de nuevo.');
+            customAlert('Revisa tu conexión a internet e intenta de nuevo.');
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Enviar Sugerencia <span class="material-symbols-outlined">send</span>';
@@ -781,6 +788,12 @@
     }
 
     async function enviarCurriculum() {
+        const lastCVTime = localStorage.getItem('last_cv_time');
+        if (lastCVTime && (Date.now() - parseInt(lastCVTime)) < 60000) {
+            customAlert('Debes esperar 1 minuto antes de volver a enviar tus datos.');
+            return;
+        }
+
         const cedula = document.getElementById('emp-cedula').value.trim();
         const nombre = document.getElementById('emp-nombre').value.trim();
         const sexo = document.getElementById('emp-sexo').value;
@@ -801,6 +814,9 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Enviando...';
 
+        await localforage.setItem('combox_cv_data', { cedula, nombre, sexo, fecha, telefono, domicilio, discapacidad });
+        localStorage.setItem('last_cv_time', Date.now());
+
         const payload = {
             action: 'nuevo_curriculum',
             id_curriculum: generarId(),
@@ -815,23 +831,33 @@
         };
 
         try {
-            await fetchWithRetry(API, {
+            await fetch(API, {
                 method: 'POST',
                 mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             
-            ['emp-cedula', 'emp-nombre', 'emp-fecha', 'emp-telefono', 'emp-domicilio', 'emp-discapacidad'].forEach(id => document.getElementById(id).value = '');
-            document.querySelectorAll('.emp-cargo-cb').forEach(cb => cb.checked = false);
-            
             toggleModal('empleo-modal', false);
             setTimeout(() => customAlert('¡Datos enviados con éxito! Te contactaremos pronto.', 'Genial'), 300);
         } catch (e) {
-            customAlert('Hubo un error al enviar. Intenta de nuevo.');
+            customAlert('Revisa tu conexión a internet e intenta de nuevo.');
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Enviar Datos <span class="material-symbols-outlined">send</span>';
+        }
+    }
+
+    async function loadSavedCV() {
+        const data = await localforage.getItem('combox_cv_data');
+        if(data) {
+            if(data.cedula) document.getElementById('emp-cedula').value = data.cedula;
+            if(data.nombre) document.getElementById('emp-nombre').value = data.nombre;
+            if(data.sexo) document.getElementById('emp-sexo').value = data.sexo;
+            if(data.fecha) document.getElementById('emp-fecha').value = data.fecha;
+            if(data.telefono) document.getElementById('emp-telefono').value = data.telefono;
+            if(data.domicilio) document.getElementById('emp-domicilio').value = data.domicilio;
+            if(data.discapacidad) document.getElementById('emp-discapacidad').value = data.discapacidad;
         }
     }
 
@@ -856,7 +882,7 @@
         let pullDist = ptrCurrentY - ptrStartY;
         
         if (pullDist > 0 && window.scrollY <= 0) {
-            let move = Math.min(pullDist * 0.25, 120); 
+            let move = Math.min(pullDist * 0.35, 180); 
             ptrContainer.style.transform = `translate3d(0, calc(-100% + ${move}px), 0)`;
             
             if (move > 100) {
@@ -876,10 +902,10 @@
         ptrContainer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
         
         let pullDist = ptrCurrentY - ptrStartY;
-        let move = Math.min(pullDist * 0.25, 120);
+        let move = Math.min(pullDist * 0.35, 180);
         
         if (move > 100 && window.scrollY <= 0) {
-            ptrContainer.style.transform = `translate3d(0, 15px, 0)`;
+            ptrContainer.style.transform = `translate3d(0, 45px, 0)`;
             ptrIcon.classList.add('animate-spin');
             ptrText.innerText = "Actualizando...";
             
@@ -922,16 +948,36 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
+    // Reactiva el contexto de audio si sales y entras a Safari/App en iOS
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    });
+
+    // Respaldo de reactivación táctil agresiva para Safari
+    document.addEventListener('touchstart', () => {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }, {passive: true});
+    
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
         if (!ticking) {
             window.requestAnimationFrame(() => {
                 const currentScrollY = window.scrollY;
                 const searchInput = document.getElementById('global-search');
-                const searchValue = searchInput ? searchInput.value.trim() : '';
                 const isFocused = document.activeElement === searchInput;
 
-                if (searchValue !== '' || isFocused) { 
+                // FIX: Si el input está enfocado, lo mantenemos estático y salimos de la función
+                if (isFocused) {
+                    searchContainer.classList.remove('search-hidden');
+                    lastScrollY = currentScrollY;
+                    ticking = false;
+                    return;
+                }
+
+                const searchValue = searchInput ? searchInput.value.trim() : '';
+                if (searchValue !== '') { 
                     searchContainer.classList.remove('search-hidden'); 
                 } 
                 else if (currentScrollY > 300) {
@@ -941,14 +987,12 @@
                     searchContainer.classList.remove('search-hidden'); 
                 }
 
-                // Detección de Scroll Infinito
                 if ((window.innerHeight + currentScrollY) >= document.body.offsetHeight - 500) {
                     if (catalogLimit < totalFilteredItemsCount) {
                         catalogLimit += 24;
-                        renderCatalog(); // Recalcula límite y añade más elementos
+                        renderCatalog(); 
                     }
                 }
-                
                 lastScrollY = currentScrollY;
                 ticking = false;
             });
@@ -975,6 +1019,8 @@
     });
 
     async function init() {
+        loadSavedCV();
+        
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('sugerencias')) {
             setTimeout(() => toggleModal('sugerencias-modal', true), 500);
@@ -1008,7 +1054,7 @@
         } catch(e) { console.error("Error al cargar carrito:", e); }
 
         if (loadedFromCache) {
-            setupAfterDBLoad(true);
+            await setupAfterDBLoad(true);
         }
 
         try {
@@ -1027,7 +1073,7 @@
                     setTimeout(async () => {
                         db = freshDB;
                         await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
-                        setupAfterDBLoad(false); 
+                        await setupAfterDBLoad(false); 
                         setTimeout(() => {
                             toast.style.opacity = '0';
                             toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
@@ -1038,19 +1084,28 @@
                 db = freshDB;
                 await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
                 if (!loadedFromCache) {
-                    setupAfterDBLoad(false); 
+                    await setupAfterDBLoad(false); 
                 }
             }
         } catch(e) { console.error("Error cargando DB:", e); }
     }
 
-    function setupAfterDBLoad(isCached) {
+    async function setupAfterDBLoad(isCached) {
         if(db && db.finanzas && db.finanzas.tasa_usd) {
             tasaBCV = parseFloat(db.finanzas.tasa_usd);
             const displayEl = document.getElementById('tasa-bcv-display');
             if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
         }
-        if(db && db.sedes && db.sedes.length) { currentSede = db.sedes[0]; updateHeader(); }
+        
+        if(db && db.sedes && db.sedes.length) { 
+            const savedSedeId = await localforage.getItem('combox_sede_id');
+            if (savedSedeId) {
+                currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
+            } else {
+                currentSede = db.sedes[0]; 
+            }
+            updateHeader(); 
+        }
         
         renderPromos();
         
@@ -1068,6 +1123,15 @@
             render();
             updateOrder(); 
         }
+    }
+
+    function getSortedSedes() {
+        if (!db?.sedes) return [];
+        return [...db.sedes].sort((a, b) => {
+            if (a.ID_SEDE === currentSede?.ID_SEDE) return -1;
+            if (b.ID_SEDE === currentSede?.ID_SEDE) return 1;
+            return 0;
+        });
     }
 
     async function saveCart() {
@@ -1159,8 +1223,15 @@
                     </span>
                 `;
             }
+
+            let dayClass = 'bg-white/5 border-white/10'; 
+            if (isToday) {
+                dayClass = (open && close) 
+                    ? 'bg-white/10 border-gray-300 shadow-[0_0_15px_rgba(255,255,255,0.1)]' 
+                    : 'bg-red-500/10 border-red-500 shadow-[0_0_15px_rgba(255,0,0,0.2)]'; 
+            }
             
-            return `<div onclick="void(0)" class="flex justify-between items-center p-3.5 rounded-2xl ${isToday ? 'bg-white/10 border border-white/40 shadow-lg' : 'bg-white/5 border border-white/10'}">
+            return `<div onclick="void(0)" class="flex justify-between items-center p-3.5 rounded-2xl border ${dayClass}">
                 <span class="${isToday ? 'text-white font-black' : 'text-white font-bold'} text-sm">${names[i]}</span>
                 <span class="text-xs tracking-wide flex items-center">${timeHtml}</span>
             </div>`;
@@ -1168,9 +1239,12 @@
     }
 
     function renderMapModal() {
-        if(!db?.sedes) return;
-        document.getElementById('mapa-list-container').innerHTML = db.sedes.map(s => `
-            <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 gap-3">
+        const sorted = getSortedSedes();
+        document.getElementById('mapa-list-container').innerHTML = sorted.map(s => {
+            const active = currentSede?.ID_SEDE === s.ID_SEDE;
+            const bgClass = active ? 'bg-zinc-800/90 border-zinc-500' : 'bg-white/5 border-white/10';
+            return `
+            <div class="flex items-center justify-between p-4 rounded-2xl ${bgClass} border gap-3">
                 <div class="flex flex-col min-w-0 flex-1">
                     <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
                     <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
@@ -1179,13 +1253,16 @@
                     <span class="material-symbols-outlined text-[20px]">near_me</span> <span class="text-[10px] font-black uppercase tracking-widest">Ir</span>
                 </button>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     function renderChatModal() {
-        if(!db?.sedes) return;
-        document.getElementById('chat-list-container').innerHTML = db.sedes.map(s => `
-            <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 gap-3">
+        const sorted = getSortedSedes();
+        document.getElementById('chat-list-container').innerHTML = sorted.map(s => {
+            const active = currentSede?.ID_SEDE === s.ID_SEDE;
+            const bgClass = active ? 'bg-zinc-800/90 border-zinc-500' : 'bg-white/5 border-white/10';
+            return `
+            <div class="flex items-center justify-between p-4 rounded-2xl ${bgClass} border gap-3">
                 <div class="flex flex-col min-w-0 flex-1">
                     <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
                     <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
@@ -1195,7 +1272,7 @@
                     <span class="text-[9px] font-black uppercase tracking-widest">WhatsApp</span>
                 </button>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     async function openCheckoutModal(type) {
@@ -1357,14 +1434,18 @@
     }
     
     function renderSedesModal() {
-        if(!db?.sedes) return;
-        document.getElementById('sedes-list-container').innerHTML = db.sedes.map(s => {
+        const sorted = getSortedSedes();
+        document.getElementById('sedes-list-container').innerHTML = sorted.map(s => {
             const sched = getSchedule(s);
             const active = currentSede?.ID_SEDE === s.ID_SEDE;
             const [main, sub] = s.NOMBRE_SEDE.split(',');
-            return `<button class="w-full flex items-center justify-between p-4 md:p-5 rounded-3xl ${active ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(227,6,19,0.3)]' : 'bg-white/5 border-white/10'} border transition-all" onclick="selectLocation('${s.ID_SEDE}')">
+            
+            const bgClass = active ? 'bg-zinc-800/90 border-zinc-500 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-white/5 border-white/10';
+            const iconClass = active ? 'bg-white/20 text-white' : 'bg-white/5 text-white/30';
+
+            return `<button class="w-full flex items-center justify-between p-4 md:p-5 rounded-3xl ${bgClass} border transition-all" onclick="selectLocation('${s.ID_SEDE}')">
                 <div class="flex items-center gap-3 min-w-0 flex-1">
-                    <div class="w-10 h-10 flex-shrink-0 md:w-12 md:h-12 rounded-2xl ${active ? 'bg-white/20 text-white' : 'bg-white/10 text-white/40'} flex items-center justify-center">
+                    <div class="w-10 h-10 flex-shrink-0 md:w-12 md:h-12 rounded-2xl ${iconClass} flex items-center justify-center">
                         <span class="material-symbols-outlined text-[20px] md:text-[24px]">storefront</span>
                     </div>
                     <div class="text-left min-w-0 flex-1 pr-2">
@@ -1384,7 +1465,10 @@
     }
     
     function selectLocation(id) { 
-        if(db?.sedes) currentSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
+        if(db?.sedes) {
+            currentSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
+            localforage.setItem('combox_sede_id', currentSede.ID_SEDE);
+        }
         updateHeader(); 
         if(window.navigator.vibrate) window.navigator.vibrate(10); 
         setTimeout(() => toggleModal('sedes-modal', false), 50); 
@@ -1448,7 +1532,7 @@
         if (val.length > 0) {
             icon.innerText = 'close';
             icon.classList.add('text-primary');
-            catalogLimit = 9999; // <--- CORRECCIÓN: Evita paginación y muestra todo al buscar
+            catalogLimit = 9999; 
             
             if (currentCat !== 'TODOS') {
                 currentCat = 'TODOS';
@@ -1461,7 +1545,7 @@
         } else {
             icon.innerText = 'search';
             icon.classList.remove('text-primary');
-            catalogLimit = 24; // Restaura límite
+            catalogLimit = 24; 
         }
         
         clearTimeout(searchRenderTimer);
@@ -1492,6 +1576,7 @@
         const input = document.getElementById('global-search');
         if (input.value.length > 0) {
             input.value = '';
+            clearCategoryAndKeepScroll(); 
             onSearchInput(); 
         } else {
             input.focus();
@@ -1626,11 +1711,12 @@
         else items.sort((a, b) => b._index - a._index);
         
         totalFilteredItemsCount = items.length;
-        const paginatedItems = items.slice(0, catalogLimit);
+        
+        const isCarousel = currentCat === 'TODOS' && search === '';
+        const paginatedItems = isCarousel ? items : items.slice(0, catalogLimit);
 
         const grouped = paginatedItems.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
         
-        const isCarousel = currentCat === 'TODOS' && !search;
         const showFilterUI = currentCat !== 'TODOS' || search !== '';
 
         const filterUI = showFilterUI ? `
@@ -1649,7 +1735,6 @@
         const htmlString = Object.entries(grouped).map(([cat, products]) => {
             const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
             
-            // CORRECCIÓN: Botones X solo si NO hay búsqueda de texto y estamos filtrando
             let titleBtn = '';
             let rightBtn = '';
 

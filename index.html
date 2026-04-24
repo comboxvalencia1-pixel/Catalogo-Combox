@@ -10,6 +10,7 @@
     <meta name="theme-color" content="#E30613" />
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
@@ -45,7 +46,7 @@
         html { background-color: #050505; height: 100%; min-height: -webkit-fill-available; overscroll-behavior: none; scroll-behavior: smooth; }
         body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-        #splash { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; }
+        #splash { position: fixed; inset: 0; width: 100%; height: 100%; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; transform: translateZ(0); }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
@@ -77,7 +78,6 @@
         .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(15px) brightness(0.6); opacity: 0.8; z-index: 0; }
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
-        /* Contorno original */
         .glass-contour { position: relative; border-color: transparent !important; border: none; }
         .glass-contour::after {
             content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
@@ -86,7 +86,6 @@
             -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
         }
 
-        /* Contorno delgado para islas */
         .glass-contour-thin { position: relative; border-color: transparent !important; border: none; }
         .glass-contour-thin::after {
             content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 0.75px;
@@ -95,7 +94,6 @@
             -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
         }
 
-        /* Contorno superior para carrito */
         .glass-contour-top { position: relative; border-color: transparent !important; border: none; }
         .glass-contour-top::after {
             content: ""; position: absolute; inset: 0; border-radius: inherit; 
@@ -157,7 +155,6 @@
 
         #custom-dialog-modal { z-index: 9999 !important; }
 
-        /* Anulación de transiciones para Android */
         html.is-android .modal-overlay,
         html.is-android .modal-content {
             transition: none !important;
@@ -260,13 +257,6 @@
         <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('chat-modal', true, renderChatModal)">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
                 <svg class="w-6 h-6 fill-white m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            </div>
-            <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
-        </div>
-
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openInstagram()">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
         </div>
@@ -616,7 +606,27 @@
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
     const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
     
-    // Detector de Android para quitar animaciones
+    // Inyección de Service Worker local para fuentes e iconos rápidos
+    const swCode = `
+        const CACHE_NAME = 'combox-assets-v1';
+        const ASSETS = [
+            'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block',
+            'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap'
+        ];
+        self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))); });
+        self.addEventListener('fetch', e => {
+            if (e.request.url.includes('fonts.googleapis.com') || e.request.url.includes('fonts.gstatic.com')) {
+                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request).then(fRes => {
+                    return caches.open(CACHE_NAME).then(c => { c.put(e.request, fRes.clone()); return fRes; });
+                })));
+            }
+        });
+    `;
+    if('serviceWorker' in navigator) {
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
+    }
+
     if (/android/i.test(navigator.userAgent)) {
         document.documentElement.classList.add('is-android');
     }
@@ -639,7 +649,26 @@
     let initialRenderDone = false;
     let cachedDataString = null;
     
+    // Scroll Infinito variables
+    let catalogLimit = 24;
+    let totalFilteredItemsCount = 0;
+    
     const searchContainer = document.getElementById('search-container');
+
+    /* ----- Fetch API con Retry & Exponential Backoff ----- */
+    async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) throw new Error('Servidor ocupado o fallo HTTP');
+                return await response.json();
+            } catch (err) {
+                if (i === maxRetries - 1) throw err;
+                // Espera 200ms, 400ms, 800ms
+                await new Promise(res => setTimeout(res, 200 * Math.pow(2, i)));
+            }
+        }
+    }
 
     /* ----- Custom Alerts / Confirms ----- */
     function customAlert(msg, title = 'Aviso') {
@@ -653,9 +682,10 @@
         document.getElementById('dialog-title').innerText = title;
         document.getElementById('dialog-msg').innerText = msg;
         window._pendingConfirm = onConfirm;
+        // CORRECCIÓN: Ahora el callback guardado se ejecuta DENTRO del flujo correcto
         document.getElementById('dialog-buttons').innerHTML = `
             <button class="w-full bg-white/10 text-white font-black py-3 rounded-xl text-xs uppercase" onclick="closeCustomDialog()">Cancelar</button>
-            <button class="w-full bg-primary text-white font-black py-3 rounded-xl text-xs uppercase shadow-lg shadow-primary/30" onclick="closeCustomDialog(); if(window._pendingConfirm) window._pendingConfirm();">Aceptar</button>
+            <button class="w-full bg-primary text-white font-black py-3 rounded-xl text-xs uppercase shadow-lg shadow-primary/30" onclick="let cb = window._pendingConfirm; closeCustomDialog(); if(cb) cb();">Aceptar</button>
         `;
         toggleModal('custom-dialog-modal', true);
     }
@@ -668,6 +698,7 @@
     function clearCategoryAndKeepScroll() {
         const currentScroll = window.scrollY; 
         currentCat = 'TODOS'; 
+        catalogLimit = 24; 
         
         const menuBtn = document.getElementById('cat-menu-btn');
         if (menuBtn) {
@@ -709,7 +740,7 @@
         };
 
         try {
-            await fetch(API, {
+            await fetchWithRetry(API, {
                 method: 'POST',
                 mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
@@ -763,7 +794,7 @@
         };
 
         try {
-            await fetch(API, {
+            await fetchWithRetry(API, {
                 method: 'POST',
                 mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
@@ -818,7 +849,7 @@
         }
     }, {passive: true});
 
-    document.addEventListener('touchend', () => {
+    document.addEventListener('touchend', async () => {
         if (!isPtrPulling) return;
         isPtrPulling = false;
         ptrContainer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -833,7 +864,7 @@
             
             if(window.navigator.vibrate) window.navigator.vibrate(15);
             
-            localStorage.removeItem('combox_db_v2');
+            await localforage.removeItem('combox_db_v2');
             saveCart(); 
             
             setTimeout(() => {
@@ -861,7 +892,7 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(150, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.04);
-        gain.gain.setValueAtTime(1.2, audioCtx.currentTime); // Volumen aumentado
+        gain.gain.setValueAtTime(1.2, audioCtx.currentTime); 
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
         osc.start(audioCtx.currentTime);
         osc.stop(audioCtx.currentTime + 0.04);
@@ -887,6 +918,14 @@
                     else searchContainer.classList.remove('search-hidden'); 
                 } else { 
                     searchContainer.classList.remove('search-hidden'); 
+                }
+
+                // Detección de Scroll Infinito
+                if ((window.innerHeight + currentScrollY) >= document.body.offsetHeight - 500) {
+                    if (catalogLimit < totalFilteredItemsCount) {
+                        catalogLimit += 24;
+                        renderCatalog(); // Recalcula límite y añade más elementos
+                    }
                 }
                 
                 lastScrollY = currentScrollY;
@@ -923,7 +962,7 @@
         
         let loadedFromCache = false;
         try {
-            const cachedObjStr = localStorage.getItem('combox_db_v2');
+            const cachedObjStr = await localforage.getItem('combox_db_v2');
             if (cachedObjStr) {
                 const parsed = JSON.parse(cachedObjStr);
                 // Caché vence en 6 horas (21600000 ms)
@@ -932,18 +971,18 @@
                     cachedDataString = JSON.stringify(db);
                     loadedFromCache = true;
                 } else {
-                    localStorage.removeItem('combox_db_v2');
+                    await localforage.removeItem('combox_db_v2');
                 }
             }
-        } catch(e) { console.error("Error cargando caché:", e); }
+        } catch(e) { console.error("Error cargando caché localForage:", e); }
 
         try {
-            const savedCart = localStorage.getItem('combox_cart');
+            const savedCart = await localforage.getItem('combox_cart');
             if(savedCart) {
                 const parsed = JSON.parse(savedCart);
                 // Carrito vence en 1 hora (3600000 ms)
                 if (Date.now() - parsed.time < 3600000) { cart = parsed.cart; } 
-                else { localStorage.removeItem('combox_cart'); }
+                else { await localforage.removeItem('combox_cart'); }
             }
         } catch(e) { console.error("Error al cargar carrito:", e); }
 
@@ -952,8 +991,7 @@
         }
 
         try {
-            const res = await fetch(API);
-            const freshDB = await res.json();
+            const freshDB = await fetchWithRetry(API);
             
             if(freshDB.catalogo) freshDB.catalogo.forEach((p, i) => p._index = i);
             if(freshDB.combos) freshDB.combos.forEach((p, i) => p._index = i);
@@ -965,9 +1003,9 @@
                 if(toast) {
                     toast.style.opacity = '1';
                     toast.style.transform = 'translate(-50%, -50%) scale(1)';
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         db = freshDB;
-                        localStorage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
+                        await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
                         setupAfterDBLoad(false); 
                         setTimeout(() => {
                             toast.style.opacity = '0';
@@ -977,7 +1015,7 @@
                 }
             } else {
                 db = freshDB;
-                localStorage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
+                await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
                 if (!loadedFromCache) {
                     setupAfterDBLoad(false); 
                 }
@@ -1011,8 +1049,8 @@
         }
     }
 
-    function saveCart() {
-        try { localStorage.setItem('combox_cart', JSON.stringify({cart: cart, time: Date.now()})); } 
+    async function saveCart() {
+        try { await localforage.setItem('combox_cart', JSON.stringify({cart: cart, time: Date.now()})); } 
         catch(e) { console.error("Error guardando carrito:", e); }
     }
 
@@ -1139,7 +1177,7 @@
         `).join('');
     }
 
-    function openCheckoutModal(type) {
+    async function openCheckoutModal(type) {
         checkoutType = type; 
         const title = document.getElementById('checkout-title');
         const sedeLabel = document.getElementById('checkout-sede-label');
@@ -1171,8 +1209,7 @@
             checkoutSede = currentSede;
         }
 
-        // Buscar el nombre guardado en caché y rellenar el input automáticamente
-        const savedName = localStorage.getItem('combox_cliente_nombre');
+        const savedName = await localforage.getItem('combox_cliente_nombre');
         if(savedName) {
             document.getElementById('checkout-name').value = savedName;
         }
@@ -1213,12 +1250,11 @@
         );
     }
     
-    function submitOrder() {
+    async function submitOrder() {
         const name = document.getElementById('checkout-name').value.trim();
         if(!name) { customAlert('Ingresa tu nombre.'); document.getElementById('checkout-name').focus(); return; }
         
-        // Guardar el nombre en caché de forma permanente al enviar el pedido
-        localStorage.setItem('combox_cliente_nombre', name);
+        await localforage.setItem('combox_cliente_nombre', name);
         
         if(checkoutType === 'delivery') {
             const loc = document.getElementById('checkout-location').value.trim();
@@ -1347,6 +1383,12 @@
     
     function getUnifiedId(p) { return (p.id || p.id_producto || p.ID_PRODUCTO_VENTA || '').toString(); }
 
+    function normalizeSearchStr(str) {
+        if(!str) return '';
+        // Normaliza texto: sin acentos, sin espacios y sin la letra 's' al final (para tolerar plurales)
+        return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '').replace(/s$/g, '');
+    }
+
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
@@ -1373,6 +1415,7 @@
 
         searchRenderTimer = setTimeout(() => {
             window.requestAnimationFrame(() => {
+                catalogLimit = 24; // Reseteamos limite del Scroll infinito al buscar
                 render();
             });
         }, 200); 
@@ -1499,7 +1542,7 @@
     }
     
     function renderCatalog() {
-        const search = document.getElementById('global-search').value.toLowerCase();
+        const search = document.getElementById('global-search').value;
         let items = getSourceData();
         
         if (currentCat === 'PROMOCIONES') {
@@ -1519,7 +1562,11 @@
             items = items.filter(p => p.categoria === currentCat); 
         }
         
-        if(search) items = items.filter(p => p.nombre?.toLowerCase().includes(search)); 
+        // Búsqueda Local Avanzada sin espacios ni final de 's'
+        if(search) {
+            const normalizedSearch = normalizeSearchStr(search);
+            items = items.filter(p => normalizeSearchStr(p.nombre).includes(normalizedSearch)); 
+        }
         
         if(currentSort === 'precio_mayor') items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
         else if(currentSort === 'precio_menor') items.sort((a, b) => getProductPrice(a) - getProductPrice(b));
@@ -1527,7 +1574,11 @@
         else if(currentSort === 'pres_menor') items.sort((a, b) => extractUnitValue(a.nombre) - extractUnitValue(b.nombre));
         else items.sort((a, b) => b._index - a._index);
         
-        const grouped = items.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
+        totalFilteredItemsCount = items.length;
+        // Limitación para el Scroll Infinito
+        const paginatedItems = items.slice(0, catalogLimit);
+
+        const grouped = paginatedItems.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
         
         const isCarousel = currentCat === 'TODOS' && !search;
         const isFiltered = currentCat !== 'TODOS' || search !== '';
@@ -1547,8 +1598,10 @@
         
         const htmlString = Object.entries(grouped).map(([cat, products]) => {
             const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
-            const headerBtn = isFiltered ? `<button onclick="clearCategoryAndKeepScroll()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
-            return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3 w-full"><div class="w-1.5 h-6 bg-primary rounded-full flex-shrink-0"></div><h2 class="text-xl font-black text-white uppercase tracking-tight truncate">${cat}</h2>${filterUI}${isFiltered ? headerBtn : ''}</div>${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
+            // Botón X (limpiar categoría) posicionado al lado de la categoría
+            const headerBtn = isFiltered ? `<button onclick="clearCategoryAndKeepScroll()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-1"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
+            
+            return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3 w-full"><div class="w-1.5 h-6 bg-primary rounded-full flex-shrink-0"></div><div class="flex items-center gap-2"><h2 class="text-xl font-black text-white uppercase tracking-tight truncate">${cat}</h2>${isFiltered ? headerBtn : ''}</div></div>${filterUI}${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
         }).join('');
         
         const tempDiv = document.createElement('div');
@@ -1614,7 +1667,6 @@
         
         list.innerHTML = items.map(p => { 
             const id = getUnifiedId(p); const price = getProductPrice(p); 
-            // Modificación: Color de "C/u" cambiado a text-primary
             const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITAR PRECIO</span>' : `$${price.toFixed(2)} <span class="text-[10px] text-primary font-bold ml-1">C/u</span>`;
             const img = p.imagen || DEFAULT_IMG;
 
@@ -1682,10 +1734,11 @@
         customConfirm('¿Seguro que deseas vaciar todo el pedido?', () => {
             cart = {}; 
             updateOrder(); 
-            toggleModal('cart-modal', false); 
             document.querySelectorAll('.count-badge').forEach(b => b.remove()); 
             document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active')); 
             saveCart(); 
+            renderCart(); 
+            toggleModal('cart-modal', false); 
         }, 'Vaciar Pedido');
     }
     
@@ -1736,6 +1789,7 @@
 
         currentType = type; 
         currentCat = 'TODOS'; 
+        catalogLimit = 24; 
 
         const searchInput = document.getElementById('global-search');
         if (searchInput) searchInput.value = ''; 
@@ -1755,6 +1809,7 @@
     
     function setCat(c) { 
         currentCat = c; 
+        catalogLimit = 24; 
         
         const menuBtn = document.getElementById('cat-menu-btn');
         if (c !== 'TODOS') {

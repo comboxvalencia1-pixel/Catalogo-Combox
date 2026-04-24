@@ -75,7 +75,12 @@
             -webkit-transform: translateZ(0); 
         }
         
-        .bg-blur-image { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(15px) brightness(0.6); opacity: 0.8; z-index: 0; }
+        /* CORRECCIÓN: Background zoom estricto a la izquierda para capturar solo el color */
+        .bg-blur-image { 
+            position: absolute; inset: 0; background-size: cover; background-position: left center; 
+            filter: blur(35px) brightness(0.6); opacity: 0.8; z-index: 0; 
+            transform: scale(3.5); transform-origin: left center; 
+        }
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
         .glass-contour { position: relative; border-color: transparent !important; border: none; }
@@ -1399,10 +1404,41 @@
     
     function getUnifiedId(p) { return (p.id || p.id_producto || p.ID_PRODUCTO_VENTA || '').toString(); }
 
-    function normalizeSearchStr(str) {
-        if(!str) return '';
-        // Normaliza texto: sin acentos, sin espacios y sin la letra 's' al final (para tolerar plurales)
-        return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '').replace(/s$/g, '');
+    function getLevenshtein(a, b) {
+        if(a.length === 0) return b.length;
+        if(b.length === 0) return a.length;
+        let prevRow = Array.from({length: b.length + 1}, (_, i) => i);
+        for (let i = 0; i < a.length; i++) {
+            let currRow = [i + 1];
+            for (let j = 0; j < b.length; j++) {
+                let cost = a[i] === b[j] ? 0 : 1;
+                currRow.push(Math.min(currRow[j] + 1, prevRow[j + 1] + 1, prevRow[j] + cost));
+            }
+            prevRow = currRow;
+        }
+        return prevRow[b.length];
+    }
+
+    function flexibleSearchMatch(query, text) {
+        if (!query) return true;
+        
+        const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/s\b/g, ''); 
+        
+        const qClean = normalize(query);
+        const tClean = normalize(text);
+        
+        const qWords = qClean.split(/\s+/).filter(w => w.length > 0);
+        const tWords = tClean.split(/\s+/).filter(w => w.length > 0);
+        
+        return qWords.every(qw => {
+            if (tClean.includes(qw)) return true; 
+            const maxTypos = qw.length <= 4 ? 1 : 2; 
+            
+            return tWords.some(tw => {
+                const limit = Math.min(tw.length, qw.length + Math.floor(maxTypos/2));
+                return getLevenshtein(qw, tw.substring(0, limit)) <= maxTypos;
+            });
+        });
     }
 
     function onSearchInput() {
@@ -1412,6 +1448,7 @@
         if (val.length > 0) {
             icon.innerText = 'close';
             icon.classList.add('text-primary');
+            catalogLimit = 9999; // <--- CORRECCIÓN: Evita paginación y muestra todo al buscar
             
             if (currentCat !== 'TODOS') {
                 currentCat = 'TODOS';
@@ -1424,6 +1461,7 @@
         } else {
             icon.innerText = 'search';
             icon.classList.remove('text-primary');
+            catalogLimit = 24; // Restaura límite
         }
         
         clearTimeout(searchRenderTimer);
@@ -1431,7 +1469,6 @@
 
         searchRenderTimer = setTimeout(() => {
             window.requestAnimationFrame(() => {
-                catalogLimit = 24; // Reseteamos limite del Scroll infinito al buscar
                 render();
             });
         }, 200); 
@@ -1578,10 +1615,8 @@
             items = items.filter(p => p.categoria === currentCat); 
         }
         
-        // Búsqueda Local Avanzada sin espacios ni final de 's'
         if(search) {
-            const normalizedSearch = normalizeSearchStr(search);
-            items = items.filter(p => normalizeSearchStr(p.nombre).includes(normalizedSearch)); 
+            items = items.filter(p => flexibleSearchMatch(search, p.nombre)); 
         }
         
         if(currentSort === 'precio_mayor') items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
@@ -1591,15 +1626,14 @@
         else items.sort((a, b) => b._index - a._index);
         
         totalFilteredItemsCount = items.length;
-        // Limitación para el Scroll Infinito
         const paginatedItems = items.slice(0, catalogLimit);
 
         const grouped = paginatedItems.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
         
         const isCarousel = currentCat === 'TODOS' && !search;
-        const isFiltered = currentCat !== 'TODOS' || search !== '';
+        const showFilterUI = currentCat !== 'TODOS' || search !== '';
 
-        const filterUI = isFiltered ? `
+        const filterUI = showFilterUI ? `
             <div class="relative ml-auto">
                 <select onchange="changeSort(this.value)" class="appearance-none bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase rounded-full px-3 py-1.5 pr-6 outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000]">
                     <option class="text-black" value="default" ${currentSort==='default'?'selected':''}>Últimos Agregados</option>
@@ -1614,10 +1648,18 @@
         
         const htmlString = Object.entries(grouped).map(([cat, products]) => {
             const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
-            // Botón X (limpiar categoría) posicionado al lado de la categoría
-            const headerBtn = isFiltered ? `<button onclick="clearCategoryAndKeepScroll()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-1"><span class="material-symbols-outlined text-[16px]">close</span></button>` : (isCarousel ? `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors">Ver Todo</button>` : '');
             
-            return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3 w-full"><div class="w-1.5 h-6 bg-primary rounded-full flex-shrink-0"></div><div class="flex items-center gap-2"><h2 class="text-xl font-black text-white uppercase tracking-tight truncate">${cat}</h2>${isFiltered ? headerBtn : ''}</div></div>${filterUI}${!isFiltered && headerBtn ? headerBtn : ''}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
+            // CORRECCIÓN: Botones X solo si NO hay búsqueda de texto y estamos filtrando
+            let titleBtn = '';
+            let rightBtn = '';
+
+            if (currentCat !== 'TODOS') {
+                titleBtn = `<button onclick="clearCategoryAndKeepScroll()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
+            } else if (isCarousel) {
+                rightBtn = `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors ml-2">Ver Todo</button>`;
+            }
+            
+            return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3 w-full"><div class="w-1.5 h-6 bg-primary rounded-full flex-shrink-0"></div><div class="flex items-center gap-0"><h2 class="text-xl font-black text-white uppercase tracking-tight truncate">${cat}</h2>${titleBtn}</div></div>${filterUI}${rightBtn}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
         }).join('');
         
         const tempDiv = document.createElement('div');

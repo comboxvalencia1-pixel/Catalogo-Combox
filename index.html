@@ -204,6 +204,20 @@
     <span class="text-[13px] font-[900] uppercase tracking-widest leading-tight">Actualizando<br>datos nuevos...</span>
 </div>
 
+<div id="pwa-install-banner" class="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-primary text-white p-4 rounded-3xl shadow-2xl z-[9999] flex items-center justify-between transition-transform duration-500 translate-y-[200%] border border-white/20 glass-contour-thin">
+    <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-3xl drop-shadow-md">app_shortcut</span>
+        <div class="flex flex-col">
+            <span class="font-black text-[13px] uppercase tracking-widest leading-none drop-shadow-md">Instalar Combox</span>
+            <span class="text-[9px] font-bold opacity-90 mt-1">Mejor rendimiento y acceso directo</span>
+        </div>
+    </div>
+    <div class="flex items-center gap-2">
+        <button onclick="hidePwaInstall()" class="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 text-white active:scale-90 flex-shrink-0"><span class="material-symbols-outlined text-sm">close</span></button>
+        <button id="pwa-install-btn" class="bg-white text-primary font-black px-4 py-2.5 rounded-full text-[10px] uppercase shadow-lg active:scale-95 transition-transform flex-shrink-0">Instalar</button>
+    </div>
+</div>
+
 <div class="absolute top-0 left-0 w-full z-[100] pt-2 flex justify-center pointer-events-none" style="padding-top: calc(0.5rem + env(safe-area-inset-top));">
     <div class="flex items-center gap-2 md:gap-3 px-3 py-1.5 pointer-events-auto bg-black/20 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
         <button onclick="toggleModal('sugerencias-modal', true)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
@@ -212,6 +226,10 @@
         <span class="text-white/30 text-[10px] md:text-[12px] font-light">|</span>
         <button onclick="toggleModal('empleo-modal', true)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
             <span class="material-symbols-outlined text-[13px] text-white">work</span> Currículum
+        </button>
+        <span class="text-white/30 text-[10px] md:text-[12px] font-light">|</span>
+        <button onclick="toggleModal('install-modal', true, renderInstallModal)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
+            <span class="material-symbols-outlined text-[13px] text-white">download</span> App
         </button>
     </div>
 </div>
@@ -339,9 +357,14 @@
                 <div class="w-1.5 h-6 bg-primary rounded-full"></div>
                 <h2 class="text-xl font-black text-white uppercase tracking-tighter">Tu Pedido</h2>
             </div>
-            <button type="button" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('cart-modal', false)">
-                <span class="material-symbols-outlined text-lg">close</span>
-            </button>
+            <div class="flex items-center gap-2 z-50">
+                <button type="button" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 relative" onclick="shareCartUrl()">
+                    <span class="material-symbols-outlined text-lg">ios_share</span>
+                </button>
+                <button type="button" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 relative" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('cart-modal', false)">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
         </div>
         <div class="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-5" id="cart-items-list"></div>
         <div class="pt-5 border-t border-white/10 space-y-4">
@@ -406,6 +429,27 @@
         </div>
         <div class="pt-6 border-t border-white/10 mt-auto">
             <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="install-modal">
+    <div class="modal-overlay" onclick="toggleModal('install-modal', false)"></div>
+    <div class="modal-content flex flex-col max-h-[85vh] p-6 pb-8 glass-contour" style="background: rgba(10,10,11,0.95);">
+        <div class="flex items-center justify-between mb-6 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-primary rounded-full"></div>
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter">Instalar App</h2>
+            </div>
+            <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('install-modal', false)">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        <div class="flex flex-col gap-4">
+            <div id="install-instructions" class="text-zinc-300 text-sm leading-relaxed font-medium"></div>
+            <button id="modal-install-btn" class="w-full bg-primary text-white font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all hidden">
+                Descargar Automáticamente <span class="material-symbols-outlined">download</span>
+            </button>
         </div>
     </div>
 </div>
@@ -643,6 +687,76 @@
     if('serviceWorker' in navigator) {
         const swBlob = new Blob([swCode], {type: 'application/javascript'});
         navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
+    }
+
+    // Instalador PWA Lógica
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if(!localStorage.getItem('pwa_prompt_dismissed')) {
+            setTimeout(() => {
+                document.getElementById('pwa-install-banner').classList.remove('translate-y-[200%]');
+            }, 3000);
+        }
+    });
+
+    document.getElementById('pwa-install-btn')?.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                hidePwaInstall();
+            }
+            deferredPrompt = null;
+        }
+    });
+
+    function hidePwaInstall() {
+        document.getElementById('pwa-install-banner').classList.add('translate-y-[200%]');
+        localStorage.setItem('pwa_prompt_dismissed', 'true');
+    }
+
+    const isIos = () => { return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()); }
+    const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+
+    if (isIos() && !isInStandaloneMode() && !localStorage.getItem('pwa_prompt_dismissed')) {
+         setTimeout(() => {
+                const banner = document.getElementById('pwa-install-banner');
+                if(banner) banner.classList.remove('translate-y-[200%]');
+                const btn = document.getElementById('pwa-install-btn');
+                if(btn) {
+                    btn.innerText = "Ver cómo";
+                    btn.onclick = () => {
+                        toggleModal('install-modal', true, renderInstallModal);
+                        hidePwaInstall();
+                    }
+                }
+         }, 3000);
+    }
+
+    // NUEVO LOGICA RENDER INSTALL MODAL
+    function renderInstallModal() {
+        const inst = document.getElementById('install-instructions');
+        const btn = document.getElementById('modal-install-btn');
+        if (isIos()) {
+            inst.innerHTML = `Para instalar Combox en tu iPhone/iPad:<br><br>1. Toca el botón <b>Compartir</b> <span class="material-symbols-outlined inline align-middle text-lg">ios_share</span> en la barra inferior de Safari.<br><br>2. Desliza hacia abajo y selecciona <b>"Agregar a Inicio"</b> <span class="material-symbols-outlined inline align-middle text-lg">add_box</span>.`;
+            btn.classList.add('hidden');
+        } else {
+            inst.innerHTML = `Descarga nuestra aplicación web para un acceso rápido, sin escribir la URL y con un rendimiento superior.`;
+            if (deferredPrompt) {
+                btn.classList.remove('hidden');
+                btn.onclick = async () => {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') { toggleModal('install-modal', false); hidePwaInstall(); }
+                    deferredPrompt = null;
+                };
+            } else {
+                inst.innerHTML += `<br><br><span class="text-primary font-bold">Nota:</span> Parece que la app ya está instalada o tu navegador no permite la descarga automática mediante este botón. Abre el menú principal de tu navegador web (los tres puntos arriba a la derecha) y selecciona "Instalar aplicación" o "Agregar a la pantalla principal".`;
+                btn.classList.add('hidden');
+            }
+        }
     }
 
     if (/android/i.test(navigator.userAgent)) {
@@ -1000,15 +1114,12 @@
         inputs.forEach(input => {
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
         });
-
-        const searchInput = document.getElementById('global-search');
-        if (searchInput) {
-            searchInput.addEventListener('focus', function() {
-                const searchCont = document.getElementById('search-container');
-                const y = searchCont.offsetTop - 15;
-                if (window.scrollY < y) {
-                    window.scrollTo({ top: y, behavior: 'smooth' });
-                }
+        
+        // ESTABILIZACIÓN DEL ISLAND SEARCH EN FOCUS
+        const globalSearch = document.getElementById('global-search');
+        if(globalSearch){
+            globalSearch.addEventListener('focus', function(e) {
+                window.scrollTo({top: window.scrollY}); 
             });
         }
     });
@@ -1099,6 +1210,33 @@
             }
             updateHeader(); 
         }
+
+        // LÓGICA DE RECUPERACIÓN DE CARRITO COMPARTIDO ACTUALIZADA
+        const urlParams = new URLSearchParams(window.location.search);
+        const pedidoParam = urlParams.get('pedido');
+        if(pedidoParam) {
+            const pairs = pedidoParam.split('_');
+            let hasNewItems = false;
+            pairs.forEach(pair => {
+                const [id, qty] = pair.split('-');
+                // Verifica que el ID del producto que se comparte exista en la base de datos fresca
+                const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
+                if(productExists && qty && !isNaN(qty)) {
+                    cart[id] = parseInt(qty);
+                    hasNewItems = true;
+                }
+            });
+            if(hasNewItems) {
+                saveCart();
+                updateOrder();
+                // Limpiar la URL para que no vuelva a cargar el carrito al recargar la página
+                urlParams.delete('pedido');
+                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                window.history.replaceState({}, document.title, newUrl);
+                // Abrir el modal del carrito para mostrar lo recibido con la nueva info
+                setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
+            }
+        }
         
         renderPromos();
         
@@ -1109,7 +1247,6 @@
             
             setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
 
-            const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
             if(productId) { setTimeout(() => openProductView(productId), 500); }
         } else {
@@ -1132,6 +1269,19 @@
         catch(e) { console.error("Error guardando carrito:", e); }
     }
 
+    function shareCartUrl() {
+        if(Object.keys(cart).length === 0) { customAlert('Tu pedido está vacío. Agrega productos antes de compartir.'); return; }
+        const cartStr = Object.entries(cart).map(([id, qty]) => `${id}-${qty}`).join('_');
+        const url = new URL(window.location.href);
+        url.searchParams.set('pedido', cartStr);
+        if (navigator.share) {
+            navigator.share({ title: 'Mi Pedido en Combox', text: '¡Mira los productos que elegí en Combox!', url: url.href }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(url.href);
+            customAlert('¡Enlace del pedido copiado con éxito! Envíalo a quien quieras para que pueda abrir tu pedido listo.');
+        }
+    }
+
     function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
 
     function lockScroll(lock) { 
@@ -1147,7 +1297,7 @@
     }
     
     function checkActiveModals() {
-        const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'sugerencias-modal', 'empleo-modal', 'custom-dialog-modal'];
+        const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'sugerencias-modal', 'empleo-modal', 'custom-dialog-modal', 'install-modal'];
         if(!modals.some(id => document.getElementById(id).classList.contains('active'))) {
             lockScroll(false);
         }
@@ -1496,10 +1646,16 @@
         return prevRow[b.length];
     }
 
+    // LOGICA DE BÚSQUEDA INTELIGENTE DE UNIDADES ACTUALIZADA
     function getSearchScore(query, text) {
         if (!query) return 1;
         
-        const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/s\b/g, ''); 
+        const normalize = (s) => {
+            let str = s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/s\b/g, '');
+            // Une los números con las unidades de medida (ej. "1 kg" pasa a ser "1kg")
+            str = str.replace(/(\d+)\s+(kg|gr|g|lt|l|ml|cc|und|u|paq|pqte)\b/gi, '$1$2');
+            return str;
+        };
         
         const qClean = normalize(query);
         const tClean = normalize(text);
@@ -1519,11 +1675,17 @@
 
         for (const qw of qWords) {
             let wordMatched = false;
+            
+            const isUnit = /^\d+(kg|gr|g|lt|l|ml|cc|und|u|paq|pqte)$/.test(qw);
 
             if (tClean.includes(qw)) {
                 score += 50;
                 wordMatched = true;
-                if (tWords.includes(qw)) score += 50; 
+                
+                if (tWords.includes(qw)) {
+                    score += 150; 
+                    if(isUnit) score += 500; 
+                }
             } else {
                 const maxTypos = qw.length <= 4 ? 1 : 2; 
                 let bestFuzzy = -1;
@@ -1547,7 +1709,6 @@
         return allWordsMatch ? score : 0;
     }
 
-    // --- NUEVO SISTEMA DE DEBOUNCE (1.5s) Y FILTRO RELEVANCIA ---
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
@@ -1557,7 +1718,6 @@
             icon.classList.add('text-primary');
             catalogLimit = 9999; 
             
-            // Forzar relevancia si estaba en "default" al empezar a buscar
             if (currentSort !== 'relevancia' && currentSort === 'default') {
                 currentSort = 'relevancia';
             }
@@ -1580,7 +1740,6 @@
         clearTimeout(searchRenderTimer);
         clearTimeout(searchScrollTimer);
 
-        // Retraso de 1.5 segundos para evitar parpadeo
         searchRenderTimer = setTimeout(() => {
             window.requestAnimationFrame(() => {
                 render();
@@ -1594,7 +1753,7 @@
             clearTimeout(searchRenderTimer);
             clearTimeout(searchScrollTimer);
             if(document.activeElement) document.activeElement.blur(); 
-            render(); // Al darle enter renderiza de inmediato
+            render(); 
             scrollToCatalog();
         }
     }
@@ -1606,12 +1765,11 @@
             clearCategoryAndKeepScroll(); 
             onSearchInput(); 
             clearTimeout(searchRenderTimer);
-            render(); // Al limpiar, borra instantáneo
+            render(); 
         } else {
             input.focus();
         }
     }
-    // -----------------------------------------------------------
     
     function scrollToCatalog() {
         const grid = document.getElementById('catalog-anchor');

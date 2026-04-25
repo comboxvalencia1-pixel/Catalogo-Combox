@@ -334,7 +334,6 @@
     <div class="modal-overlay" onclick="toggleModal('cart-modal', false)"></div>
     <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3 glass-contour-top" style="background: rgba(10,10,11,0.95);">
         <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
-        
         <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-3">
                 <div class="w-1.5 h-6 bg-primary rounded-full"></div>
@@ -344,9 +343,7 @@
                 <span class="material-symbols-outlined text-lg">close</span>
             </button>
         </div>
-        
         <div class="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-5" id="cart-items-list"></div>
-        
         <div class="pt-5 border-t border-white/10 space-y-4">
             <div class="w-full text-center -mt-2 mb-2">
                 <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
@@ -719,6 +716,7 @@
         const currentScroll = window.scrollY; 
         currentCat = 'TODOS'; 
         catalogLimit = 24; 
+        if (currentSort === 'relevancia') currentSort = 'default';
         
         const menuBtn = document.getElementById('cat-menu-btn');
         if (menuBtn) {
@@ -948,14 +946,12 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
-    // Reactiva el contexto de audio si sales y entras a Safari/App en iOS
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
     });
 
-    // Respaldo de reactivación táctil agresiva para Safari
     document.addEventListener('touchstart', () => {
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }, {passive: true});
@@ -968,7 +964,6 @@
                 const searchInput = document.getElementById('global-search');
                 const isFocused = document.activeElement === searchInput;
 
-                // FIX: Si el input está enfocado, lo mantenemos estático y salimos de la función
                 if (isFocused) {
                     searchContainer.classList.remove('search-hidden');
                     lastScrollY = currentScrollY;
@@ -1032,7 +1027,6 @@
             const cachedObjStr = await localforage.getItem('combox_db_v2');
             if (cachedObjStr) {
                 const parsed = JSON.parse(cachedObjStr);
-                // Caché vence en 6 horas (21600000 ms)
                 if (Date.now() - parsed.time < 21600000) {
                     db = parsed.data;
                     cachedDataString = JSON.stringify(db);
@@ -1047,7 +1041,6 @@
             const savedCart = await localforage.getItem('combox_cart');
             if(savedCart) {
                 const parsed = JSON.parse(savedCart);
-                // Carrito vence en 1 hora (3600000 ms)
                 if (Date.now() - parsed.time < 3600000) { cart = parsed.cart; } 
                 else { await localforage.removeItem('combox_cart'); }
             }
@@ -1503,28 +1496,58 @@
         return prevRow[b.length];
     }
 
-    function flexibleSearchMatch(query, text) {
-        if (!query) return true;
+    function getSearchScore(query, text) {
+        if (!query) return 1;
         
         const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/s\b/g, ''); 
         
         const qClean = normalize(query);
         const tClean = normalize(text);
         
+        let score = 0;
+
+        if (tClean === qClean) {
+            score += 1000;
+        } else if (tClean.includes(qClean)) {
+            score += 500;
+        }
+
         const qWords = qClean.split(/\s+/).filter(w => w.length > 0);
         const tWords = tClean.split(/\s+/).filter(w => w.length > 0);
         
-        return qWords.every(qw => {
-            if (tClean.includes(qw)) return true; 
-            const maxTypos = qw.length <= 4 ? 1 : 2; 
+        let allWordsMatch = true;
+
+        for (const qw of qWords) {
+            let wordMatched = false;
+
+            if (tClean.includes(qw)) {
+                score += 50;
+                wordMatched = true;
+                if (tWords.includes(qw)) score += 50; 
+            } else {
+                const maxTypos = qw.length <= 4 ? 1 : 2; 
+                let bestFuzzy = -1;
+                
+                for (const tw of tWords) {
+                    const limit = Math.min(tw.length, qw.length + Math.floor(maxTypos/2));
+                    const dist = getLevenshtein(qw, tw.substring(0, limit));
+                    
+                    if (dist <= maxTypos) {
+                        wordMatched = true;
+                        let fuzzyScore = 20 - (dist * 5); 
+                        if (fuzzyScore > bestFuzzy) bestFuzzy = fuzzyScore;
+                    }
+                }
+                if (bestFuzzy > 0) score += bestFuzzy;
+            }
             
-            return tWords.some(tw => {
-                const limit = Math.min(tw.length, qw.length + Math.floor(maxTypos/2));
-                return getLevenshtein(qw, tw.substring(0, limit)) <= maxTypos;
-            });
-        });
+            if (!wordMatched) allWordsMatch = false;
+        }
+
+        return allWordsMatch ? score : 0;
     }
 
+    // --- NUEVO SISTEMA DE DEBOUNCE (1.5s) Y FILTRO RELEVANCIA ---
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
@@ -1534,6 +1557,11 @@
             icon.classList.add('text-primary');
             catalogLimit = 9999; 
             
+            // Forzar relevancia si estaba en "default" al empezar a buscar
+            if (currentSort !== 'relevancia' && currentSort === 'default') {
+                currentSort = 'relevancia';
+            }
+
             if (currentCat !== 'TODOS') {
                 currentCat = 'TODOS';
                 const menuBtn = document.getElementById('cat-menu-btn');
@@ -1546,28 +1574,27 @@
             icon.innerText = 'search';
             icon.classList.remove('text-primary');
             catalogLimit = 24; 
+            if (currentSort === 'relevancia') currentSort = 'default';
         }
         
         clearTimeout(searchRenderTimer);
         clearTimeout(searchScrollTimer);
 
+        // Retraso de 1.5 segundos para evitar parpadeo
         searchRenderTimer = setTimeout(() => {
             window.requestAnimationFrame(() => {
                 render();
             });
-        }, 200); 
-
-        if (val.length > 0) {
-            searchScrollTimer = setTimeout(() => {
-                scrollToCatalog();
-            }, 1000); 
-        }
+            if (val.length > 0) scrollToCatalog();
+        }, 1500); 
     }
     
     function handleSearchEnter(e) {
         if (e.key === 'Enter') {
+            clearTimeout(searchRenderTimer);
             clearTimeout(searchScrollTimer);
             if(document.activeElement) document.activeElement.blur(); 
+            render(); // Al darle enter renderiza de inmediato
             scrollToCatalog();
         }
     }
@@ -1578,10 +1605,13 @@
             input.value = '';
             clearCategoryAndKeepScroll(); 
             onSearchInput(); 
+            clearTimeout(searchRenderTimer);
+            render(); // Al limpiar, borra instantáneo
         } else {
             input.focus();
         }
     }
+    // -----------------------------------------------------------
     
     function scrollToCatalog() {
         const grid = document.getElementById('catalog-anchor');
@@ -1680,7 +1710,7 @@
     }
     
     function renderCatalog() {
-        const search = document.getElementById('global-search').value;
+        const search = document.getElementById('global-search').value.trim();
         let items = getSourceData();
         
         if (currentCat === 'PROMOCIONES') {
@@ -1696,32 +1726,54 @@
                 }
                 return p.precio_promo && parseFloat(p.precio_promo) > 0;
             });
-        } else if(currentCat !== 'TODOS') {
+        } else if(currentCat !== 'TODOS' && search === '') { 
             items = items.filter(p => p.categoria === currentCat); 
         }
         
         if(search) {
-            items = items.filter(p => flexibleSearchMatch(search, p.nombre)); 
+            items = items.map(p => ({
+                ...p,
+                _searchScore: getSearchScore(search, p.nombre)
+            })).filter(p => p._searchScore > 0);
+            
+            items.sort((a, b) => {
+                if (currentSort === 'relevancia' || currentSort === 'default') {
+                    if (b._searchScore !== a._searchScore) {
+                        return b._searchScore - a._searchScore;
+                    }
+                }
+                if(currentSort === 'precio_mayor') return getProductPrice(b) - getProductPrice(a);
+                if(currentSort === 'precio_menor') return getProductPrice(a) - getProductPrice(b);
+                if(currentSort === 'pres_mayor') return extractUnitValue(b.nombre) - extractUnitValue(a.nombre);
+                if(currentSort === 'pres_menor') return extractUnitValue(a.nombre) - extractUnitValue(b.nombre);
+                return b._index - a._index;
+            });
+        } else {
+            if(currentSort === 'precio_mayor') items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
+            else if(currentSort === 'precio_menor') items.sort((a, b) => getProductPrice(a) - getProductPrice(b));
+            else if(currentSort === 'pres_mayor') items.sort((a, b) => extractUnitValue(b.nombre) - extractUnitValue(a.nombre));
+            else if(currentSort === 'pres_menor') items.sort((a, b) => extractUnitValue(a.nombre) - extractUnitValue(b.nombre));
+            else items.sort((a, b) => b._index - a._index);
         }
-        
-        if(currentSort === 'precio_mayor') items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
-        else if(currentSort === 'precio_menor') items.sort((a, b) => getProductPrice(a) - getProductPrice(b));
-        else if(currentSort === 'pres_mayor') items.sort((a, b) => extractUnitValue(b.nombre) - extractUnitValue(a.nombre));
-        else if(currentSort === 'pres_menor') items.sort((a, b) => extractUnitValue(a.nombre) - extractUnitValue(b.nombre));
-        else items.sort((a, b) => b._index - a._index);
         
         totalFilteredItemsCount = items.length;
         
         const isCarousel = currentCat === 'TODOS' && search === '';
         const paginatedItems = isCarousel ? items : items.slice(0, catalogLimit);
 
-        const grouped = paginatedItems.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
+        let grouped = {};
+        if (search) {
+            grouped['RESULTADOS'] = paginatedItems;
+        } else {
+            grouped = paginatedItems.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
+        }
         
         const showFilterUI = currentCat !== 'TODOS' || search !== '';
 
         const filterUI = showFilterUI ? `
             <div class="relative ml-auto">
                 <select onchange="changeSort(this.value)" class="appearance-none bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase rounded-full px-3 py-1.5 pr-6 outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000]">
+                    ${search ? `<option class="text-black" value="relevancia" ${currentSort==='relevancia'?'selected':''}>Relevancia</option>` : ''}
                     <option class="text-black" value="default" ${currentSort==='default'?'selected':''}>Últimos Agregados</option>
                     <option class="text-black" value="precio_menor" ${currentSort==='precio_menor'?'selected':''}>Precio: Menor a Mayor</option>
                     <option class="text-black" value="precio_mayor" ${currentSort==='precio_mayor'?'selected':''}>Precio: Mayor a Menor</option>
@@ -1738,7 +1790,9 @@
             let titleBtn = '';
             let rightBtn = '';
 
-            if (currentCat !== 'TODOS') {
+            if (search) {
+                titleBtn = `<button onclick="document.getElementById('global-search').value=''; onSearchInput(); clearTimeout(searchRenderTimer); render();" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
+            } else if (currentCat !== 'TODOS') {
                 titleBtn = `<button onclick="clearCategoryAndKeepScroll()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
             } else if (isCarousel) {
                 rightBtn = `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors ml-2">Ver Todo</button>`;
@@ -1748,7 +1802,7 @@
         }).join('');
         
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlString;
+        tempDiv.innerHTML = htmlString || '<div class="text-center text-zinc-500 py-10 font-bold uppercase tracking-widest text-xs">No se encontraron resultados</div>';
         
         const fragment = document.createDocumentFragment();
         while(tempDiv.firstChild) {

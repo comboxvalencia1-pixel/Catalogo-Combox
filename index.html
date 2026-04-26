@@ -35,16 +35,36 @@
         };
     </script>
     <style>
-        * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-        input, textarea { -webkit-touch-callout: default !important; -webkit-user-select: auto !important; user-select: auto !important; }
+        /* Bloqueo de zoom, rebote y selección global */
+        html { 
+            background-color: #050505; height: 100%; min-height: -webkit-fill-available; 
+            overscroll-behavior: none; scroll-behavior: smooth; 
+        }
+        body { 
+            background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; 
+            overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; 
+            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
+            
+            /* Bloqueo Real iOS/Android */
+            touch-action: pan-y; 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+        
+        /* Excepciones para inputs y textareas */
+        input, textarea { 
+            -webkit-touch-callout: default !important; 
+            -webkit-user-select: auto !important; 
+            user-select: auto !important; 
+            touch-action: manipulation !important; /* Permite interactuar sin hacer zoom */
+        }
         
         select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important; }
         select::-ms-expand { display: none !important; }
         input::-webkit-calendar-picker-indicator, input::-webkit-listbox, input::-webkit-contacts-auto-fill-button { display: none !important; visibility: hidden !important; pointer-events: none !important; }
         img { -webkit-user-drag: none; pointer-events: none; }
-        
-        html { background-color: #050505; height: 100%; min-height: -webkit-fill-available; overscroll-behavior: none; scroll-behavior: smooth; }
-        body { background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; touch-action: manipulation; overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
         #splash { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; }
         .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; transform: translateZ(0); }
@@ -75,11 +95,20 @@
             -webkit-transform: translateZ(0); 
         }
         
+        /* Solución VRAM y Rendimiento Android/Samsung */
         .bg-blur-image { 
             position: absolute; inset: 0; background-size: cover; background-position: left center; 
-            filter: blur(35px) brightness(0.6); opacity: 0.8; z-index: 0; 
-            transform: scale(3.5); transform-origin: left center; 
+            filter: blur(15px) brightness(0.6); opacity: 0.8; z-index: 0; 
+            transform: scale(1.5); transform-origin: center center; 
+            will-change: transform, filter;
         }
+        
+        /* Aceleración en Header */
+        header .absolute { 
+            transform: translateZ(0); 
+            will-change: opacity; 
+        }
+
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
         .glass-contour { position: relative; border-color: transparent !important; border: none; }
@@ -133,12 +162,13 @@
         .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; visibility: hidden; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
+        /* Solución Lag de 5s en iOS */
         .modal-overlay { 
             position: fixed; inset: 0; width: 100vw; height: 100dvh; 
-            background-color: rgba(0, 0, 0, 0.55); 
-            -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); 
+            background-color: rgba(0, 0, 0, 0.8); 
             cursor: pointer; z-index: 1;
             opacity: 0; transition: opacity 0.25s ease; 
+            transform: translateZ(0);
         }
         .modal.active .modal-overlay { opacity: 1; }
         
@@ -227,8 +257,8 @@
         <button onclick="toggleModal('empleo-modal', true)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
             <span class="material-symbols-outlined text-[13px] text-white">work</span> Currículum
         </button>
-        <span class="text-white/30 text-[10px] md:text-[12px] font-light">|</span>
-        <button onclick="toggleModal('install-modal', true, renderInstallModal)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
+        <span class="text-white/30 text-[10px] md:text-[12px] font-light" id="top-nav-app-separator">|</span>
+        <button id="top-nav-app-btn" onclick="toggleModal('install-modal', true, renderInstallModal)" class="bg-transparent text-white/90 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.15em] active:scale-95 transition-transform flex items-center gap-1">
             <span class="material-symbols-outlined text-[13px] text-white">download</span> App
         </button>
     </div>
@@ -689,25 +719,51 @@
         navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
     }
 
-    // Instalador PWA Lógica
+    // Instalador PWA Lógica y Detección
     let deferredPrompt;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+    if (isStandalone) {
+        // Ocultar elementos si es app web instalada
+        const banner = document.getElementById('pwa-install-banner');
+        if (banner) banner.style.display = 'none';
+        
+        const topAppBtn = document.getElementById('top-nav-app-btn');
+        if (topAppBtn) topAppBtn.style.display = 'none';
+        
+        const topAppSeparator = document.getElementById('top-nav-app-separator');
+        if (topAppSeparator) topAppSeparator.style.display = 'none';
+    } else {
+        // Mostrar en navegador
+        setTimeout(() => {
+            if(!localStorage.getItem('pwa_prompt_dismissed')) {
+                const banner = document.getElementById('pwa-install-banner');
+                if (banner) banner.classList.remove('translate-y-[200%]');
+                
+                if (isIos()) {
+                    const btn = document.getElementById('pwa-install-btn');
+                    if(btn) {
+                        btn.innerText = "Ver cómo";
+                        btn.onclick = () => {
+                            toggleModal('install-modal', true, renderInstallModal);
+                            hidePwaInstall();
+                        }
+                    }
+                }
+            }
+        }, 2000);
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        if(!localStorage.getItem('pwa_prompt_dismissed')) {
-            setTimeout(() => {
-                document.getElementById('pwa-install-banner').classList.remove('translate-y-[200%]');
-            }, 3000);
-        }
     });
 
     document.getElementById('pwa-install-btn')?.addEventListener('click', async () => {
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                hidePwaInstall();
-            }
+            if (outcome === 'accepted') { hidePwaInstall(); }
             deferredPrompt = null;
         }
     });
@@ -718,24 +774,7 @@
     }
 
     const isIos = () => { return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()); }
-    const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
 
-    if (isIos() && !isInStandaloneMode() && !localStorage.getItem('pwa_prompt_dismissed')) {
-         setTimeout(() => {
-                const banner = document.getElementById('pwa-install-banner');
-                if(banner) banner.classList.remove('translate-y-[200%]');
-                const btn = document.getElementById('pwa-install-btn');
-                if(btn) {
-                    btn.innerText = "Ver cómo";
-                    btn.onclick = () => {
-                        toggleModal('install-modal', true, renderInstallModal);
-                        hidePwaInstall();
-                    }
-                }
-         }, 3000);
-    }
-
-    // NUEVO LOGICA RENDER INSTALL MODAL
     function renderInstallModal() {
         const inst = document.getElementById('install-instructions');
         const btn = document.getElementById('modal-install-btn');
@@ -767,7 +806,7 @@
     let cart = {}; 
     let currentType = 'Individual'; 
     let currentCat = 'TODOS'; 
-    let currentSort = 'default';
+    let currentSort = 'precio_menor'; // Por defecto ajustado aquí
     let currentSede = null; 
     let currentHorarioSede = null; 
     let checkoutType = 'delivery'; 
@@ -796,7 +835,6 @@
                 return await response.json();
             } catch (err) {
                 if (i === maxRetries - 1) throw err;
-                // Espera 200ms, 400ms, 800ms
                 await new Promise(res => setTimeout(res, 200 * Math.pow(2, i)));
             }
         }
@@ -830,7 +868,7 @@
         const currentScroll = window.scrollY; 
         currentCat = 'TODOS'; 
         catalogLimit = 24; 
-        if (currentSort === 'relevancia') currentSort = 'default';
+        if (currentSort === 'relevancia') currentSort = 'precio_menor';
         
         const menuBtn = document.getElementById('cat-menu-btn');
         if (menuBtn) {
@@ -850,9 +888,7 @@
         window.scrollTo(0, currentScroll); 
     }
 
-    function generarId() {
-        return 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-    }
+    function generarId() { return 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase(); }
 
     async function enviarSugerencia() {
         const lastSugTime = localStorage.getItem('last_sug_time');
@@ -1037,8 +1073,17 @@
         ptrCurrentY = 0;
     });
 
+    // Lógica para iOS Audio Unlocking
     function initAudio() {
-        if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        if(!audioCtx) { 
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+            // Inyección de buffer silencioso para desbloquear el audio en iOS
+            const buffer = audioCtx.createBuffer(1, 1, 22050);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            source.start(0);
+        }
     }
 
     function playClick() {
@@ -1060,9 +1105,12 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
+    // Resume audio context al volver de segundo plano
     document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
+        if (!document.hidden && audioCtx) {
+            if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+                audioCtx.resume();
+            }
         }
     });
 
@@ -1115,7 +1163,6 @@
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
         });
         
-        // ESTABILIZACIÓN DEL ISLAND SEARCH EN FOCUS
         const globalSearch = document.getElementById('global-search');
         if(globalSearch){
             globalSearch.addEventListener('focus', function(e) {
@@ -1191,7 +1238,16 @@
                     await setupAfterDBLoad(false); 
                 }
             }
-        } catch(e) { console.error("Error cargando DB:", e); }
+        } catch(e) { 
+            console.error("Error cargando DB:", e); 
+            // Manejo Offline / Advertencia HTTPS
+            if (loadedFromCache) {
+                const s = document.getElementById('splash'); 
+                if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
+            } else {
+                customAlert("No hay conexión a internet y no hay datos guardados para arrancar la aplicación.");
+            }
+        }
     }
 
     async function setupAfterDBLoad(isCached) {
@@ -1211,7 +1267,6 @@
             updateHeader(); 
         }
 
-        // LÓGICA DE RECUPERACIÓN DE CARRITO COMPARTIDO ACTUALIZADA
         const urlParams = new URLSearchParams(window.location.search);
         const pedidoParam = urlParams.get('pedido');
         if(pedidoParam) {
@@ -1219,7 +1274,6 @@
             let hasNewItems = false;
             pairs.forEach(pair => {
                 const [id, qty] = pair.split('-');
-                // Verifica que el ID del producto que se comparte exista en la base de datos fresca
                 const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
                 if(productExists && qty && !isNaN(qty)) {
                     cart[id] = parseInt(qty);
@@ -1229,11 +1283,9 @@
             if(hasNewItems) {
                 saveCart();
                 updateOrder();
-                // Limpiar la URL para que no vuelva a cargar el carrito al recargar la página
                 urlParams.delete('pedido');
                 const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
                 window.history.replaceState({}, document.title, newUrl);
-                // Abrir el modal del carrito para mostrar lo recibido con la nueva info
                 setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
             }
         }
@@ -1646,13 +1698,11 @@
         return prevRow[b.length];
     }
 
-    // LOGICA DE BÚSQUEDA INTELIGENTE DE UNIDADES ACTUALIZADA
     function getSearchScore(query, text) {
         if (!query) return 1;
         
         const normalize = (s) => {
             let str = s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/s\b/g, '');
-            // Une los números con las unidades de medida (ej. "1 kg" pasa a ser "1kg")
             str = str.replace(/(\d+)\s+(kg|gr|g|lt|l|ml|cc|und|u|paq|pqte)\b/gi, '$1$2');
             return str;
         };
@@ -1718,7 +1768,7 @@
             icon.classList.add('text-primary');
             catalogLimit = 9999; 
             
-            if (currentSort !== 'relevancia' && currentSort === 'default') {
+            if (currentSort !== 'relevancia') {
                 currentSort = 'relevancia';
             }
 
@@ -1734,7 +1784,7 @@
             icon.innerText = 'search';
             icon.classList.remove('text-primary');
             catalogLimit = 24; 
-            if (currentSort === 'relevancia') currentSort = 'default';
+            if (currentSort === 'relevancia') currentSort = 'precio_menor';
         }
         
         clearTimeout(searchRenderTimer);

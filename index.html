@@ -58,7 +58,7 @@
             -webkit-touch-callout: default !important; 
             -webkit-user-select: auto !important; 
             user-select: auto !important; 
-            touch-action: manipulation !important; 
+            touch-action: manipulation !important; /* Permite interactuar sin hacer zoom */
         }
         
         select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important; }
@@ -72,14 +72,11 @@
 
         #search-container { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; transform: translateZ(0); }
         .search-hidden { transform: translate3d(0, -150%, 0) !important; }
-        
-        #type-tabs-container { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); max-height: 60px; opacity: 1; overflow: hidden; }
-        #type-tabs-container.tabs-hidden { max-height: 0 !important; opacity: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: none !important; transform: scaleY(0); }
 
         button, .nav-col, .type-tab, .cat-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .btn-bounce { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); will-change: transform; cursor: pointer; }
-        .btn-bounce-active, .btn-bounce:active { transform: scale(0.90) !important; transition: transform 0.1s; }
+        .btn-bounce { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; will-change: transform; }
+        .btn-bounce-active, .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
 
         .image-container { position: relative; width: 100%; overflow: hidden; background: rgba(255,255,255,0.03); }
         .placeholder-blur { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: blur(12px); transform: scale(1.1); opacity: 1; transition: opacity 0.5s; z-index: 1; }
@@ -90,29 +87,38 @@
         .nav-btn-glass { position: relative; z-index: 1; }
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
-        /* OPTIMIZACIÓN 120FPS & ANTI-CRASH PARA NEVERAS SAMSUNG */
+        /* Solución Crash Samsung: Eliminamos content-visibility */
         .product-card-glass { 
             position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; 
-            contain: content; content-visibility: auto; contain-intrinsic-size: auto 260px;
-            /* Eliminada la máscara radial pesada que crasheaba la GPU */
-            background-color: #121212; 
-            -webkit-transform: translateZ(0); transform: translateZ(0); 
+            -webkit-mask-image: -webkit-radial-gradient(white, black);
+            mask-image: radial-gradient(white, black);
+            -webkit-transform: translateZ(0); transform: translateZ(0);
         }
         
+        /* Solución Rendimiento Android y Zoom/Posición */
         .bg-blur-image { 
             position: absolute; inset: 0; background-size: cover; background-position: left center; 
-            /* Se reduce el blur extremo para salvar VRAM y se compensa con opacidad */
-            filter: blur(8px) brightness(0.5); opacity: 0.7; z-index: 0; 
-            transform: scale(2.2); transform-origin: left center; /* Más zoom y hacia la izquierda */
+            filter: blur(12px) brightness(0.6); opacity: 0.8; z-index: 0; 
+            transform: scale(2.2) translateX(-8%); transform-origin: left center; 
+            will-change: transform;
         }
         
+        /* Animación de ocultar Tabs al buscar */
+        #type-tabs-container { 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease; 
+            max-height: 60px; overflow: hidden; opacity: 1;
+        }
+        .tabs-hidden { 
+            max-height: 0 !important; opacity: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: none !important; 
+        }
+
         /* Aceleración en Header */
         header .absolute { 
             transform: translateZ(0); 
             will-change: opacity; 
         }
 
-        .glass-overlay { position: relative; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 100%); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
+        .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
         .glass-contour { position: relative; border-color: transparent !important; border: none; }
         .glass-contour::after {
@@ -152,7 +158,7 @@
         .price-pill { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: white; transition: all 0.2s; }
         .price-pill.active { background: #ff0000 !important; box-shadow: 0 0 20px rgba(255,0,0,0.4) !important; border-color: rgba(255,255,255,0.15) !important; }
 
-        .count-badge { position: absolute; top: -8px; right: -8px; background: white; color: black; font-size: 10px; font-weight: 900; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 40; }
+        .count-badge { position: absolute; top: -6px; right: -6px; background: white; color: black; font-size: 9px; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4); z-index: 40; }
         
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -212,7 +218,6 @@
         
         .card-title { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; min-height: 2.8rem; margin-bottom: 0.25rem; }
 
-        /* Ajustes específicos para móviles estándar */
         @media (max-width: 395px) {
             .nav-container { gap: 0.25rem !important; justify-content: space-between !important; width: 100%; padding: 0 0.5rem !important; }
             .nav-col { min-width: 58px !important; gap: 0.3rem !important; }
@@ -227,23 +232,6 @@
             .product-card-glass { border-radius: 1.25rem !important; }
         }
 
-        /* AJUSTE PARA PANTALLAS FLACAS (SAMSUNG S20, iPhone Mini) */
-        @media (max-width: 370px) {
-            .nav-container { gap: 0.1rem !important; }
-            .nav-col { min-width: 50px !important; }
-            .nav-btn-glass { width: 40px !important; height: 40px !important; }
-            .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 20px !important; width: 20px !important; height: 20px !important; }
-            .nav-text { font-size: 7px !important; letter-spacing: 0.05em !important; }
-            .auto-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important; gap: 0.5rem !important; }
-            .carousel-card { width: 120px !important; }
-            .card-title { font-size: 10px !important; min-height: 2.4rem; line-height: 1.2; }
-            .price-pill { font-size: 9px !important; padding-top: 0.3rem !important; padding-bottom: 0.3rem !important;}
-            h1 { font-size: 3.5rem !important; }
-            .glass-overlay { padding: 0.6rem 0.4rem 0.5rem !important; }
-            .type-tab { padding: 0.4rem 0.8rem; font-size: 9px; }
-            #search-island input { font-size: 13px !important; }
-        }
-
         .max-content-width { max-width: 1200px; margin-left: auto; margin-right: auto; }
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
     </style>
@@ -255,7 +243,7 @@
     <span class="text-[13px] font-[900] uppercase tracking-widest leading-tight">Actualizando<br>datos nuevos...</span>
 </div>
 
-<div id="pwa-install-banner" class="fixed bottom-[calc(0.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-primary text-white p-4 rounded-3xl shadow-2xl z-[9999] flex items-center justify-between transition-transform duration-500 translate-y-[200%] border border-white/20 glass-contour-thin cursor-pointer" onclick="toggleModal('install-modal', true, renderInstallModal)">
+<div id="pwa-install-banner" onclick="toggleModal('install-modal', true, renderInstallModal)" class="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-primary text-white p-4 rounded-3xl shadow-2xl z-[9999] flex items-center justify-between transition-transform duration-500 translate-y-[200%] border border-white/20 glass-contour-thin cursor-pointer">
     <div class="flex items-center gap-3 pointer-events-none">
         <span class="material-symbols-outlined text-3xl drop-shadow-md">app_shortcut</span>
         <div class="flex flex-col">
@@ -265,6 +253,7 @@
     </div>
     <div class="flex items-center gap-2">
         <button onclick="event.stopPropagation(); hidePwaInstall()" class="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 text-white active:scale-90 flex-shrink-0"><span class="material-symbols-outlined text-sm">close</span></button>
+        <button id="pwa-install-btn" class="bg-white text-primary font-black px-4 py-2.5 rounded-full text-[10px] uppercase shadow-lg active:scale-95 transition-transform flex-shrink-0 pointer-events-none">Instalar</button>
     </div>
 </div>
 
@@ -345,7 +334,7 @@
 
 <div class="sticky z-50 px-4 mt-8" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
     <div class="flex flex-col items-center gap-3 max-w-2xl mx-auto island-width">
-        <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full glass-contour-thin shadow-2xl mb-2" id="type-tabs-container">
+        <div class="flex bg-[rgba(15,15,18,0.75)] backdrop-blur-xl p-1.5 rounded-full glass-contour-thin shadow-2xl" id="type-tabs-container">
             <button class="type-tab type-tab-active" onclick="setType('Individual', this)">Individual</button>
             <button class="type-tab type-tab-inactive" onclick="setType('Combos', this)">Combos</button>
             <button class="type-tab type-tab-inactive" onclick="setType('Servicios', this)">Servicios</button>
@@ -377,7 +366,7 @@
 <div id="catalog-anchor" class="pt-4"></div>
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
 
-<div class="fixed bottom-[calc(0.5rem+env(safe-area-inset-bottom))] left-[50%] w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
+<div class="fixed bottom-[calc(0.2rem+env(safe-area-inset-bottom))] left-[50%] w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
     <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width glass-contour-thin">
         <div class="pl-6 flex flex-col relative z-10">
             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
@@ -498,7 +487,7 @@
         <div class="flex flex-col gap-4">
             <div id="install-instructions" class="text-zinc-300 text-sm leading-relaxed font-medium"></div>
             <button id="modal-install-btn" class="w-full bg-primary text-white font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all hidden">
-                Instalar Automáticamente <span class="material-symbols-outlined">download</span>
+                Descargar Automáticamente <span class="material-symbols-outlined">download</span>
             </button>
         </div>
     </div>
@@ -718,6 +707,7 @@
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
     const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
     
+    // Inyección de Service Worker local para fuentes e iconos rápidos
     const swCode = `
         const CACHE_NAME = 'combox-assets-v1';
         const ASSETS = [
@@ -738,10 +728,12 @@
         navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
     }
 
+    // Instalador PWA Lógica y Detección
     let deferredPrompt;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
     if (isStandalone) {
+        // Ocultar elementos si es app web instalada
         const banner = document.getElementById('pwa-install-banner');
         if (banner) banner.style.display = 'none';
         
@@ -751,6 +743,7 @@
         const topAppSeparator = document.getElementById('top-nav-app-separator');
         if (topAppSeparator) topAppSeparator.style.display = 'none';
     } else {
+        // Mostrar en navegador
         setTimeout(() => {
             if(!localStorage.getItem('pwa_prompt_dismissed')) {
                 const banner = document.getElementById('pwa-install-banner');
@@ -776,30 +769,36 @@
         const btn = document.getElementById('modal-install-btn');
         
         if (isIos()) {
-            inst.innerHTML = `Para instalar Combox y acceder más rápido:<br><br>
-            <div class="flex items-center gap-3 mb-4 mt-2">
-                <span class="material-symbols-outlined text-3xl bg-white/10 p-2 rounded-xl">ios_share</span>
-                <span class="text-sm">1. Toca el botón <b>Compartir</b> (el cuadrado con la flecha) en la barra de tu navegador.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-3xl bg-white/10 p-2 rounded-xl">add_box</span>
-                <span class="text-sm">2. Selecciona <b>"Agregar a Inicio"</b> en el menú que aparece.</span>
-            </div>`;
+            inst.innerHTML = `
+                <div class="flex flex-col gap-4 text-center">
+                    <p>Para instalar <b>Combox</b> en tu iPhone o iPad sigue estos pasos:</p>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 text-left">
+                        <span class="material-symbols-outlined text-3xl text-blue-400">ios_share</span>
+                        <p class="text-xs">1. Toca el botón <b>Compartir</b> en la barra inferior (Safari) o superior (Chrome).</p>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 text-left">
+                        <span class="material-symbols-outlined text-3xl text-zinc-300">add_box</span>
+                        <p class="text-xs">2. Desliza hacia abajo y selecciona <b>"Agregar a Inicio"</b>.</p>
+                    </div>
+                </div>`;
             btn.classList.add('hidden');
         } else {
-            inst.innerHTML = `Para instalar en tu Android:<br><br>
-            <div class="flex items-center gap-3 mb-4 mt-2">
-                <span class="material-symbols-outlined text-3xl bg-white/10 p-2 rounded-xl">more_vert</span>
-                <span class="text-sm">1. Toca el icono de <b>3 puntos</b> en la esquina de tu navegador.</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-3xl bg-white/10 p-2 rounded-xl">install_mobile</span>
-                <span class="text-sm">2. Selecciona <b>"Agregar a la pantalla principal"</b> o "Instalar aplicación".</span>
-            </div>`;
+            inst.innerHTML = `
+                <div class="flex flex-col gap-4 text-center">
+                    <p>Instala la App oficial para un acceso inmediato y un rendimiento superior.</p>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 text-left">
+                        <span class="material-symbols-outlined text-3xl text-zinc-300">more_vert</span>
+                        <p class="text-xs">1. Toca el <b>Menú de 3 puntos</b> en la esquina superior de tu navegador.</p>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 text-left">
+                        <span class="material-symbols-outlined text-3xl text-primary">add_to_home_screen</span>
+                        <p class="text-xs">2. Selecciona <b>"Instalar aplicación"</b> o <b>"Agregar a pantalla principal"</b>.</p>
+                    </div>
+                </div>`;
             
             if (deferredPrompt) {
-                inst.innerHTML = `<p class="mb-4 text-center">Instala nuestra App nativa para una experiencia más rápida y fluida.</p>`;
                 btn.classList.remove('hidden');
+                btn.innerHTML = 'Instalar Automáticamente <span class="material-symbols-outlined">download</span>';
                 btn.onclick = async () => {
                     deferredPrompt.prompt();
                     const { outcome } = await deferredPrompt.userChoice;
@@ -820,7 +819,7 @@
     let cart = {}; 
     let currentType = 'Individual'; 
     let currentCat = 'TODOS'; 
-    let currentSort = 'precio_menor';
+    let currentSort = 'precio_menor'; 
     let currentSede = null; 
     let currentHorarioSede = null; 
     let checkoutType = 'delivery'; 
@@ -833,14 +832,14 @@
     let searchScrollTimer = null;
     let initialRenderDone = false;
     let cachedDataString = null;
-    let userClearedLocation = false; // Flag para GPS en iOS
     
+    // Scroll Infinito variables
     let catalogLimit = 24;
     let totalFilteredItemsCount = 0;
     
     const searchContainer = document.getElementById('search-container');
-    const typeTabsContainer = document.getElementById('type-tabs-container');
 
+    /* ----- Fetch API con Retry & Exponential Backoff ----- */
     async function fetchWithRetry(url, options = {}, maxRetries = 3) {
         for (let i = 0; i < maxRetries; i++) {
             try {
@@ -854,6 +853,7 @@
         }
     }
 
+    /* ----- Custom Alerts / Confirms ----- */
     function customAlert(msg, title = 'Aviso') {
         document.getElementById('dialog-title').innerText = title;
         document.getElementById('dialog-msg').innerText = msg;
@@ -890,16 +890,16 @@
         }
         
         const searchInput = document.getElementById('global-search');
-        if(searchInput) {
-            searchInput.value = '';
-            typeTabsContainer.classList.remove('tabs-hidden');
-        }
+        if(searchInput) searchInput.value = '';
         const searchIcon = document.getElementById('search-icon');
         if(searchIcon) {
             searchIcon.innerText = 'search';
             searchIcon.classList.remove('text-primary');
         }
         
+        const tabsContainer = document.getElementById('type-tabs-container');
+        tabsContainer.classList.remove('tabs-hidden');
+
         render(); 
         window.scrollTo(0, currentScroll); 
     }
@@ -1089,9 +1089,11 @@
         ptrCurrentY = 0;
     });
 
+    // Lógica para iOS Audio Unlocking
     function initAudio() {
         if(!audioCtx) { 
             audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+            // Inyección de buffer silencioso para desbloquear el audio en iOS
             const buffer = audioCtx.createBuffer(1, 1, 22050);
             const source = audioCtx.createBufferSource();
             source.buffer = buffer;
@@ -1119,6 +1121,7 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
+    // Resume audio context al volver de segundo plano
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && audioCtx) {
             if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
@@ -1127,6 +1130,10 @@
         }
     });
 
+    document.addEventListener('touchstart', () => {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }, {passive: true});
+    
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
         if (!ticking) {
@@ -1249,6 +1256,7 @@
             }
         } catch(e) { 
             console.error("Error cargando DB:", e); 
+            // Manejo Offline / Advertencia HTTPS
             if (loadedFromCache) {
                 const s = document.getElementById('splash'); 
                 if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
@@ -1494,7 +1502,9 @@
             submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2";
             accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
             
-            if(!userClearedLocation) {
+            // SOLUCIÓN GPS iOS: Solo buscar ubicación si está vacío
+            const locInput = document.getElementById('checkout-location');
+            if (!locInput.value) {
                 getLocation(); 
             }
         } else {
@@ -1534,18 +1544,7 @@
         else { btn.className = "w-14 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center active:scale-90 flex-shrink-0"; icon.innerText = "delete_sweep"; }
     }
     
-    function handleLocationAction() { 
-        const loc = document.getElementById('checkout-location'); 
-        if(loc.value.trim() === '') {
-            getLocation(); 
-            userClearedLocation = false;
-        } else { 
-            loc.value = ''; 
-            loc.focus(); 
-            updateLocationBtnState(); 
-            userClearedLocation = true; // Recordar que el usuario limpió el GPS
-        } 
-    }
+    function handleLocationAction() { const loc = document.getElementById('checkout-location'); if(loc.value.trim() === '') getLocation(); else { loc.value = ''; loc.focus(); updateLocationBtnState(); } }
     
     function getLocation() {
         const loc = document.getElementById('checkout-location');
@@ -1564,11 +1563,12 @@
         );
     }
     
-    async function submitOrder() {
+    function submitOrder() {
         const name = document.getElementById('checkout-name').value.trim();
         if(!name) { customAlert('Ingresa tu nombre.'); document.getElementById('checkout-name').focus(); return; }
         
-        await localforage.setItem('combox_cliente_nombre', name);
+        // SOLUCIÓN WHATSAPP: Guardar en segundo plano sin usar "await" para no bloquear el popup de WhatsApp
+        localforage.setItem('combox_cliente_nombre', name).catch(e => console.error(e));
         
         if(checkoutType === 'delivery') {
             const loc = document.getElementById('checkout-location').value.trim();
@@ -1613,8 +1613,7 @@
             msg += `_Por favor confírmame disponibilidad, Gracias._`;
         }
         
-        // Usar window.location.href garantiza que funcione en todos los navegadores de iOS/Android sin bloqueos
-        window.location.href = `https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`;
+        window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
     function getSchedule(sede) {
@@ -1784,13 +1783,15 @@
     function onSearchInput() {
         const val = document.getElementById('global-search').value.trim();
         const icon = document.getElementById('search-icon');
+        const tabsContainer = document.getElementById('type-tabs-container');
         
         if (val.length > 0) {
             icon.innerText = 'close';
             icon.classList.add('text-primary');
-            typeTabsContainer.classList.add('tabs-hidden'); // Ocultar pastillas
             catalogLimit = 9999; 
             
+            tabsContainer.classList.add('tabs-hidden');
+
             if (currentSort !== 'relevancia') {
                 currentSort = 'relevancia';
             }
@@ -1806,8 +1807,9 @@
         } else {
             icon.innerText = 'search';
             icon.classList.remove('text-primary');
-            typeTabsContainer.classList.remove('tabs-hidden'); // Mostrar pastillas
             catalogLimit = 24; 
+            
+            tabsContainer.classList.remove('tabs-hidden');
             if (currentSort === 'relevancia') currentSort = 'precio_menor';
         }
         
@@ -1818,7 +1820,7 @@
             window.requestAnimationFrame(() => {
                 render();
             });
-            if (val.length > 0) setTimeout(scrollToCatalog, 50); // Auto-scroll
+            if (val.length > 0) scrollToCatalog();
         }, 1500); 
     }
     
@@ -1828,7 +1830,7 @@
             clearTimeout(searchScrollTimer);
             if(document.activeElement) document.activeElement.blur(); 
             render(); 
-            setTimeout(scrollToCatalog, 50);
+            scrollToCatalog();
         }
     }
 
@@ -1836,7 +1838,6 @@
         const input = document.getElementById('global-search');
         if (input.value.length > 0) {
             input.value = '';
-            typeTabsContainer.classList.remove('tabs-hidden');
             clearCategoryAndKeepScroll(); 
             onSearchInput(); 
             clearTimeout(searchRenderTimer);
@@ -1849,7 +1850,7 @@
     function scrollToCatalog() {
         const grid = document.getElementById('catalog-anchor');
         if (grid) {
-            const offset = 100; // Ajuste para que se vea el top
+            const offset = 80; 
             const y = grid.getBoundingClientRect().top + window.scrollY - offset;
             
             window.scrollTo({ top: y, behavior: 'smooth' });
@@ -1944,8 +1945,9 @@
     
     function renderCatalog() {
         const search = document.getElementById('global-search').value.trim();
-        // Buscar en todo si hay algo escrito, si no, buscar en la pastilla seleccionada
-        let items = search.length > 0 ? getAllSourceData() : getSourceData();
+        
+        // Búsqueda global en todo el inventario si hay un término
+        let items = search !== '' ? getAllSourceData() : getSourceData();
         
         if (currentCat === 'PROMOCIONES') {
             const today = new Date();
@@ -1965,11 +1967,21 @@
         }
         
         if(search) {
+            const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const searchClean = normalize(search);
+
             items = items.map(p => {
                 let score = getSearchScore(search, p.nombre);
-                // Si la categoría coincide exactamente, forzamos máxima prioridad
-                if (p.categoria && p.categoria.toLowerCase() === search.toLowerCase()) score += 2000;
-                return {...p, _searchScore: score};
+                
+                // Prioridad máxima si escribe la categoría exacta
+                if (p.categoria && normalize(p.categoria) === searchClean) {
+                    score += 5000;
+                }
+                
+                return {
+                    ...p,
+                    _searchScore: score
+                };
             }).filter(p => p._searchScore > 0);
             
             items.sort((a, b) => {
@@ -2027,7 +2039,7 @@
             let rightBtn = '';
 
             if (search) {
-                titleBtn = `<button onclick="document.getElementById('global-search').value=''; handleSearchClick();" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
+                titleBtn = `<button onclick="document.getElementById('global-search').value=''; onSearchInput(); clearTimeout(searchRenderTimer); render();" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
             } else if (currentCat !== 'TODOS') {
                 titleBtn = `<button onclick="clearCategoryAndKeepScroll()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
             } else if (isCarousel) {
@@ -2066,6 +2078,7 @@
         
         const cardClass = isCarousel ? 'carousel-card' : 'w-full';
         const contourClass = isPromo ? 'card-promo' : '';
+        const pricePillAnimationClass = '';
         
         const img = p.imagen || DEFAULT_IMG;
         
@@ -2084,7 +2097,7 @@
                 
                 <div class="flex justify-center w-full pt-1 relative btn-action-area btn-bounce" onclick="event.stopPropagation(); triggerTap(this); add('${id}')">
                     ${count > 0 ? `<div class="count-badge">${count}</div>` : ''} 
-                    <button ${isOut ? 'disabled' : ''} class="price-pill w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}">
+                    <button class="price-pill w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}" ${isOut ? 'disabled' : ''}>
                         ${isOut ? 'SIN STOCK' : priceDisplay}
                     </button>
                 </div>
@@ -2232,6 +2245,9 @@
             searchIcon.classList.remove('text-primary');
         }
         
+        const tabsContainer = document.getElementById('type-tabs-container');
+        tabsContainer.classList.remove('tabs-hidden');
+        
         showSkeletons();
         
         setTimeout(() => {
@@ -2260,7 +2276,6 @@
             searchIcon.innerText = 'search';
             searchIcon.classList.remove('text-primary');
         }
-        typeTabsContainer.classList.remove('tabs-hidden');
         
         render(); 
         scrollToCatalog();

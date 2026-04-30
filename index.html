@@ -165,8 +165,24 @@
         
         .out-of-stock { filter: grayscale(1); opacity: 0.6; }
 
-        #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; transform: translate3d(-50%, 0, 0); }
+        /* Ajustes Order Island para optimización Android 120hz */
+        #order-island { 
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); 
+            will-change: transform; 
+            backface-visibility: hidden; 
+            perspective: 1000px;
+            transform: translate3d(-50%, 0, 0); 
+        }
         .order-island-hidden { transform: translate3d(-50%, 160px, 0) !important; }
+
+        /* Estilos base para los modales y Toasts */
+        .toast-product {
+            z-index: 150 !important; 
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s ease;
+        }
+        body.island-active .toast-product {
+            transform: translate(-50%, -80px) !important; 
+        }
 
         .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; visibility: hidden; }
         .modal.active { pointer-events: auto; visibility: visible; }
@@ -366,7 +382,7 @@
 <div id="catalog-anchor" class="pt-4"></div>
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
 
-<div class="fixed bottom-[calc(0.2rem+env(safe-area-inset-bottom))] left-[50%] w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
+<div class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-[50%] w-[92%] max-w-md z-[100] order-island-hidden" id="order-island">
     <div class="bg-[rgba(15,15,18,0.75)] backdrop-blur-xl border border-white/10 rounded-full p-1.5 flex items-center justify-between shadow-2xl island-width glass-contour-thin">
         <div class="pl-6 flex flex-col relative z-10">
             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Total Pedido</span>
@@ -773,12 +789,16 @@
                 <div class="flex flex-col gap-4 text-center">
                     <p>Para instalar <b>Combox</b> en tu iPhone o iPad sigue estos pasos:</p>
                     <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 text-left">
+                        <span class="material-symbols-outlined text-3xl text-zinc-300">more_horiz</span>
+                        <p class="text-xs">1. Presiona el botón de los <b>3 puntos</b>.</p>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 text-left">
                         <span class="material-symbols-outlined text-3xl text-blue-400">ios_share</span>
-                        <p class="text-xs">1. Toca el botón <b>Compartir</b> en la barra inferior (Safari) o superior (Chrome).</p>
+                        <p class="text-xs">2. Toca la opción de <b>"Compartir"</b>.</p>
                     </div>
                     <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 text-left">
                         <span class="material-symbols-outlined text-3xl text-zinc-300">add_box</span>
-                        <p class="text-xs">2. Desliza hacia abajo y selecciona <b>"Agregar a Inicio"</b>.</p>
+                        <p class="text-xs">3. Selecciona <b>"Añadir a pantalla de inicio"</b>.</p>
                     </div>
                 </div>`;
             btn.classList.add('hidden');
@@ -878,7 +898,8 @@
     }
 
     function clearCategoryAndKeepScroll() {
-        const currentScroll = window.scrollY; 
+        const targetScroll = window.scrollY; 
+        
         currentCat = 'TODOS'; 
         catalogLimit = 24; 
         if (currentSort === 'relevancia') currentSort = 'precio_menor';
@@ -900,8 +921,15 @@
         const tabsContainer = document.getElementById('type-tabs-container');
         tabsContainer.classList.remove('tabs-hidden');
 
-        render(); 
-        window.scrollTo(0, currentScroll); 
+        // Layout Thrashing Fix
+        setTimeout(() => {
+            window.requestAnimationFrame(() => {
+                render(); 
+                window.requestAnimationFrame(() => {
+                    window.scrollTo(0, targetScroll); 
+                });
+            });
+        }, 0);
     }
 
     function generarId() { return 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase(); }
@@ -1502,7 +1530,6 @@
             submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2";
             accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
             
-            // SOLUCIÓN GPS iOS: Solo buscar ubicación si está vacío
             const locInput = document.getElementById('checkout-location');
             if (!locInput.value) {
                 getLocation(); 
@@ -1552,7 +1579,7 @@
         loc.value = "Obteniendo coordenadas...";
         navigator.geolocation.getCurrentPosition(
             pos => { 
-                loc.value = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`; 
+                loc.value = `https://maps.google.com/?q=$${pos.coords.latitude},${pos.coords.longitude}`; 
                 updateLocationBtnState(); 
             },
             err => { 
@@ -1567,7 +1594,6 @@
         const name = document.getElementById('checkout-name').value.trim();
         if(!name) { customAlert('Ingresa tu nombre.'); document.getElementById('checkout-name').focus(); return; }
         
-        // SOLUCIÓN WHATSAPP: Guardar en segundo plano sin usar "await" para no bloquear el popup de WhatsApp
         localforage.setItem('combox_cliente_nombre', name).catch(e => console.error(e));
         
         if(checkoutType === 'delivery') {
@@ -1587,30 +1613,38 @@
             if(!p) return;
             const price = getProductPrice(p);
             const priceStr = price === 0 ? 'Por cotizar' : `${price}$ c/u`;
-            itemsText += `- ${p.nombre.toUpperCase()}\nCant:  \`${cart[id]}\`  |  \`${priceStr}\`\n\n`;
+            itemsText += `- *${p.nombre.toUpperCase()}*\nCant:  \`${cart[id]}\`  |  \`${priceStr}\`\n\n`;
             total += price * cart[id];
         });
+
+        // Formateo dinámico de fecha para WhatsApp (_16 FEB 2026_)
+        const date = new Date();
+        const monthNames = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+        const dateStr = `(_${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}_)`;
+
+        const cartStr = Object.entries(cart).map(([id, qty]) => `${id}-${qty}`).join('_');
+        const cartUrl = `${window.location.origin}${window.location.pathname}?pedido=${cartStr}`;
         
         let msg = '';
         
         if(checkoutType === 'delivery') {
             const locationLink = document.getElementById('checkout-location').value.trim();
-            msg = `> *🛵 (SOLICITUD DE DELIVERY)*\n`;
-            msg += `> 🏢 *SEDE:* \`${nombreSede}\`\n\n`;
+            msg = `🛵 *SOLICITUD DE DELIVERY*\n${dateStr}\n\n\n`;
+            msg += `🏢 *SEDE:* \`${nombreSede}\`\n\n`;
             msg += `👤 *CLIENTE:* \`${name}\`\n\n`;
-            msg += `📍 *UBICACION:*\n${locationLink}\n\n`;
-            msg += `_________________________________\n\n`;
+            msg += `📍 *UBICACION:*\n${locationLink}\n\n\n`;
             msg += `📦 *PEDIDO:*\n\n${itemsText}`;
             msg += `*TOTAL (SIN DELIVERY Ni IVA):* \`$${total.toFixed(2)}\`\n\n`;
-            msg += `_Por favor confírmame el total con el delivery, Gracias._`;
+            msg += `____________________________________\n\n`;
+            msg += `> 🛒 *LINK CARRITO:* ${cartUrl}`;
         } else {
-            msg = `> 🚘 *(SOLICITUD DE PICK-UP)*\n`;
-            msg += `> 🏢 *SEDE:* \`${nombreSede}\`\n\n`;
-            msg += `👤 *CLIENTE:* \`${name}\`\n\n`;
-            msg += `_________________________________\n\n`;
+            msg = `🚘 *SOLICITUD DE PICK-UP*\n${dateStr}\n\n\n`;
+            msg += `🏢 *SEDE:* \`${nombreSede}\`\n\n`;
+            msg += `👤 *CLIENTE:* \`${name}\`\n\n\n`;
             msg += `📦 *PEDIDO:*\n\n${itemsText}`;
             msg += `*TOTAL (SIN IVA):* \`$${total.toFixed(2)}\`\n\n`;
-            msg += `_Por favor confírmame disponibilidad, Gracias._`;
+            msg += `____________________________________\n\n`;
+            msg += `> 🛒 *LINK CARRITO:* ${cartUrl}`;
         }
         
         window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -1826,11 +1860,17 @@
     
     function handleSearchEnter(e) {
         if (e.key === 'Enter') {
+            e.preventDefault(); 
             clearTimeout(searchRenderTimer);
             clearTimeout(searchScrollTimer);
             if(document.activeElement) document.activeElement.blur(); 
-            render(); 
-            scrollToCatalog();
+            
+            window.requestAnimationFrame(() => {
+                render(); 
+                setTimeout(() => {
+                    scrollToCatalog();
+                }, 50); 
+            });
         }
     }
 
@@ -2216,8 +2256,13 @@
         }
         
         const island = document.getElementById('order-island');
-        if(count > 0) island.classList.remove('order-island-hidden');
-        else island.classList.add('order-island-hidden');
+        if(count > 0) {
+            island.classList.remove('order-island-hidden');
+            document.body.classList.add('island-active');
+        } else {
+            island.classList.add('order-island-hidden');
+            document.body.classList.remove('island-active');
+        }
     }
     
     function setType(type, btn) { 

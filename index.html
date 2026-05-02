@@ -35,15 +35,25 @@
         };
     </script>
     <style>
-        /* Bloqueo de zoom, rebote y selección global */
+        /* Bloqueo de zoom, rebote y selección global - Solución a glitches de iOS */
         html { 
-            background-color: #050505; height: 100%; min-height: -webkit-fill-available; 
-            overscroll-behavior: none; scroll-behavior: smooth; 
+            background-color: #050505 !important; 
+            height: 100%; 
+            min-height: 100dvh; 
+            overscroll-behavior: none; 
+            scroll-behavior: smooth; 
         }
         body { 
-            background: #050505; color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; 
-            overflow-x: hidden; overscroll-behavior-y: none; min-height: 100vh; min-height: -webkit-fill-available; 
-            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
+            background: #050505 !important; 
+            color: #F4F4F5; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            overflow-x: hidden; 
+            overscroll-behavior-y: none; 
+            min-height: 100vh; 
+            min-height: 100dvh; 
+            background-attachment: fixed; /* Forzamos a iOS a no romper el fondo */
+            -webkit-font-smoothing: antialiased; 
+            -moz-osx-font-smoothing: grayscale; 
             
             /* Bloqueo Real iOS/Android */
             touch-action: pan-y; 
@@ -87,7 +97,6 @@
         .nav-btn-glass { position: relative; z-index: 1; }
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
-        /* Solución Crash Samsung: Eliminamos content-visibility */
         .product-card-glass { 
             position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; 
             -webkit-mask-image: -webkit-radial-gradient(white, black);
@@ -95,7 +104,6 @@
             -webkit-transform: translateZ(0); transform: translateZ(0);
         }
         
-        /* Solución Rendimiento Android y Zoom/Posición */
         .bg-blur-image { 
             position: absolute; inset: 0; background-size: cover; background-position: left center; 
             filter: blur(12px) brightness(0.6); opacity: 0.8; z-index: 0; 
@@ -103,7 +111,6 @@
             will-change: transform;
         }
         
-        /* Animación de ocultar Tabs al buscar */
         #type-tabs-container { 
             transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease; 
             max-height: 60px; overflow: hidden; opacity: 1;
@@ -112,7 +119,6 @@
             max-height: 0 !important; opacity: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: none !important; 
         }
 
-        /* Aceleración en Header */
         header .absolute { 
             transform: translateZ(0); 
             will-change: opacity; 
@@ -165,7 +171,6 @@
         
         .out-of-stock { filter: grayscale(1); opacity: 0.6; }
 
-        /* Ajustes Order Island para optimización Android 120hz */
         #order-island { 
             transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); 
             will-change: transform; 
@@ -175,19 +180,17 @@
         }
         .order-island-hidden { transform: translate3d(-50%, 160px, 0) !important; }
 
-        /* Estilos base para los modales y Toasts */
         .toast-product {
             z-index: 150 !important; 
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s ease;
         }
         body.island-active .toast-product {
-            transform: translate(-50%, -80px) !important; 
+            transform: translate(-50%, calc(-120px - env(safe-area-inset-bottom))) !important; 
         }
 
         .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; visibility: hidden; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
-        /* Solución Lag de 5s en iOS */
         .modal-overlay { 
             position: fixed; inset: 0; width: 100vw; height: 100dvh; 
             background-color: rgba(0, 0, 0, 0.8); 
@@ -218,6 +221,10 @@
         html.is-android .modal-content {
             transition: none !important;
             transform: translate3d(0,0,0) !important;
+        }
+
+        @supports (-webkit-touch-callout: none) {
+            .modal { height: 100dvh; }
         }
 
         .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -473,6 +480,10 @@
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
                 <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
             </div>
+            <div class="mt-4">
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
+                <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
+            </div>
             <div id="checkout-location-container">
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación Actual</label>
                 <div class="flex gap-2">
@@ -723,7 +734,6 @@
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
     const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
     
-    // Inyección de Service Worker local para fuentes e iconos rápidos
     const swCode = `
         const CACHE_NAME = 'combox-assets-v1';
         const ASSETS = [
@@ -744,12 +754,10 @@
         navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
     }
 
-    // Instalador PWA Lógica y Detección
     let deferredPrompt;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
     if (isStandalone) {
-        // Ocultar elementos si es app web instalada
         const banner = document.getElementById('pwa-install-banner');
         if (banner) banner.style.display = 'none';
         
@@ -759,7 +767,6 @@
         const topAppSeparator = document.getElementById('top-nav-app-separator');
         if (topAppSeparator) topAppSeparator.style.display = 'none';
     } else {
-        // Mostrar en navegador
         setTimeout(() => {
             if(!localStorage.getItem('pwa_prompt_dismissed')) {
                 const banner = document.getElementById('pwa-install-banner');
@@ -853,13 +860,11 @@
     let initialRenderDone = false;
     let cachedDataString = null;
     
-    // Scroll Infinito variables
     let catalogLimit = 24;
     let totalFilteredItemsCount = 0;
     
     const searchContainer = document.getElementById('search-container');
 
-    /* ----- Fetch API con Retry & Exponential Backoff ----- */
     async function fetchWithRetry(url, options = {}, maxRetries = 3) {
         for (let i = 0; i < maxRetries; i++) {
             try {
@@ -873,7 +878,6 @@
         }
     }
 
-    /* ----- Custom Alerts / Confirms ----- */
     function customAlert(msg, title = 'Aviso') {
         document.getElementById('dialog-title').innerText = title;
         document.getElementById('dialog-msg').innerText = msg;
@@ -921,7 +925,6 @@
         const tabsContainer = document.getElementById('type-tabs-container');
         tabsContainer.classList.remove('tabs-hidden');
 
-        // Layout Thrashing Fix
         setTimeout(() => {
             window.requestAnimationFrame(() => {
                 render(); 
@@ -1117,11 +1120,9 @@
         ptrCurrentY = 0;
     });
 
-    // Lógica para iOS Audio Unlocking
     function initAudio() {
         if(!audioCtx) { 
             audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
-            // Inyección de buffer silencioso para desbloquear el audio en iOS
             const buffer = audioCtx.createBuffer(1, 1, 22050);
             const source = audioCtx.createBufferSource();
             source.buffer = buffer;
@@ -1149,7 +1150,6 @@
     document.addEventListener('touchstart', initAudio, {once: true, passive: true});
     document.addEventListener('click', initAudio, {once: true, passive: true});
     
-    // Resume audio context al volver de segundo plano
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && audioCtx) {
             if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
@@ -1202,7 +1202,7 @@
     }, { passive: true });
 
     document.addEventListener("DOMContentLoaded", () => {
-        const inputs = document.querySelectorAll('#checkout-name, #checkout-location');
+        const inputs = document.querySelectorAll('#checkout-name, #checkout-phone, #checkout-location');
         inputs.forEach(input => {
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
         });
@@ -1284,7 +1284,6 @@
             }
         } catch(e) { 
             console.error("Error cargando DB:", e); 
-            // Manejo Offline / Advertencia HTTPS
             if (loadedFromCache) {
                 const s = document.getElementById('splash'); 
                 if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
@@ -1553,6 +1552,11 @@
         if(savedName) {
             document.getElementById('checkout-name').value = savedName;
         }
+
+        const savedPhone = await localforage.getItem('combox_cliente_telefono');
+        if(savedPhone) {
+            document.getElementById('checkout-phone').value = savedPhone;
+        }
         
         document.getElementById('cart-modal').classList.remove('active');
         toggleModal('checkout-modal', true, null);
@@ -1592,9 +1596,13 @@
     
     function submitOrder() {
         const name = document.getElementById('checkout-name').value.trim();
+        const phone = document.getElementById('checkout-phone').value.trim();
+
         if(!name) { customAlert('Ingresa tu nombre.'); document.getElementById('checkout-name').focus(); return; }
+        if(!phone) { customAlert('Ingresa tu teléfono.'); document.getElementById('checkout-phone').focus(); return; }
         
         localforage.setItem('combox_cliente_nombre', name).catch(e => console.error(e));
+        localforage.setItem('combox_cliente_telefono', phone).catch(e => console.error(e));
         
         if(checkoutType === 'delivery') {
             const loc = document.getElementById('checkout-location').value.trim();
@@ -1617,7 +1625,6 @@
             total += price * cart[id];
         });
 
-        // Formateo dinámico de fecha para WhatsApp (_16 FEB 2026_)
         const date = new Date();
         const monthNames = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
         const dateStr = `(_${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}_)`;
@@ -1631,7 +1638,8 @@
             const locationLink = document.getElementById('checkout-location').value.trim();
             msg = `🛵 *SOLICITUD DE DELIVERY*\n${dateStr}\n\n\n`;
             msg += `🏢 *SEDE:* \`${nombreSede}\`\n\n`;
-            msg += `👤 *CLIENTE:* \`${name}\`\n\n`;
+            msg += `👤 *CLIENTE:*  \`${name}\`\n\n`;
+            msg += `☎️ *TELEFONO:* ${phone}\n\n`;
             msg += `📍 *UBICACION:*\n${locationLink}\n\n\n`;
             msg += `📦 *PEDIDO:*\n\n${itemsText}`;
             msg += `*TOTAL (SIN DELIVERY Ni IVA):* \`$${total.toFixed(2)}\`\n\n`;
@@ -1640,7 +1648,8 @@
         } else {
             msg = `🚘 *SOLICITUD DE PICK-UP*\n${dateStr}\n\n\n`;
             msg += `🏢 *SEDE:* \`${nombreSede}\`\n\n`;
-            msg += `👤 *CLIENTE:* \`${name}\`\n\n\n`;
+            msg += `👤 *CLIENTE:*  \`${name}\`\n\n`;
+            msg += `☎️ *TELEFONO:* ${phone}\n\n\n`;
             msg += `📦 *PEDIDO:*\n\n${itemsText}`;
             msg += `*TOTAL (SIN IVA):* \`$${total.toFixed(2)}\`\n\n`;
             msg += `____________________________________\n\n`;
@@ -1986,7 +1995,6 @@
     function renderCatalog() {
         const search = document.getElementById('global-search').value.trim();
         
-        // Búsqueda global en todo el inventario si hay un término
         let items = search !== '' ? getAllSourceData() : getSourceData();
         
         if (currentCat === 'PROMOCIONES') {
@@ -2013,7 +2021,6 @@
             items = items.map(p => {
                 let score = getSearchScore(search, p.nombre);
                 
-                // Prioridad máxima si escribe la categoría exacta
                 if (p.categoria && normalize(p.categoria) === searchClean) {
                     score += 5000;
                 }
@@ -2180,19 +2187,21 @@
     }
 
     function changeQty(id, delta) {
-        const newQty = Math.max(0, (cart[id] || 0) + delta);
-        if(newQty === 0) delete cart[id];
-        else cart[id] = newQty;
-        
-        const cartModalActive = document.getElementById('cart-modal').classList.contains('active');
-        if(cartModalActive) renderCart();
-        
-        updateOrder();
-        syncCardBadge(id); 
-        saveCart(); 
-        
         playClick();
         if(window.navigator.vibrate) window.navigator.vibrate(5); 
+
+        requestAnimationFrame(() => {
+            const newQty = Math.max(0, (cart[id] || 0) + delta);
+            if(newQty === 0) delete cart[id];
+            else cart[id] = newQty;
+            
+            const cartModalActive = document.getElementById('cart-modal').classList.contains('active');
+            if(cartModalActive) renderCart();
+            
+            updateOrder();
+            syncCardBadge(id); 
+            saveCart(); 
+        });
     }
 
     function syncCardBadge(id) {
@@ -2229,16 +2238,20 @@
     }
     
     function add(id) { 
-        cart[id] = (cart[id] || 0) + 1; 
-        updateOrder(); 
-        syncCardBadge(id); 
-        saveCart(); 
+        const btnArea = document.querySelector(`[data-id="${id}"] .btn-action-area`);
         
         playClick();
         if(window.navigator.vibrate) window.navigator.vibrate(8); 
-        
-        const cartActive = document.getElementById('cart-modal').classList.contains('active'); 
-        if(cartActive) renderCart(); 
+
+        setTimeout(() => {
+            cart[id] = (cart[id] || 0) + 1; 
+            updateOrder(); 
+            syncCardBadge(id); 
+            saveCart(); 
+            
+            const cartActive = document.getElementById('cart-modal').classList.contains('active'); 
+            if(cartActive) renderCart(); 
+        }, 0);
     }
     
     function updateOrder() {

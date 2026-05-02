@@ -40,13 +40,15 @@
         };
     </script>
     <style>
-        /* Bloqueo de zoom, rebote y selección global - CORREGIDO PARA IOS */
+        /* Bloqueo de zoom estricto y selección global */
         html { 
             background-color: #050505 !important; 
             height: 100%; 
             min-height: 100dvh; 
             overscroll-behavior: none; 
             scroll-behavior: smooth; 
+            touch-action: pan-y !important; 
+            zoom: 1 !important;
         }
         body { 
             background: #050505 !important; 
@@ -55,24 +57,23 @@
             overflow-x: hidden; 
             overscroll-behavior-y: none; 
             min-height: 100dvh; 
-            background-attachment: fixed; /* Evita glitch negro en iOS */
+            background-attachment: fixed;
             -webkit-font-smoothing: antialiased; 
             -moz-osx-font-smoothing: grayscale; 
-            
-            /* Bloqueo Real iOS/Android */
-            touch-action: pan-y; 
+            touch-action: pan-y !important; 
+            zoom: 1 !important;
             user-select: none;
             -webkit-user-select: none;
         }
 
         * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
         
-        /* Excepciones para inputs y textareas */
+        /* Excepciones para inputs */
         input, textarea { 
             -webkit-touch-callout: default !important; 
             -webkit-user-select: auto !important; 
             user-select: auto !important; 
-            touch-action: manipulation !important; /* Permite interactuar sin hacer zoom */
+            touch-action: manipulation !important; 
         }
         
         select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important; }
@@ -185,15 +186,15 @@
             z-index: 150 !important; 
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s ease;
         }
-        /* Ajuste de Toast sobre Island iOS/Android */
-        body.island-active .toast-product {
-            transform: translate(-50%, calc(-120px - env(safe-area-inset-bottom))) !important; 
+        
+        /* Ajuste de PWA Banner dinámico */
+        body.island-active #pwa-install-banner:not(.translate-y-[200%]) {
+            transform: translate(-50%, calc(-100px - env(safe-area-inset-bottom))) !important;
         }
 
         .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; visibility: hidden; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
-        /* Hack iOS Modal */
         @supports (-webkit-touch-callout: none) {
             .modal { height: 100dvh; }
         }
@@ -450,15 +451,37 @@
                     <span class="text-[12px] text-zinc-400 font-bold tracking-wider mt-1" id="cart-subtotal-bs">Bs 0,00</span>
                 </div>
             </div>
-            <div class="flex flex-col gap-3">
-                <button class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-[13px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('delivery')">
-                    <span class="material-symbols-outlined text-[22px]">two_wheeler</span> Delivery
-                </button>
-                <button class="w-full bg-white/10 text-white font-[900] py-4 rounded-2xl text-[13px] uppercase border border-white/10 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('pickup')">
-                    <span class="material-symbols-outlined text-[22px]">storefront</span> Pick-Up
+            
+            <div class="flex flex-col gap-3 mt-2">
+                <button class="w-full bg-[#39FF14] text-black font-[900] py-4 rounded-2xl text-[16px] uppercase shadow-lg shadow-[#39FF14]/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openMethodModal()">
+                    Confirmar Productos <span class="material-symbols-outlined text-[24px]">check_circle</span>
                 </button>
             </div>
+
             <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Pedido</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal modal-bottom" id="method-modal">
+    <div class="modal-overlay" onclick="toggleModal('method-modal', false)"></div>
+    <div class="modal-content flex flex-col p-6 pb-8 glass-contour-top" style="background: rgba(10,10,11,0.95);">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-primary rounded-full"></div>
+                <h2 class="text-xl font-black text-white uppercase tracking-tighter">Método de Entrega</h2>
+            </div>
+            <button type="button" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="toggleModal('method-modal', false); setTimeout(() => toggleModal('cart-modal', true), 150);">
+                <span class="material-symbols-outlined text-lg">arrow_back</span>
+            </button>
+        </div>
+        <div class="flex flex-col gap-3">
+            <button class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-[13px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('delivery')">
+                <span class="material-symbols-outlined text-[22px]">two_wheeler</span> Delivery
+            </button>
+            <button class="w-full bg-white/10 text-white font-[900] py-4 rounded-2xl text-[13px] uppercase border border-white/10 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openCheckoutModal('pickup')">
+                <span class="material-symbols-outlined text-[22px]">storefront</span> Pick-Up
+            </button>
         </div>
     </div>
 </div>
@@ -875,10 +898,13 @@
     
     const searchContainer = document.getElementById('search-container');
     
-    // Variables de Leaflet para mapa
     let map, userMarker, zonesGeoLayer;
 
-    /* ----- Fetch API con Retry & Exponential Backoff ----- */
+    // Bloqueo de zoom estricto (Mobile Safari / Chrome)
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+    document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
+    document.addEventListener('gestureend', function (e) { e.preventDefault(); });
+
     async function fetchWithRetry(url, options = {}, maxRetries = 3) {
         for (let i = 0; i < maxRetries; i++) {
             try {
@@ -892,7 +918,6 @@
         }
     }
 
-    /* ----- Custom Alerts / Confirms ----- */
     function customAlert(msg, title = 'Aviso') {
         document.getElementById('dialog-title').innerText = title;
         document.getElementById('dialog-msg').innerText = msg;
@@ -1135,7 +1160,6 @@
         ptrCurrentY = 0;
     });
 
-    // Lógica para iOS Audio Unlocking
     function initAudio() {
         if(!audioCtx) { 
             audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
@@ -1180,35 +1204,27 @@
     
     window.addEventListener('scroll', () => {
         if (document.body.classList.contains('modal-open')) return;
+        
+        const currentScrollY = window.scrollY;
+        const isAtBottom = (window.innerHeight + currentScrollY) >= document.body.offsetHeight - 500;
+        
         if (!ticking) {
             window.requestAnimationFrame(() => {
-                const currentScrollY = window.scrollY;
                 const searchInput = document.getElementById('global-search');
                 const isFocused = document.activeElement === searchInput;
-
-                if (isFocused) {
-                    searchContainer.classList.remove('search-hidden');
-                    lastScrollY = currentScrollY;
-                    ticking = false;
-                    return;
-                }
-
                 const searchValue = searchInput ? searchInput.value.trim() : '';
-                if (searchValue !== '') { 
-                    searchContainer.classList.remove('search-hidden'); 
-                } 
-                else if (currentScrollY > 300) {
-                    if (currentScrollY > lastScrollY) searchContainer.classList.add('search-hidden'); 
-                    else searchContainer.classList.remove('search-hidden'); 
-                } else { 
-                    searchContainer.classList.remove('search-hidden'); 
+
+                if (isFocused || searchValue !== '' || currentScrollY <= 300) {
+                    searchContainer.classList.remove('search-hidden');
+                } else if (currentScrollY > lastScrollY) {
+                    searchContainer.classList.add('search-hidden');
+                } else {
+                    searchContainer.classList.remove('search-hidden');
                 }
 
-                if ((window.innerHeight + currentScrollY) >= document.body.offsetHeight - 500) {
-                    if (catalogLimit < totalFilteredItemsCount) {
-                        catalogLimit += 24;
-                        renderCatalog(); 
-                    }
+                if (isAtBottom && catalogLimit < totalFilteredItemsCount) {
+                    catalogLimit += 24;
+                    renderCatalog();
                 }
                 lastScrollY = currentScrollY;
                 ticking = false;
@@ -1408,7 +1424,7 @@
     }
     
     function checkActiveModals() {
-        const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'sugerencias-modal', 'empleo-modal', 'custom-dialog-modal', 'install-modal'];
+        const modals = ['cart-modal', 'method-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'sugerencias-modal', 'empleo-modal', 'custom-dialog-modal', 'install-modal'];
         if(!modals.some(id => document.getElementById(id).classList.contains('active'))) {
             lockScroll(false);
         }
@@ -1529,7 +1545,13 @@
         `}).join('');
     }
 
+    function openMethodModal() {
+        toggleModal('cart-modal', false);
+        setTimeout(() => { toggleModal('method-modal', true); }, 150);
+    }
+
     async function openCheckoutModal(type) {
+        toggleModal('method-modal', false);
         checkoutType = type; 
         const title = document.getElementById('checkout-title');
         const sedeLabel = document.getElementById('checkout-sede-label');
@@ -1608,7 +1630,6 @@
         } 
     }
     
-    // --- INTEGRACIÓN DE MAPA LEAFLET ---
     function initLeafletMap() {
         if (map) {
             setTimeout(() => map.invalidateSize(), 100);
@@ -1626,16 +1647,15 @@
 
         zonesGeoLayer = omnivore.kml('zonas.kml')
             .on('ready', function() {
-                this.setStyle({
-                    color: "#E30613", 
-                    fillColor: "#E30613",
-                    fillOpacity: 0.2,      
-                    weight: 2              
+                this.eachLayer(function(layer) {
+                    if (layer.setStyle) {
+                        layer.setStyle({ fillOpacity: 0.35, weight: 2 });
+                    }
                 });
                 map.fitBounds(this.getBounds());
             })
             .on('error', function(e) {
-                console.error("Error cargando KML. Revisa el archivo zonas.kml", e);
+                console.error("Error cargando KML. Recuerda usar un servidor local (Live Server).", e);
             })
             .addTo(map);
     }
@@ -2152,7 +2172,7 @@
 
         const filterUI = showFilterUI ? `
             <div class="relative ml-auto">
-                <select onchange="changeSort(this.value)" class="appearance-none bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase rounded-full px-3 py-1.5 pr-6 outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000]">
+                <select onchange="changeSort(this.value)" class="appearance-none bg-white/5 border border-white/10 text-white text-[8px] text-center font-black uppercase rounded-full px-4 py-2 pr-7 outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000]">
                     ${search ? `<option class="text-black" value="relevancia" ${currentSort==='relevancia'?'selected':''}>Relevancia</option>` : ''}
                     <option class="text-black" value="default" ${currentSort==='default'?'selected':''}>Últimos Agregados</option>
                     <option class="text-black" value="precio_menor" ${currentSort==='precio_menor'?'selected':''}>Precio: Menor a Mayor</option>
@@ -2402,7 +2422,7 @@
     
     function setCat(c) { 
         currentCat = c; 
-        catalogLimit = 24; 
+        catalogLimit = 24; // Optimización vital: Rinde primero 24
         
         const menuBtn = document.getElementById('cat-menu-btn');
         if (c !== 'TODOS') {
@@ -2421,8 +2441,12 @@
             searchIcon.classList.remove('text-primary');
         }
         
-        render(); 
-        scrollToCatalog();
+        window.requestAnimationFrame(() => {
+            render(); 
+            window.requestAnimationFrame(() => {
+                scrollToCatalog();
+            });
+        });
     }
 
     function shareProduct(id, name) {

@@ -2,6 +2,7 @@
 <html class="dark" lang="es">
 <head>
     <meta charset="utf-8"/>
+    <!-- Bloqueo estricto de Zoom -->
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
     <title>Combox - Menú</title>
     
@@ -35,51 +36,48 @@
         };
     </script>
     <style>
-        /* Bloqueo de zoom, rebote y solución de glitch Safari iOS */
+        /* FIX iOS: Fondo negro y overscroll (Evita el fondo transparente/bug al scrollear) */
         html { 
             background-color: #050505 !important; 
-            height: 100%; min-height: 100dvh; 
-            overscroll-behavior: none !important; 
-            scroll-behavior: smooth; 
-            -webkit-text-size-adjust: 100%; /* Evita ajuste de texto automático */
+            height: 100%; 
+            min-height: 100dvh; 
+            overscroll-behavior: none; 
+            -webkit-text-size-adjust: 100%;
         }
-        
+
         body { 
             background-color: #050505 !important; 
             color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; 
             overflow-x: hidden; 
-            overscroll-behavior-y: none !important; /* Bloquea rebote elástico en Safari */
             min-height: 100dvh; 
+            overscroll-behavior: none;
+            background-attachment: fixed; /* Fix para safari */
             -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
-            background-attachment: fixed;
             
-            /* Bloqueo Real iOS/Android de Zoom */
-            touch-action: pan-y !important; 
+            /* Bloqueo ESTRICTO de Zoom iOS/Android */
+            touch-action: pan-y; 
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* Capa fija de fondo para forzar el color negro en overscroll de iOS */
-        #fixed-bg-layer { position: fixed; inset: 0; background-color: #050505; z-index: -9999; pointer-events: none; }
-
         * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
         
-        /* Excepciones para inputs y textareas - text-base (16px) vital para evitar zoom auto en iOS */
-        input, textarea, select { 
+        /* Excepciones para inputs permitiendo teclado sin zoom */
+        input, textarea { 
             -webkit-touch-callout: default !important; 
             -webkit-user-select: auto !important; 
             user-select: auto !important; 
-            touch-action: manipulation !important;
-            font-size: 16px !important; 
+            touch-action: manipulation !important; 
+            font-size: 16px !important; /* iOS no hace zoom si el input es 16px o más */
         }
         
-        select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important; }
+        select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important; font-size: 16px !important;}
         select::-ms-expand { display: none !important; }
         input::-webkit-calendar-picker-indicator, input::-webkit-listbox, input::-webkit-contacts-auto-fill-button { display: none !important; visibility: hidden !important; pointer-events: none !important; }
         img { -webkit-user-drag: none; pointer-events: none; }
 
-        #splash { position: fixed; inset: 0; width: 100vw; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; }
-        .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; transform: translateZ(0); }
+        #splash { position: fixed; inset: 0; width: 100vw; height: 100dvh; background: #E30613; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease; will-change: opacity; transform: translateZ(0); }
+        .pulse-logo { font-weight: 900; font-size: 3.75rem; color: white; animation: pulse 2s infinite; transform: translateZ(0); will-change: transform, opacity; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
         #search-container { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; transform: translateZ(0); }
@@ -87,55 +85,78 @@
 
         button, .nav-col, .type-tab, .cat-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .btn-bounce { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; will-change: transform; }
-        .btn-bounce-active, .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
+        .btn-bounce { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s; will-change: transform; }
+        .btn-bounce-active, .btn-bounce:active { transform: scale(0.85) translateZ(0) !important; transition: transform 0.1s; }
 
         .image-container { position: relative; width: 100%; overflow: hidden; background: rgba(255,255,255,0.03); transform: translateZ(0); }
-        .placeholder-blur { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: blur(12px); transform: scale(1.1); opacity: 1; transition: opacity 0.5s; z-index: 1; }
-        .main-image { position: relative; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.4s; z-index: 2; }
+        .placeholder-blur { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: blur(12px); transform: scale(1.1) translateZ(0); opacity: 1; transition: opacity 0.5s; z-index: 1; will-change: opacity; }
+        .main-image { position: relative; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.4s; z-index: 2; will-change: opacity; }
         .main-image.loaded { opacity: 1; }
         .main-image.loaded + .placeholder-blur { opacity: 0; }
         
-        .nav-btn-glass { position: relative; z-index: 1; transform: translateZ(0); }
+        .nav-btn-glass { position: relative; z-index: 1; }
         .nav-btn-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: rgba(30,30,35,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 0.5px solid rgba(255,255,255,0.1); }
 
-        /* Optimización Android 120fps */
+        /* Optimización 120fps Android */
         .product-card-glass { 
             position: relative; overflow: hidden; border-radius: 1.5rem; display: flex; flex-direction: column; height: 100%; 
             -webkit-mask-image: -webkit-radial-gradient(white, black);
             mask-image: radial-gradient(white, black);
-            transform: translateZ(0); 
-            will-change: transform;
-            backface-visibility: hidden;
+            transform: translateZ(0); will-change: transform;
         }
         
         .bg-blur-image { 
             position: absolute; inset: 0; background-size: cover; background-position: left center; 
             filter: blur(12px) brightness(0.6); opacity: 0.8; z-index: 0; 
-            transform: scale(2.2) translateX(-8%); transform-origin: left center; 
+            transform: scale(2.2) translateX(-8%) translateZ(0); transform-origin: left center; 
             will-change: transform;
         }
         
-        #type-tabs-container { transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease; max-height: 60px; overflow: hidden; opacity: 1; }
-        .tabs-hidden { max-height: 0 !important; opacity: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: none !important; }
+        #type-tabs-container { 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease; 
+            max-height: 60px; overflow: hidden; opacity: 1; transform: translateZ(0);
+        }
+        .tabs-hidden { 
+            max-height: 0 !important; opacity: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: none !important; 
+        }
 
         header .absolute { transform: translateZ(0); will-change: opacity; }
 
-        .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
+        .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; transform: translateZ(0); } 
         
-        .glass-contour, .glass-contour-thin, .glass-contour-top { position: relative; border-color: transparent !important; border: none; transform: translateZ(0); }
-        .glass-contour::after, .glass-contour-thin::after, .glass-contour-top::after {
-            content: ""; position: absolute; inset: 0; border-radius: inherit; 
+        .glass-contour { position: relative; border-color: transparent !important; border: none; }
+        .glass-contour::after {
+            content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 100%);
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
         }
-        .glass-contour::after { padding: 1.5px; }
-        .glass-contour-thin::after { padding: 0.75px; }
-        .glass-contour-top::after { padding: 1.5px 1.5px 0px 1.5px; }
 
-        @keyframes promoAgitate { 0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); } 25% { transform: translate3d(0, -3px, 0) rotate(1.5deg); } 50% { transform: translate3d(0, -1px, 0) rotate(-0.5deg); } 75% { transform: translate3d(0, -4px, 0) rotate(1deg); } }
-        .card-promo { animation: promoAgitate 2.5s ease-in-out infinite; box-shadow: 0 0 15px rgba(249, 115, 22, 0.5); }
+        .glass-contour-thin { position: relative; border-color: transparent !important; border: none; }
+        .glass-contour-thin::after {
+            content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 0.75px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
+        }
+
+        .glass-contour-top { position: relative; border-color: transparent !important; border: none; }
+        .glass-contour-top::after {
+            content: ""; position: absolute; inset: 0; border-radius: inherit; 
+            padding: 1.5px 1.5px 0px 1.5px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
+        }
+
+        @keyframes promoAgitate {
+            0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+            25% { transform: translate3d(0, -3px, 0) rotate(1.5deg); }
+            50% { transform: translate3d(0, -1px, 0) rotate(-0.5deg); }
+            75% { transform: translate3d(0, -4px, 0) rotate(1deg); }
+        }
+
+        .card-promo { animation: promoAgitate 2.5s ease-in-out infinite; box-shadow: 0 0 15px rgba(249, 115, 22, 0.5); will-change: transform; }
         .card-promo::after { padding: 2.5px !important; background: linear-gradient(135deg, rgba(251, 146, 60, 1) 0%, rgba(249, 115, 22, 0.3) 100%) !important; }
 
         .price-pill { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: white; transition: all 0.2s; }
@@ -145,28 +166,55 @@
         
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
+        
         .out-of-stock { filter: grayscale(1); opacity: 0.6; }
 
-        #order-island { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; backface-visibility: hidden; transform: translate3d(-50%, 0, 0); }
+        /* Order Island y Banner App */
+        #order-island { 
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); 
+            will-change: transform; 
+            backface-visibility: hidden; 
+            perspective: 1000px;
+            transform: translate3d(-50%, 0, 0); 
+        }
         .order-island-hidden { transform: translate3d(-50%, 160px, 0) !important; }
 
-        /* Dinámica del PWA Banner con el Order Island */
-        #pwa-install-banner { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform, bottom; }
-        body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
-            bottom: calc(90px + env(safe-area-inset-bottom)) !important; /* Lo mueve arriba del island */
+        /* Nuevo Banner Install App CSS (Dodge Island) */
+        #pwa-install-banner {
+            transform: translate3d(-50%, 200%, 0);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+        }
+        #pwa-install-banner.show {
+            transform: translate3d(-50%, 0, 0);
+        }
+        /* Mueve el banner hacia arriba si el island está visible */
+        body.island-active #pwa-install-banner.show {
+            transform: translate3d(-50%, -90px, 0) !important; 
         }
 
-        .toast-product { z-index: 150 !important; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        body.island-active .toast-product { transform: translate(-50%, calc(-110px - env(safe-area-inset-bottom))) !important; }
-
-        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; height: 100dvh; visibility: hidden; }
+        .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100dvh; visibility: hidden; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
-        .modal-overlay { position: fixed; inset: 0; width: 100vw; height: 100dvh; background-color: rgba(0, 0, 0, 0.8); cursor: pointer; z-index: 1; opacity: 0; transition: opacity 0.25s ease; transform: translateZ(0); }
+        .modal-overlay { 
+            position: fixed; inset: 0; width: 100vw; height: 100dvh; 
+            background-color: rgba(0, 0, 0, 0.8); 
+            cursor: pointer; z-index: 1;
+            opacity: 0; transition: opacity 0.25s ease; 
+            transform: translateZ(0); will-change: opacity;
+        }
         .modal.active .modal-overlay { opacity: 1; }
         
-        .modal-content { position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; transform: translate3d(0, 15px, 0); opacity: 0; transition: transform 0.2s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.15s ease; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; }
-        .modal.active .modal-content { transform: translate3d(0, 0, 0); opacity: 1; transition: transform 0.4s cubic-bezier(0.1, 0.8, 0.2, 1) 0.15s, opacity 0.3s ease 0.15s; }
+        .modal-content { 
+            position: relative; z-index: 10; width: 100%; max-width: 500px; border-radius: 32px; overflow: hidden; background: #0A0A0B; 
+            transform: translate3d(0, 15px, 0); opacity: 0; 
+            transition: transform 0.2s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.15s ease; 
+            border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.6); will-change: transform, opacity; 
+        }
+        .modal.active .modal-content { 
+            transform: translate3d(0, 0, 0); opacity: 1; 
+            transition: transform 0.4s cubic-bezier(0.1, 0.8, 0.2, 1) 0.15s, opacity 0.3s ease 0.15s; 
+        }
 
         .modal-bottom { align-items: flex-end; padding: 0; }
         .modal-bottom .modal-content { border-radius: 32px 32px 0 0; max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: 2.5rem; transform: translate3d(0, 25px, 0); }
@@ -174,19 +222,24 @@
 
         #custom-dialog-modal { z-index: 9999 !important; }
 
-        html.is-android .modal-overlay, html.is-android .modal-content { transition: none !important; transform: translate3d(0,0,0) !important; }
+        html.is-android .modal-overlay,
+        html.is-android .modal-content {
+            transition: none !important;
+            transform: translate3d(0,0,0) !important;
+        }
 
-        .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .type-tab { padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateZ(0); }
         .type-tab-active { background: #E30613; color: white; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.4); }
         .type-tab-inactive { color: #a1a1aa; background: transparent; }
 
-        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; transform: translateZ(0); }
+        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; transform: translateZ(0); will-change: background-position; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .skeleton-title { height: 16px; width: 70%; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 10px auto; }
         .skeleton-pill { height: 32px; width: 90%; background: rgba(255,255,255,0.1); border-radius: 20px; margin: auto; }
 
         .auto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; align-items: stretch; }
-        .carousel-card { width: 160px; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+        .carousel-card { width: 160px; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; transform: translateZ(0); will-change: transform; }
+        
         .card-title { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; min-height: 2.8rem; margin-bottom: 0.25rem; }
 
         @media (max-width: 395px) {
@@ -209,15 +262,13 @@
 </head>
 <body class="pb-32" oncontextmenu="return false;">
 
-<div id="fixed-bg-layer"></div>
-
-<div id="update-toast" class="fixed top-1/2 left-1/2 w-[85%] max-w-xs bg-black/80 backdrop-blur-xl border border-white/10 text-white p-6 rounded-[2rem] shadow-2xl z-[9999] transition-all duration-500 opacity-0 pointer-events-none flex flex-col items-center justify-center text-center" style="transform: translate(-50%, -50%) scale(0.9);">
+<div id="update-toast" class="fixed top-1/2 left-1/2 w-[85%] max-w-xs bg-black/80 backdrop-blur-xl border border-white/10 text-white p-6 rounded-[2rem] shadow-2xl z-[9999] transition-all duration-500 opacity-0 pointer-events-none flex flex-col items-center justify-center text-center" style="transform: translate3d(-50%, -50%, 0) scale(0.9); will-change: transform, opacity;">
     <span class="material-symbols-outlined text-[48px] mb-3 animate-spin text-white">sync</span>
     <span class="text-[13px] font-[900] uppercase tracking-widest leading-tight">Actualizando<br>datos nuevos...</span>
 </div>
 
-<!-- Banner de Instalación (Con lógica CSS para moverse si el Island está activo) -->
-<div id="pwa-install-banner" onclick="toggleModal('install-modal', true, renderInstallModal)" class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-primary text-white p-4 rounded-3xl shadow-2xl z-[105] flex items-center justify-between transition-transform duration-500 translate-y-[200%] border border-white/20 glass-contour-thin cursor-pointer">
+<!-- Banner PWA Actualizado -->
+<div id="pwa-install-banner" onclick="toggleModal('install-modal', true, renderInstallModal)" class="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 w-[92%] max-w-md bg-primary text-white p-4 rounded-3xl shadow-2xl z-[9999] flex items-center justify-between border border-white/20 glass-contour-thin cursor-pointer">
     <div class="flex items-center gap-3 pointer-events-none">
         <span class="material-symbols-outlined text-3xl drop-shadow-md">app_shortcut</span>
         <div class="flex flex-col">
@@ -247,7 +298,7 @@
     </div>
 </div>
 
-<div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-[110] pointer-events-none transition-transform duration-300" style="transform: translateY(-100%); will-change: transform;">
+<div id="ptr-container" class="fixed top-0 left-0 w-full flex justify-center items-start pt-6 h-24 z-[110] pointer-events-none transition-transform duration-300" style="transform: translate3d(0,-100%,0); will-change: transform;">
     <div class="bg-black/60 backdrop-blur-xl border border-white/20 text-white rounded-full px-5 py-2.5 flex items-center gap-2 shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <span class="material-symbols-outlined text-primary text-[20px] transition-transform" id="ptr-icon">sync</span>
         <span class="text-[10px] font-black uppercase tracking-widest text-zinc-200" id="ptr-text">Estira más para actualizar</span>
@@ -272,7 +323,7 @@
 </header>
 
 <div class="relative -mt-8 px-4 z-20 max-content-width">
-    <div class="flex overflow-x-auto hide-scrollbar py-2 justify-center gap-2 md:gap-4 px-2 w-full mx-auto nav-container" style="max-width: fit-content;">
+    <div class="flex overflow-x-auto hide-scrollbar py-2 justify-center gap-2 md:gap-4 px-2 w-full mx-auto nav-container" style="max-width: fit-content; transform: translateZ(0);">
         
         <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleSedesModal(true)">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl nav-btn-glass flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0" style="color: #39FF14;">storefront</span></div>
@@ -334,7 +385,7 @@
         </div>
         <button onclick="setCat('PROMOCIONES'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
     </div>
-    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
+    <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel" style="transform: translateZ(0);"></div>
 </section>
 
 <div id="catalog-anchor" class="pt-4"></div>
@@ -361,31 +412,7 @@
     </div>
 </div>
 
-<!-- Modal Selección de Entrega Nuevo -->
-<div class="modal modal-bottom" id="delivery-type-modal">
-    <div class="modal-overlay" onclick="toggleModal('delivery-type-modal', false)"></div>
-    <div class="modal-content flex flex-col p-6 pb-8 glass-contour-top" style="background: rgba(10,10,11,0.95);">
-        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
-        <div class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-3">
-                <div class="w-1.5 h-6 bg-primary rounded-full"></div>
-                <h2 class="text-xl font-black text-white uppercase tracking-tighter">Método de Entrega</h2>
-            </div>
-            <button type="button" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="toggleModal('delivery-type-modal', false)">
-                <span class="material-symbols-outlined text-lg">close</span>
-            </button>
-        </div>
-        <div class="flex flex-col gap-4">
-            <button class="w-full bg-neon-accent text-black font-[900] py-5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-3 transition-transform" onclick="openCheckoutModal('delivery')">
-                <span class="material-symbols-outlined text-[26px]">two_wheeler</span> Solicitar Delivery
-            </button>
-            <button class="w-full bg-white/10 text-white font-[900] py-5 rounded-2xl text-sm uppercase border border-white/10 active:scale-[0.98] flex items-center justify-center gap-3 transition-transform" onclick="openCheckoutModal('pickup')">
-                <span class="material-symbols-outlined text-[26px]">storefront</span> Retirar en Pick-Up
-            </button>
-        </div>
-    </div>
-</div>
-
+<!-- Modal Principal del Carrito Rediseñado -->
 <div class="modal modal-bottom" id="cart-modal">
     <div class="modal-overlay" onclick="toggleModal('cart-modal', false)"></div>
     <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3 glass-contour-top" style="background: rgba(10,10,11,0.95);">
@@ -419,13 +446,35 @@
                     <span class="text-[12px] text-zinc-400 font-bold tracking-wider mt-1" id="cart-subtotal-bs">Bs 0,00</span>
                 </div>
             </div>
-            <div class="flex flex-col gap-3 mt-4">
-                <!-- BOTÓN ÚNICO MODIFICADO -->
-                <button class="w-full bg-primary text-white font-[900] py-4.5 rounded-2xl text-[14px] uppercase shadow-lg shadow-primary/30 active:scale-[0.98] flex items-center justify-center gap-2 transition-all" onclick="openTypeSelectionModal()">
-                    Confirmar Productos <span class="material-symbols-outlined text-[24px]">check_circle</span>
-                </button>
-            </div>
+            
+            <!-- NUEVO BOTÓN UNICO DE CONFIRMAR PRODUCTOS -->
+            <button class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-[15px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-transform" onclick="openMethodModal()">
+                Confirmar Productos <span class="material-symbols-outlined text-[22px]">check_circle</span>
+            </button>
+            
             <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Pedido</button>
+        </div>
+    </div>
+</div>
+
+<!-- NUEVO Modal Método de Entrega -->
+<div class="modal modal-bottom" id="method-modal">
+    <div class="modal-overlay" onclick="toggleModal('method-modal', false)"></div>
+    <div class="modal-content flex flex-col p-5 pt-3 glass-contour-top" style="background: rgba(10,10,11,0.95);">
+        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-black text-white uppercase tracking-tighter ml-2">Entrega</h2>
+            <button type="button" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90" onclick="toggleModal('method-modal', false); setTimeout(() => toggleModal('cart-modal', true), 150);">
+                <span class="material-symbols-outlined text-lg">arrow_back</span>
+            </button>
+        </div>
+        <div class="flex flex-col gap-4 mb-4">
+            <button class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-[14px] uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-transform" onclick="openCheckoutModal('delivery')">
+                <span class="material-symbols-outlined text-[24px]">two_wheeler</span> SOLICITAR DELIVERY
+            </button>
+            <button class="w-full bg-white text-black font-[900] py-4 rounded-2xl text-[14px] uppercase shadow-lg shadow-white/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-transform" onclick="openCheckoutModal('pickup')">
+                <span class="material-symbols-outlined text-[24px]">storefront</span> RETIRAR (PICK-UP)
+            </button>
         </div>
     </div>
 </div>
@@ -452,8 +501,9 @@
             </div>
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
-                <input type="text" id="checkout-name" autocomplete="name" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
+                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
             </div>
+            <!-- NUEVO INPUT DE TELEFONO -->
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
                 <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
@@ -468,7 +518,7 @@
             </div>
         </div>
         <div class="pt-6 border-t border-white/10 mt-auto">
-            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
+            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
         </div>
     </div>
 </div>
@@ -620,41 +670,41 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Cédula *</label>
-                    <input type="number" id="emp-cedula" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base" placeholder="Ej. 25123456">
+                    <input type="number" id="emp-cedula" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. 25123456">
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Teléfono *</label>
-                    <input type="tel" id="emp-telefono" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base" placeholder="Ej. 0424...">
+                    <input type="tel" id="emp-telefono" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. 0424...">
                 </div>
             </div>
             
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Nombre Completo *</label>
-                <input type="text" id="emp-nombre" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base" placeholder="Ej. María González">
+                <input type="text" id="emp-nombre" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ej. María González">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Sexo *</label>
-                    <select id="emp-sexo" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base appearance-none">
+                    <select id="emp-sexo" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm appearance-none">
                         <option value="Femenino" class="text-black">Femenino</option>
                         <option value="Masculino" class="text-black">Masculino</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">F. Nacimiento *</label>
-                    <input type="date" id="emp-fecha" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base appearance-none" style="color-scheme: dark;">
+                    <input type="date" id="emp-fecha" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm appearance-none" style="color-scheme: dark;">
                 </div>
             </div>
 
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Dónde Reside *</label>
-                <input type="text" id="emp-domicilio" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base" placeholder="Sector, Municipio...">
+                <input type="text" id="emp-domicilio" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Sector, Municipio...">
             </div>
 
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Discapacidades (Opcional)</label>
-                <input type="text" id="emp-discapacidad" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base" placeholder="Ninguna">
+                <input type="text" id="emp-discapacidad" class="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-sm" placeholder="Ninguna">
             </div>
 
             <div>
@@ -708,7 +758,7 @@
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
     const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
     
-    // Inyección de Service Worker local
+    // Inyección de Service Worker
     const swCode = `
         const CACHE_NAME = 'combox-assets-v1';
         const ASSETS = [
@@ -729,22 +779,23 @@
         navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
     }
 
-    // PWA Lógica
     let deferredPrompt;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
     if (isStandalone) {
         const banner = document.getElementById('pwa-install-banner');
         if (banner) banner.style.display = 'none';
+        
         const topAppBtn = document.getElementById('top-nav-app-btn');
         if (topAppBtn) topAppBtn.style.display = 'none';
+        
         const topAppSeparator = document.getElementById('top-nav-app-separator');
         if (topAppSeparator) topAppSeparator.style.display = 'none';
     } else {
         setTimeout(() => {
             if(!localStorage.getItem('pwa_prompt_dismissed')) {
                 const banner = document.getElementById('pwa-install-banner');
-                if (banner) banner.classList.remove('translate-y-[200%]');
+                if (banner) banner.classList.add('show');
             }
         }, 2000);
     }
@@ -755,7 +806,7 @@
     });
 
     function hidePwaInstall() {
-        document.getElementById('pwa-install-banner').classList.add('translate-y-[200%]');
+        document.getElementById('pwa-install-banner').classList.remove('show');
         localStorage.setItem('pwa_prompt_dismissed', 'true');
     }
 
@@ -812,9 +863,7 @@
         }
     }
 
-    if (/android/i.test(navigator.userAgent)) {
-        document.documentElement.classList.add('is-android');
-    }
+    if (/android/i.test(navigator.userAgent)) { document.documentElement.classList.add('is-android'); }
 
     let db = null; 
     let cart = {}; 
@@ -843,7 +892,7 @@
         for (let i = 0; i < maxRetries; i++) {
             try {
                 const response = await fetch(url, options);
-                if (!response.ok) throw new Error('Servidor ocupado o fallo HTTP');
+                if (!response.ok) throw new Error('Servidor ocupado');
                 return await response.json();
             } catch (err) {
                 if (i === maxRetries - 1) throw err;
@@ -877,7 +926,6 @@
 
     function clearCategoryAndKeepScroll() {
         const targetScroll = window.scrollY; 
-        
         currentCat = 'TODOS'; 
         catalogLimit = 24; 
         if (currentSort === 'relevancia') currentSort = 'precio_menor';
@@ -929,21 +977,10 @@
 
         localStorage.setItem('last_sug_time', Date.now());
 
-        const payload = {
-            action: 'nueva_sugerencia',
-            id_sugerencia: generarId(),
-            nombre_cliente: nombre,
-            sugerencia: texto
-        };
+        const payload = { action: 'nueva_sugerencia', id_sugerencia: generarId(), nombre_cliente: nombre, sugerencia: texto };
 
         try {
-            await fetch(API, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
+            await fetch(API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             document.getElementById('sug-texto').value = '';
             document.getElementById('sug-nombre').value = '';
             toggleModal('sugerencias-modal', false);
@@ -986,27 +1023,10 @@
         await localforage.setItem('combox_cv_data', { cedula, nombre, sexo, fecha, telefono, domicilio, discapacidad });
         localStorage.setItem('last_cv_time', Date.now());
 
-        const payload = {
-            action: 'nuevo_curriculum',
-            id_curriculum: generarId(),
-            Cedula: cedula,
-            Nombre: nombre,
-            Fecha_nac: fecha,
-            telefono: telefono,
-            Domicilio: domicilio,
-            Discapacidad: discapacidad,
-            Cargos_interesado: cargo,
-            Sexo: sexo
-        };
+        const payload = { action: 'nuevo_curriculum', id_curriculum: generarId(), Cedula: cedula, Nombre: nombre, Fecha_nac: fecha, telefono: telefono, Domicilio: domicilio, Discapacidad: discapacidad, Cargos_interesado: cargo, Sexo: sexo };
 
         try {
-            await fetch(API, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
+            await fetch(API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             toggleModal('empleo-modal', false);
             setTimeout(() => customAlert('¡Datos enviados con éxito! Te contactaremos pronto.', 'Genial'), 300);
         } catch (e) {
@@ -1083,9 +1103,7 @@
             await localforage.removeItem('combox_db_v2');
             saveCart(); 
             
-            setTimeout(() => {
-                window.location.reload(true);
-            }, 600); 
+            setTimeout(() => { window.location.reload(true); }, 600); 
         } else {
             ptrContainer.style.transform = `translate3d(0, -100%, 0)`;
         }
@@ -1183,9 +1201,7 @@
         
         const globalSearch = document.getElementById('global-search');
         if(globalSearch){
-            globalSearch.addEventListener('focus', function(e) {
-                window.scrollTo({top: window.scrollY}); 
-            });
+            globalSearch.addEventListener('focus', function(e) { window.scrollTo({top: window.scrollY}); });
         }
     });
 
@@ -1222,9 +1238,7 @@
             }
         } catch(e) { console.error("Error al cargar carrito:", e); }
 
-        if (loadedFromCache) {
-            await setupAfterDBLoad(true);
-        }
+        if (loadedFromCache) { await setupAfterDBLoad(true); }
 
         try {
             const freshDB = await fetchWithRetry(API);
@@ -1238,23 +1252,21 @@
                 const toast = document.getElementById('update-toast');
                 if(toast) {
                     toast.style.opacity = '1';
-                    toast.style.transform = 'translate(-50%, -50%) scale(1)';
+                    toast.style.transform = 'translate3d(-50%, -50%, 0) scale(1)';
                     setTimeout(async () => {
                         db = freshDB;
                         await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
                         await setupAfterDBLoad(false); 
                         setTimeout(() => {
                             toast.style.opacity = '0';
-                            toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                            toast.style.transform = 'translate3d(-50%, -50%, 0) scale(0.9)';
                         }, 800);
                     }, 1200);
                 }
             } else {
                 db = freshDB;
                 await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
-                if (!loadedFromCache) {
-                    await setupAfterDBLoad(false); 
-                }
+                if (!loadedFromCache) { await setupAfterDBLoad(false); }
             }
         } catch(e) { 
             console.error("Error cargando DB:", e); 
@@ -1278,9 +1290,7 @@
             const savedSedeId = await localforage.getItem('combox_sede_id');
             if (savedSedeId) {
                 currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
-            } else {
-                currentSede = db.sedes[0]; 
-            }
+            } else { currentSede = db.sedes[0]; }
             updateHeader(); 
         }
 
@@ -1292,10 +1302,7 @@
             pairs.forEach(pair => {
                 const [id, qty] = pair.split('-');
                 const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
-                if(productExists && qty && !isNaN(qty)) {
-                    cart[id] = parseInt(qty);
-                    hasNewItems = true;
-                }
+                if(productExists && qty && !isNaN(qty)) { cart[id] = parseInt(qty); hasNewItems = true; }
             });
             if(hasNewItems) {
                 saveCart();
@@ -1319,8 +1326,7 @@
             const productId = urlParams.get('id');
             if(productId) { setTimeout(() => openProductView(productId), 500); }
         } else {
-            render();
-            updateOrder(); 
+            render(); updateOrder(); 
         }
     }
 
@@ -1347,7 +1353,7 @@
             navigator.share({ title: 'Mi Pedido en Combox', text: '¡Mira los productos que elegí en Combox!', url: url.href }).catch(console.error);
         } else {
             navigator.clipboard.writeText(url.href);
-            customAlert('¡Enlace del pedido copiado con éxito! Envíalo a quien quieras para que pueda abrir tu pedido listo.');
+            customAlert('¡Enlace del pedido copiado con éxito!');
         }
     }
 
@@ -1355,14 +1361,18 @@
 
     function lockScroll(lock) { 
         if(lock) { 
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
             document.body.classList.add('modal-open');
         } else { 
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
             document.body.classList.remove('modal-open'); 
         } 
     }
     
     function checkActiveModals() {
-        const modals = ['cart-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'sugerencias-modal', 'empleo-modal', 'custom-dialog-modal', 'install-modal', 'delivery-type-modal'];
+        const modals = ['cart-modal', 'method-modal', 'sedes-modal', 'categories-modal', 'horario-modal', 'checkout-modal', 'product-modal', 'mapa-modal', 'chat-modal', 'sugerencias-modal', 'empleo-modal', 'custom-dialog-modal', 'install-modal'];
         if(!modals.some(id => document.getElementById(id).classList.contains('active'))) {
             lockScroll(false);
         }
@@ -1386,6 +1396,12 @@
     function toggleCategoriesModal(show) { toggleModal('categories-modal', show, renderAllCategories); }
     function toggleCartModal(show) { toggleModal('cart-modal', show, renderCart); }
     function toggleProductModal(show) { toggleModal('product-modal', show, null); }
+    
+    // Nueva función para el modal de método
+    function openMethodModal() {
+        toggleModal('cart-modal', false);
+        setTimeout(() => toggleModal('method-modal', true), 150);
+    }
 
     function formatTimeFromIso(iso) { if(!iso) return null; return new Date(iso).toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}); }
     
@@ -1483,14 +1499,6 @@
         `}).join('');
     }
 
-    // Nuevo flujo de Checkout
-    function openTypeSelectionModal() {
-        toggleModal('cart-modal', false);
-        setTimeout(() => {
-            toggleModal('delivery-type-modal', true);
-        }, 200); 
-    }
-
     async function openCheckoutModal(type) {
         checkoutType = type; 
         const title = document.getElementById('checkout-title');
@@ -1508,9 +1516,7 @@
             accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
             
             const locInput = document.getElementById('checkout-location');
-            if (!locInput.value) {
-                getLocation(); 
-            }
+            if (!locInput.value) { getLocation(); }
         } else {
             title.innerText = 'Datos de Pick-Up';
             sedeLabel.innerText = 'Sede donde retirarás';
@@ -1532,17 +1538,12 @@
         const savedPhone = await localforage.getItem('combox_cliente_telefono');
         if(savedPhone) document.getElementById('checkout-phone').value = savedPhone;
         
-        toggleModal('delivery-type-modal', false);
-        setTimeout(() => {
-            toggleModal('checkout-modal', true);
-            document.getElementById('checkout-scroll-area').scrollTop = 0;
-        }, 200);
+        document.getElementById('method-modal').classList.remove('active');
+        toggleModal('checkout-modal', true, null);
+        document.getElementById('checkout-scroll-area').scrollTop = 0;
     }
     
-    function closeCheckout() { 
-        toggleModal('checkout-modal', false); 
-        setTimeout(() => toggleModal('cart-modal', true), 200); 
-    }
+    function closeCheckout() { toggleModal('checkout-modal', false, null); setTimeout(() => toggleModal('method-modal', true), 150); }
     
     function updateCheckoutSede(id) { if(db?.sedes) checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; }
     
@@ -1561,14 +1562,8 @@
         if(!navigator.geolocation) { loc.value = ""; loc.placeholder = "GPS no soportado."; return; }
         loc.value = "Obteniendo coordenadas...";
         navigator.geolocation.getCurrentPosition(
-            pos => { 
-                loc.value = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`; 
-                updateLocationBtnState(); 
-            },
-            err => { 
-                loc.value = ""; loc.placeholder = "No se pudo obtener. Escribe dirección."; 
-                updateLocationBtnState(); 
-            }, 
+            pos => { loc.value = `https://maps.google.com/?q=$${pos.coords.latitude},${pos.coords.longitude}`; updateLocationBtnState(); },
+            err => { loc.value = ""; loc.placeholder = "No se pudo obtener. Escribe dirección."; updateLocationBtnState(); }, 
             { enableHighAccuracy: true, timeout: 5000 }
         );
     }
@@ -1588,7 +1583,7 @@
             if(!loc || loc.includes('Obteniendo')) { customAlert('Indica tu ubicación.'); document.getElementById('checkout-location').focus(); return; }
         }
         
-        let telefonoWs = checkoutSede?.TELEFONO || '584244701273';
+        let telefonoWA = checkoutSede?.TELEFONO || '584244701273';
         let nombreSede = checkoutSede?.NOMBRE_SEDE || '';
         
         let total = 0;
@@ -1617,7 +1612,7 @@
             const locationLink = document.getElementById('checkout-location').value.trim();
             msg = `🛵 *SOLICITUD DE DELIVERY*\n${dateStr}\n\n\n`;
             msg += `🏢 *SEDE:* \`${nombreSede}\`\n\n`;
-            msg += `👤 *CLIENTE:*  \`${name}\`\n`;
+            msg += `👤 *CLIENTE:*  \`${name}\`\n\n`;
             msg += `☎️ *TELEFONO:* ${phone}\n\n`;
             msg += `📍 *UBICACION:*\n${locationLink}\n\n\n`;
             msg += `📦 *PEDIDO:*\n\n${itemsText}`;
@@ -1627,7 +1622,7 @@
         } else {
             msg = `🚘 *SOLICITUD DE PICK-UP*\n${dateStr}\n\n\n`;
             msg += `🏢 *SEDE:* \`${nombreSede}\`\n\n`;
-            msg += `👤 *CLIENTE:*  \`${name}\`\n`;
+            msg += `👤 *CLIENTE:*  \`${name}\`\n\n`;
             msg += `☎️ *TELEFONO:* ${phone}\n\n\n`;
             msg += `📦 *PEDIDO:*\n\n${itemsText}`;
             msg += `*TOTAL (SIN IVA):* \`$${total.toFixed(2)}\`\n\n`;
@@ -1635,7 +1630,7 @@
             msg += `> 🛒 *LINK CARRITO:* ${cartUrl}`;
         }
         
-        window.open(`https://wa.me/${telefonoWs}?text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://wa.me/${telefonoWA}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
     function getSchedule(sede) {
@@ -1751,38 +1746,23 @@
         const qClean = normalize(query);
         const tClean = normalize(text);
         let score = 0;
-
-        if (tClean === qClean) score += 1000;
-        else if (tClean.includes(qClean)) score += 500;
-
+        if (tClean === qClean) { score += 1000; } else if (tClean.includes(qClean)) { score += 500; }
         const qWords = qClean.split(/\s+/).filter(w => w.length > 0);
         const tWords = tClean.split(/\s+/).filter(w => w.length > 0);
-        
         let allWordsMatch = true;
-
         for (const qw of qWords) {
             let wordMatched = false;
             const isUnit = /^\d+(kg|gr|g|lt|l|ml|cc|und|u|paq|pqte)$/.test(qw);
-
             if (tClean.includes(qw)) {
-                score += 50;
-                wordMatched = true;
-                if (tWords.includes(qw)) {
-                    score += 150; 
-                    if(isUnit) score += 500; 
-                }
+                score += 50; wordMatched = true;
+                if (tWords.includes(qw)) { score += 150; if(isUnit) score += 500; }
             } else {
                 const maxTypos = qw.length <= 4 ? 1 : 2; 
                 let bestFuzzy = -1;
-                
                 for (const tw of tWords) {
                     const limit = Math.min(tw.length, qw.length + Math.floor(maxTypos/2));
                     const dist = getLevenshtein(qw, tw.substring(0, limit));
-                    if (dist <= maxTypos) {
-                        wordMatched = true;
-                        let fuzzyScore = 20 - (dist * 5); 
-                        if (fuzzyScore > bestFuzzy) bestFuzzy = fuzzyScore;
-                    }
+                    if (dist <= maxTypos) { wordMatched = true; let fuzzyScore = 20 - (dist * 5); if (fuzzyScore > bestFuzzy) bestFuzzy = fuzzyScore; }
                 }
                 if (bestFuzzy > 0) score += bestFuzzy;
             }
@@ -1805,10 +1785,7 @@
             if (currentCat !== 'TODOS') {
                 currentCat = 'TODOS';
                 const menuBtn = document.getElementById('cat-menu-btn');
-                if(menuBtn) {
-                    menuBtn.classList.add('bg-white/10', 'border-white/20');
-                    menuBtn.classList.remove('bg-primary', 'border-primary');
-                }
+                if(menuBtn) { menuBtn.classList.add('bg-white/10', 'border-white/20'); menuBtn.classList.remove('bg-primary', 'border-primary'); }
             }
         } else {
             icon.innerText = 'search';
@@ -1822,9 +1799,7 @@
         clearTimeout(searchScrollTimer);
 
         searchRenderTimer = setTimeout(() => {
-            window.requestAnimationFrame(() => {
-                render();
-            });
+            window.requestAnimationFrame(() => { render(); });
             if (val.length > 0) scrollToCatalog();
         }, 1500); 
     }
@@ -1838,9 +1813,7 @@
             
             window.requestAnimationFrame(() => {
                 render(); 
-                setTimeout(() => {
-                    scrollToCatalog();
-                }, 50); 
+                setTimeout(() => { scrollToCatalog(); }, 50); 
             });
         }
     }
@@ -1889,10 +1862,7 @@
     function selectCategory(c) {
         if (currentCat === c) { toggleModal('categories-modal', false); return; }
         toggleModal('categories-modal', false);
-        setTimeout(() => {
-            showSkeletons();
-            setTimeout(() => { setCat(c); }, 50);
-        }, 150);
+        setTimeout(() => { showSkeletons(); setTimeout(() => { setCat(c); }, 50); }, 150);
     }
 
     function renderAllCategories() {
@@ -1950,6 +1920,7 @@
             const today = new Date();
             const dayNames = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
             const currentDay = dayNames[today.getDay()];
+            
             items = items.filter(p => {
                 if(p.promocion?.activa && p.promocion) {
                     const dateOk = p.promocion.hasta ? new Date(p.promocion.hasta) >= today : true;
@@ -1968,14 +1939,12 @@
 
             items = items.map(p => {
                 let score = getSearchScore(search, p.nombre);
-                if (p.categoria && normalize(p.categoria) === searchClean) score += 5000;
+                if (p.categoria && normalize(p.categoria) === searchClean) { score += 5000; }
                 return { ...p, _searchScore: score };
             }).filter(p => p._searchScore > 0);
             
             items.sort((a, b) => {
-                if (currentSort === 'relevancia' || currentSort === 'default') {
-                    if (b._searchScore !== a._searchScore) return b._searchScore - a._searchScore;
-                }
+                if (currentSort === 'relevancia' || currentSort === 'default') { if (b._searchScore !== a._searchScore) return b._searchScore - a._searchScore; }
                 if(currentSort === 'precio_mayor') return getProductPrice(b) - getProductPrice(a);
                 if(currentSort === 'precio_menor') return getProductPrice(a) - getProductPrice(b);
                 if(currentSort === 'pres_mayor') return extractUnitValue(b.nombre) - extractUnitValue(a.nombre);
@@ -1991,16 +1960,12 @@
         }
         
         totalFilteredItemsCount = items.length;
-        
         const isCarousel = currentCat === 'TODOS' && search === '';
         const paginatedItems = isCarousel ? items : items.slice(0, catalogLimit);
 
         let grouped = {};
-        if (search) {
-            grouped['RESULTADOS'] = paginatedItems;
-        } else {
-            grouped = paginatedItems.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {});
-        }
+        if (search) { grouped['RESULTADOS'] = paginatedItems; } 
+        else { grouped = paginatedItems.reduce((acc,p) => { const cat = p.categoria || 'VARIOS'; acc[cat] = acc[cat] || []; acc[cat].push(p); return acc; }, {}); }
         
         const showFilterUI = currentCat !== 'TODOS' || search !== '';
 
@@ -2020,29 +1985,23 @@
         
         const htmlString = Object.entries(grouped).map(([cat, products]) => {
             const containerClass = isCarousel ? 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth' : 'auto-grid px-1 pt-4 pb-4';
-            let titleBtn = '';
-            let rightBtn = '';
+            let titleBtn = ''; let rightBtn = '';
 
-            if (search) {
-                titleBtn = `<button onclick="document.getElementById('global-search').value=''; onSearchInput(); clearTimeout(searchRenderTimer); render();" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
-            } else if (currentCat !== 'TODOS') {
-                titleBtn = `<button onclick="clearCategoryAndKeepScroll()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
-            } else if (isCarousel) {
-                rightBtn = `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors ml-2">Ver Todo</button>`;
-            }
+            if (search) { titleBtn = `<button onclick="document.getElementById('global-search').value=''; onSearchInput(); clearTimeout(searchRenderTimer); render();" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`; } 
+            else if (currentCat !== 'TODOS') { titleBtn = `<button onclick="clearCategoryAndKeepScroll()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 active:scale-90 ml-2 flex-shrink-0"><span class="material-symbols-outlined text-[16px]">close</span></button>`; } 
+            else if (isCarousel) { rightBtn = `<button onclick="selectCategory('${cat}')" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-4 py-2 rounded-full active:scale-95 flex-shrink-0 transition-colors ml-2">Ver Todo</button>`; }
             
-            return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3 w-full"><div class="w-1.5 h-6 bg-primary rounded-full flex-shrink-0"></div><div class="flex items-center gap-0"><h2 class="text-xl font-black text-white uppercase tracking-tight truncate">${cat}</h2>${titleBtn}</div></div>${filterUI}${rightBtn}</div><div class="${containerClass}">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
+            return `<div class="mb-10"><div class="flex items-center justify-between mb-5 px-1"><div class="flex items-center gap-3 w-full"><div class="w-1.5 h-6 bg-primary rounded-full flex-shrink-0"></div><div class="flex items-center gap-0"><h2 class="text-xl font-black text-white uppercase tracking-tight truncate">${cat}</h2>${titleBtn}</div></div>${filterUI}${rightBtn}</div><div class="${containerClass}" style="transform: translateZ(0);">${products.map(p => createCard(p, isCarousel)).join('')}</div></div>`;
         }).join('');
         
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = htmlString || '<div class="text-center text-zinc-500 py-10 font-bold uppercase tracking-widest text-xs">No se encontraron resultados</div>';
         
         const fragment = document.createDocumentFragment();
-        while(tempDiv.firstChild) fragment.appendChild(tempDiv.firstChild);
+        while(tempDiv.firstChild) { fragment.appendChild(tempDiv.firstChild); }
         
         const grid = document.getElementById('catalog-grid');
-        grid.innerHTML = ''; 
-        grid.appendChild(fragment); 
+        grid.innerHTML = ''; grid.appendChild(fragment); 
     }
     
     function triggerTap(el) {
@@ -2076,7 +2035,7 @@
                 <h3 class="card-title text-white uppercase text-center w-full font-black leading-tight">${p.nombre}</h3>
                 <p class="text-[8px] text-zinc-400/80 font-bold uppercase tracking-widest mb-1 text-center mt-auto">Toca para ver más</p>
                 
-                <div class="flex justify-center w-full pt-1 relative btn-action-area btn-bounce" onclick="event.stopPropagation(); triggerTap(this); add('${id}')">
+                <div class="flex justify-center w-full pt-1 relative btn-action-area btn-bounce" onclick="event.stopPropagation(); add('${id}')">
                     ${count > 0 ? `<div class="count-badge">${count}</div>` : ''} 
                     <button class="price-pill w-full py-2.5 rounded-full text-[11px] md:text-xs font-bold flex items-center justify-center gap-1 ${count > 0 ? 'active' : ''}" ${isOut ? 'disabled' : ''}>
                         ${isOut ? 'SIN STOCK' : priceDisplay}
@@ -2120,6 +2079,7 @@
         }).join('');
     }
 
+    // Funciones de Carrito ASINCRONAS (Máxima fluidez)
     function changeQty(id, delta) {
         playClick();
         if(window.navigator.vibrate) window.navigator.vibrate(5); 
@@ -2136,6 +2096,22 @@
             syncCardBadge(id); 
             saveCart(); 
         });
+    }
+
+    function add(id) { 
+        triggerTap(document.querySelector(`[data-id="${id}"] .btn-action-area`));
+        playClick();
+        if(window.navigator.vibrate) window.navigator.vibrate(8); 
+
+        setTimeout(() => {
+            cart[id] = (cart[id] || 0) + 1; 
+            updateOrder(); 
+            syncCardBadge(id); 
+            saveCart(); 
+            
+            const cartActive = document.getElementById('cart-modal').classList.contains('active'); 
+            if(cartActive) renderCart(); 
+        }, 0);
     }
 
     function syncCardBadge(id) {
@@ -2161,30 +2137,11 @@
 
     function clearCart() { 
         customConfirm('¿Seguro que deseas vaciar todo el pedido?', () => {
-            cart = {}; 
-            updateOrder(); 
+            cart = {}; updateOrder(); 
             document.querySelectorAll('.count-badge').forEach(b => b.remove()); 
             document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active')); 
-            saveCart(); 
-            renderCart(); 
-            toggleModal('cart-modal', false); 
+            saveCart(); renderCart(); toggleModal('cart-modal', false); 
         }, 'Vaciar Pedido');
-    }
-    
-    function add(id) { 
-        triggerTap(document.querySelector(`[data-id="${id}"] .btn-action-area`));
-        playClick();
-        if(window.navigator.vibrate) window.navigator.vibrate(8); 
-
-        setTimeout(() => {
-            cart[id] = (cart[id] || 0) + 1; 
-            updateOrder(); 
-            syncCardBadge(id); 
-            saveCart(); 
-            
-            const cartActive = document.getElementById('cart-modal').classList.contains('active'); 
-            if(cartActive) renderCart(); 
-        }, 0);
     }
     
     function updateOrder() {
@@ -2213,9 +2170,9 @@
     
     function setType(type, btn) { 
         if (currentType === type) return;
+        
         document.querySelectorAll('.type-tab').forEach(b => { b.classList.remove('type-tab-active'); b.classList.add('type-tab-inactive'); }); 
-        btn.classList.add('type-tab-active'); 
-        btn.classList.remove('type-tab-inactive'); 
+        btn.classList.add('type-tab-active'); btn.classList.remove('type-tab-inactive'); 
         
         const menuBtn = document.getElementById('cat-menu-btn');
         if(menuBtn) { menuBtn.classList.add('bg-white/10', 'border-white/20'); menuBtn.classList.remove('bg-primary', 'border-primary'); }
@@ -2236,6 +2193,7 @@
     
     function setCat(c) { 
         currentCat = c; catalogLimit = 24; 
+        
         const menuBtn = document.getElementById('cat-menu-btn');
         if (c !== 'TODOS') { menuBtn.classList.remove('bg-white/10', 'border-white/20'); menuBtn.classList.add('bg-primary', 'border-primary'); } 
         else { menuBtn.classList.add('bg-white/10', 'border-white/20'); menuBtn.classList.remove('bg-primary', 'border-primary'); }
@@ -2250,13 +2208,13 @@
 
     function shareProduct(id, name) {
         const url = window.location.origin + window.location.pathname + '?id=' + id;
-        if (navigator.share) navigator.share({ title: 'Combox - ' + name, url: url }).catch(console.error);
+        if (navigator.share) { navigator.share({ title: 'Combox - ' + name, url: url }).catch(console.error); } 
         else { navigator.clipboard.writeText(url); customAlert('¡Enlace del producto copiado con éxito!'); }
     }
     
     function shareSugerencias() {
         const url = window.location.origin + window.location.pathname + '?sugerencias=true';
-        if (navigator.share) navigator.share({ title: 'Combox - Buzón de Sugerencias', url: url }).catch(console.error);
+        if (navigator.share) { navigator.share({ title: 'Combox - Buzón de Sugerencias', url: url }).catch(console.error); } 
         else { navigator.clipboard.writeText(url); customAlert('¡Enlace de sugerencias copiado!'); }
     }
     

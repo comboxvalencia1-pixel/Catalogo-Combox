@@ -1661,18 +1661,21 @@
         ]
     };
 
-    // 2. Pintamos el GeoJSON en el mapa con el estilo de Combox
+    // 2. Pintamos el GeoJSON en el mapa con el estilo dinámico de Combox
     zonesGeoLayer = L.geoJSON(misZonasGeoJSON, {
         style: function (feature) {
+            // Extraemos el color directamente de las propiedades del GeoJSON, si no hay, usa el rojo de Combox
+            const zoneColor = feature.properties.fill || "#E30613"; 
+            
             return {
-                color: "#E30613", // Borde color rojo
+                color: zoneColor,       // Borde con el color de la zona
                 weight: 2,
-                fillColor: "#E30613", // Relleno
-                fillOpacity: 0.15 // Transparencia
+                fillColor: zoneColor,   // Relleno con el color de la zona
+                fillOpacity: 0.25       // Subí un poco la opacidad (0.25) para que el neón resalte mejor en el fondo oscuro
             };
         }
     }).addTo(map);
-    
+
     // 3. Ajustamos la cámara automáticamente para que tus polígonos encajen perfecto
     map.fitBounds(zonesGeoLayer.getBounds());
 }

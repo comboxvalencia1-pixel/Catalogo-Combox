@@ -1608,16 +1608,6 @@
     if(savedPhone) {
         document.getElementById('checkout-phone').value = savedPhone;
     
-    }
-}
-
-        
-        document.getElementById('cart-modal').classList.remove('active');
-        toggleModal('checkout-modal', true, null);
-        document.getElementById('checkout-scroll-area').scrollTop = 0;
-        
-        if (map && type === 'delivery') {
-            setTimeout(() => map.invalidateSize(), 300);
         }
     }
     

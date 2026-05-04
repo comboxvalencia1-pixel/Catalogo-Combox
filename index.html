@@ -1823,17 +1823,24 @@ function getLocation() {
         
         let msg = '';
         
-        if(checkoutType === 'delivery') {
+                if(checkoutType === 'delivery') {
             let locationData = "";
-const isManual = document.getElementById('manual-location-wrapper').style.display === 'block';
+            const isManual = document.getElementById('manual-location-wrapper').style.display === 'block';
 
-if(isManual) {
-    locationData = document.getElementById('checkout-location').value;
-} else if(userMarker) {
-    const lat = userMarker.getLatLng().lat;
-    const lng = userMarker.getLatLng().lng;
-    locationData = `GPS: https://maps.google.com/?q=${lat},${lng} (${document.getElementById('tariff-display').innerText})`;
-}
+            if(isManual) {
+                // Si el usuario escribió la dirección a mano
+                locationData = document.getElementById('checkout-location').value;
+            } else if(userMarker) {
+                // Si el usuario usó el GPS del mapa
+                const lat = userMarker.getLatLng().lat;
+                const lng = userMarker.getLatLng().lng;
+                const tarifaCalculada = document.getElementById('tariff-display').innerText;
+                locationData = `📍 GPS: https://maps.google.com/?q=${lat},${lng}\n💰 (${tarifaCalculada})`;
+            } else {
+                // Caso de emergencia si no hay ni manual ni GPS
+                locationData = "Ubicación no especificada (Contactar al cliente)";
+            }
+
             msg = `🛵 *SOLICITUD DE DELIVERY*\n${dateStr}\n\n\n`;
             msg += `🏢 *SEDE:* \`${nombreSede}\`\n\n`;
             msg += `👤 *CLIENTE:*  \`${name}\` \n`;

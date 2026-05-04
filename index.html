@@ -1727,6 +1727,61 @@ function resetToMap() {
     if (map) setTimeout(() => map.invalidateSize(), 200);
     getLocation(); 
 }
+    // Asegúrate de tener declarada tu variable con las coordenadas de tus zonas
+// const misZonasGeoJSON = { ... };
+
+function initLeafletMap() {
+    if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
+    
+    // Coordenadas centradas en Naguanagua / Valencia
+    map = L.map('map-preview', { zoomControl: false }).setView([10.2543, -68.0101], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // ICONO PERSONALIZADO COMBOX ROJO
+    const comboxIcon = L.divIcon({
+        className: 'bg-transparent',
+        html: `<div class="flex flex-col items-center justify-center" style="margin-top:-35px">
+                  <div class="bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg border border-white/20 mb-1">COMBOX</div>
+                  <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center border-2 border-white shadow-xl relative">
+                     <span class="material-symbols-outlined text-white text-[16px]">storefront</span>
+                     <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white"></div>
+                  </div>
+               </div>`,
+        iconSize: [40, 50], iconAnchor: [20, 50]
+    });
+
+    if (typeof misZonasGeoJSON !== 'undefined') {
+        zonesGeoLayer = L.geoJSON(misZonasGeoJSON, {
+            pointToLayer: (f, l) => f.properties.name === "COMBOX" ? L.marker(l, {icon: comboxIcon}) : L.marker(l),
+            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.25 })
+        }).addTo(map);
+        map.fitBounds(zonesGeoLayer.getBounds());
+    }
+}
+
+function getLocation() {
+    const tariffEl = document.getElementById('tariff-display');
+    tariffEl.innerText = "BUSCANDO GPS...";
+    initLeafletMap();
+    navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        map.setView([lat, lng], 16);
+        
+        if (userMarker) userMarker.setLatLng([lat, lng]);
+        else userMarker = L.marker([lat, lng], {
+            icon: L.divIcon({
+                className: 'bg-transparent',
+                html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
+                iconSize: [20, 20], iconAnchor: [10, 10]
+            })
+        }).addTo(map);
+        
+        tariffEl.innerText = calculateTariff(lat, lng);
+    }, () => showManualLocationInput(), { enableHighAccuracy: true });
+}
+
+    
 
     
     function submitOrder() {

@@ -500,7 +500,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                 <span class="material-symbols-outlined text-lg">close</span>
             </button>
         </div>
-        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-4" id="checkout-scroll-area">
+        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-4 flex-1 min-h-0" id="checkout-scroll-area">
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
                 <div class="relative">
@@ -552,9 +552,9 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
     </div>
 </div>
 
-        <div class="pt-6 border-t border-white/10 mt-auto">
-            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
-        </div>
+        <div class="pt-6 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-10 pb-2">
+    <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
+</div>
     </div>
 </div>
 
@@ -1770,17 +1770,31 @@ function initLeafletMap() {
     }
 }
 
-// Añadimos un parámetro para saber si el usuario tocó el botón a propósito
 function getLocation(userInitiated = false) {
     const tariffEl = document.getElementById('tariff-display');
     tariffEl.innerText = "BUSCANDO GPS...";
     initLeafletMap();
-    
-    navigator.geolocation.getCurrentPosition(pos => {
+
+    let watchId;
+    let timeoutId;
+
+    // Forzamos alta precisión y prohibimos usar caché antiguo
+    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
+    // Usamos watchPosition en lugar de getCurrentPosition para obligar a iOS a "calentar" el GPS real
+    watchId = navigator.geolocation.watchPosition(pos => {
+        // iOS suele lanzar un primer punto muy inexacto (basado en IP). 
+        // Si el margen de error es mayor a 1000 metros, lo ignoramos y esperamos el siguiente punto exacto.
+        if (pos.coords.accuracy > 1000) return;
+
+        // Ya tenemos una coordenada exacta, apagamos el rastreo para no gastar batería
+        navigator.geolocation.clearWatch(watchId);
+        clearTimeout(timeoutId);
+
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         
-        map.setView([lat, lng], 15); // Zoom 15 en lugar de 16 para que se vea más mapa
+        map.setView([lat, lng], 15); 
         
         if (userMarker) userMarker.setLatLng([lat, lng]);
         else userMarker = L.marker([lat, lng], {
@@ -1792,17 +1806,34 @@ function getLocation(userInitiated = false) {
         }).addTo(map);
         
         tariffEl.innerText = calculateTariff(lat, lng);
+
     }, (err) => {
-        // Si el usuario deniega el permiso y le dio al botón azul, mostramos alerta
-        if (err.code === err.PERMISSION_DENIED && userInitiated) {
-            customAlert("Permiso de ubicación denegado. Por favor, actívalo en los ajustes de tu navegador/celular para usar el mapa, o escribe tu dirección.", "GPS Denegado");
+        navigator.geolocation.clearWatch(watchId);
+        clearTimeout(timeoutId);
+
+        if (err.code === err.PERMISSION_DENIED) {
+            // El navegador prohíbe volver a preguntar, así que le enseñamos al usuario cómo hacerlo
+            if (userInitiated) {
+                customAlert(
+                    "Safari bloqueó tu ubicación. Para activarla: \n\n1. Toca el ícono 'aA' en la barra de arriba.\n2. Ve a 'Configuración del sitio web'.\n3. En 'Ubicación' selecciona 'Permitir'.\n\nO ingresa tu dirección a mano.", 
+                    "GPS Bloqueado"
+                );
+            }
+        } else if (err.code === err.TIMEOUT && userInitiated) {
+            customAlert("El GPS tardó mucho en responder. Intenta de nuevo o ingresa tu dirección a mano.", "Tiempo agotado");
         }
+        
         showManualLocationInput();
-    }, { 
-        enableHighAccuracy: true, 
-        timeout: 10000, 
-        maximumAge: 0 // Esto fuerza al dispositivo a usar GPS real y no la IP (Fix para PC/Android)
-    });
+    }, options);
+
+    // Un temporizador de seguridad por si el GPS del teléfono no responde nunca
+    timeoutId = setTimeout(() => {
+        navigator.geolocation.clearWatch(watchId);
+        if (userInitiated) {
+            customAlert("Tu dispositivo no logró obtener una señal GPS precisa. Por favor, escribe tu dirección manualmente.", "Señal débil");
+            showManualLocationInput();
+        }
+    }, 15000); // 15 segundos máximo de espera
 }
 
     
@@ -1910,7 +1941,7 @@ function getLocation(userInitiated = false) {
                 if(nextOpenIso) {
                     let openDate = new Date(nextOpenIso);
                     let dayStr = i === 1 ? "Mañana" : dayNamesEs[nextIdx];
-                    return { isOpen: false, text: "Cerrado", nextTime: `Abre ${dayStr} a las ${format(openDate)}` };
+                    return { isOpen: false, text: "Cerrado", nextTime: `Abre ${dayStr} las ${format(openDate)}` };
                 }
             }
             return { isOpen: false, text: "Cerrado temporalmente", nextTime: "" };
@@ -1943,7 +1974,7 @@ function getLocation(userInitiated = false) {
         if(!currentSede) return;
         document.getElementById('current-location-label').innerText = currentSede.NOMBRE_SEDE;
         const sched = getSchedule(currentSede);
-        document.getElementById('header-status-text').innerText = sched.isOpen ? `Abiertos hasta las ${sched.nextTime.replace('Cierra ','')}` : `Cerrado. ${sched.nextTime}`;
+        document.getElementById('header-status-text').innerText = sched.isOpen ? `Abiertos hasta ${sched.nextTime.replace('Cierra ','')}` : `Cerrado. ${sched.nextTime}`;
         const dot = document.getElementById('header-status-dot');
         dot.className = `w-1.5 h-1.5 rounded-full ${sched.isOpen ? 'bg-neon-accent animate-pulse shadow-[0_0_8px_#39FF14]' : 'bg-red-500 animate-pulse shadow-[0_0_8px_#ff0000]'}`;
     }

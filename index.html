@@ -490,8 +490,10 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 
 <div class="modal" id="checkout-modal">
     <div class="modal-overlay" onclick="closeCheckout()"></div>
-    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-8 glass-contour" style="background: #0A0A0B;">
-        <div class="flex items-center justify-between mb-6">
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-6 glass-contour" style="background: #0A0A0B;">
+        
+        <!-- CABECERA FIJA -->
+        <div class="flex items-center justify-between mb-6 flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div>
                 <h2 class="text-2xl font-black text-white uppercase tracking-tighter" id="checkout-title">Datos</h2>
@@ -500,7 +502,9 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                 <span class="material-symbols-outlined text-lg">close</span>
             </button>
         </div>
-        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-4 flex-1 min-h-0" id="checkout-scroll-area">
+        
+        <!-- ÁREA QUE HACE SCROLL (Sube y baja) -->
+        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-6 flex-1 min-h-0" id="checkout-scroll-area">
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
                 <div class="relative">
@@ -516,45 +520,44 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
                 <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
             </div>
-           <div id="checkout-location-container" class="flex flex-col gap-3">
-    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
+            <div id="checkout-location-container" class="flex flex-col gap-3">
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
 
-    <!-- VISTA 1: Mapa Dinámico -->
-    <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 160px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
-        <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
-        
-        <!-- Overlay: Tarifa en tiempo real -->
-        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#0A0A0B] border border-white/20 text-white font-black px-4 py-1.5 rounded-full shadow-lg text-[10px] uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
-            <span class="material-symbols-outlined text-neon-accent text-[16px]">two_wheeler</span>
-            <span id="tariff-display">Calculando...</span>
+                <!-- MAPA -->
+                <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 160px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+                    <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
+                    
+                    <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#0A0A0B] border border-white/20 text-white font-black px-4 py-1.5 rounded-full shadow-lg text-[10px] uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
+                        <span class="material-symbols-outlined text-neon-accent text-[16px]">two_wheeler</span>
+                        <span id="tariff-display">Calculando...</span>
+                    </div>
+                    
+                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-9 h-9 bg-[#0A0A0B] border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+                        <span class="material-symbols-outlined text-[18px]">my_location</span>
+                    </button>
+
+                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-3 right-3 z-[1000] bg-[#0A0A0B] border border-red-500/40 text-red-500 font-bold px-3 py-0 h-9 rounded-full text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 active:scale-95 transition-transform" style="display:none;">
+                        <span class="material-symbols-outlined text-[14px]">edit_location</span> Editar
+                    </button>
+                </div>
+
+                <!-- INPUT MANUAL DE RESPALDO -->
+                <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2">
+                    <div class="flex gap-2">
+                        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-[#1A1A1D] border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-sm flex-1" placeholder="Ej. Sector, Calle, Residencia, N°...">
+                        <button type="button" class="w-14 bg-blue-500/10 border border-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center active:scale-90 flex-shrink-0 transition-transform" onclick="resetToMap()">
+                            <span class="material-symbols-outlined text-xl">map</span>
+                        </button>
+                    </div>
+                    <p class="text-[9px] text-zinc-500 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">info</span> Ingresa referencias claras para el motorizado.</p>
+                </div>
+            </div>
         </div>
-        
-        <!-- Botón: Actualizar GPS -->
-<button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-9 h-9 bg-[#0A0A0B] border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
-    <span class="material-symbols-outlined text-[18px]">my_location</span>
-</button>
 
-        <!-- Botón: No es aquí (Movido adentro) -->
-        <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-3 right-3 z-[1000] bg-[#0A0A0B] border border-red-500/40 text-red-500 font-bold px-3 py-0 h-9 rounded-full text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 active:scale-95 transition-transform" style="display:none;">
-            <span class="material-symbols-outlined text-[14px]">edit_location</span> Editar
-        </button>
-    </div>
-
-    <!-- VISTA 2: Input Manual (Respaldo) -->
-    <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2">
-        <div class="flex gap-2">
-            <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-[#1A1A1D] border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-sm flex-1" placeholder="Ej. Sector, Calle, Residencia, N°...">
-            <button type="button" class="w-14 bg-blue-500/10 border border-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center active:scale-90 flex-shrink-0 transition-transform" onclick="resetToMap()">
-                <span class="material-symbols-outlined text-xl">map</span>
-            </button>
+        <!-- BOTÓN FIJO AL FINAL -->
+        <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-10">
+            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
         </div>
-        <p class="text-[9px] text-zinc-500 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">info</span> Ingresa referencias claras para el motorizado.</p>
-    </div>
-</div>
-
-        <div class="pt-6 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-10 pb-2">
-    <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
-</div>
     </div>
 </div>
 
@@ -1777,63 +1780,76 @@ function getLocation(userInitiated = false) {
 
     let watchId;
     let timeoutId;
+    let bestPos = null;
 
-    // Forzamos alta precisión y prohibimos usar caché antiguo
+    // Pedimos alta precisión
     const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
-    // Usamos watchPosition en lugar de getCurrentPosition para obligar a iOS a "calentar" el GPS real
     watchId = navigator.geolocation.watchPosition(pos => {
-        // iOS suele lanzar un primer punto muy inexacto (basado en IP). 
-        // Si el margen de error es mayor a 1000 metros, lo ignoramos y esperamos el siguiente punto exacto.
-        if (pos.coords.accuracy > 1000) return;
+        // Vamos guardando la mejor coordenada que el teléfono logre conseguir
+        if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) {
+            bestPos = pos;
+        }
 
-        // Ya tenemos una coordenada exacta, apagamos el rastreo para no gastar batería
+        // Relajamos la exigencia de Safari. Si la precisión baja de 2500m, lo aceptamos de inmediato.
+        if (pos.coords.accuracy > 2500) return; 
+
         navigator.geolocation.clearWatch(watchId);
         clearTimeout(timeoutId);
-
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        
-        map.setView([lat, lng], 15); 
-        
-        if (userMarker) userMarker.setLatLng([lat, lng]);
-        else userMarker = L.marker([lat, lng], {
-            icon: L.divIcon({
-                className: 'bg-transparent',
-                html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
-                iconSize: [20, 20], iconAnchor: [10, 10]
-            })
-        }).addTo(map);
-        
-        tariffEl.innerText = calculateTariff(lat, lng);
+        renderMapPosition(pos.coords.latitude, pos.coords.longitude);
 
     }, (err) => {
         navigator.geolocation.clearWatch(watchId);
         clearTimeout(timeoutId);
 
         if (err.code === err.PERMISSION_DENIED) {
-            // El navegador prohíbe volver a preguntar, así que le enseñamos al usuario cómo hacerlo
             if (userInitiated) {
                 customAlert(
                     "Safari bloqueó tu ubicación. Para activarla: \n\n1. Toca el ícono 'aA' en la barra de arriba.\n2. Ve a 'Configuración del sitio web'.\n3. En 'Ubicación' selecciona 'Permitir'.\n\nO ingresa tu dirección a mano.", 
                     "GPS Bloqueado"
                 );
             }
-        } else if (err.code === err.TIMEOUT && userInitiated) {
+        } else if (err.code === err.TIMEOUT && userInitiated && !bestPos) {
             customAlert("El GPS tardó mucho en responder. Intenta de nuevo o ingresa tu dirección a mano.", "Tiempo agotado");
         }
         
-        showManualLocationInput();
+        // Si hay error pero el teléfono guardó una ubicación aproximada, la usamos para no trabarnos
+        if (bestPos) {
+             renderMapPosition(bestPos.coords.latitude, bestPos.coords.longitude);
+        } else {
+             showManualLocationInput();
+        }
     }, options);
 
-    // Un temporizador de seguridad por si el GPS del teléfono no responde nunca
+    // Un cronómetro: Si pasan 12 segundos y Safari sigue buscando la "precisión perfecta", lo cortamos y usamos lo que tengamos
     timeoutId = setTimeout(() => {
         navigator.geolocation.clearWatch(watchId);
-        if (userInitiated) {
-            customAlert("Tu dispositivo no logró obtener una señal GPS precisa. Por favor, escribe tu dirección manualmente.", "Señal débil");
+        if (bestPos) {
+            renderMapPosition(bestPos.coords.latitude, bestPos.coords.longitude);
+        } else {
+            if (userInitiated) {
+                customAlert("Tu dispositivo no logró obtener una señal GPS precisa. Por favor, escribe tu dirección manualmente.", "Señal débil");
+            }
             showManualLocationInput();
         }
-    }, 15000); // 15 segundos máximo de espera
+    }, 12000); 
+}
+
+// Función encargada de dibujar el punto en el mapa (separamos esto para mantener el código limpio)
+function renderMapPosition(lat, lng) {
+    const tariffEl = document.getElementById('tariff-display');
+    map.setView([lat, lng], 15); 
+    
+    if (userMarker) userMarker.setLatLng([lat, lng]);
+    else userMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            className: 'bg-transparent',
+            html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
+            iconSize: [20, 20], iconAnchor: [10, 10]
+        })
+    }).addTo(map);
+    
+    tariffEl.innerText = calculateTariff(lat, lng);
 }
 
     

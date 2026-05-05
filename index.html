@@ -265,6 +265,8 @@
         /* Estilos del Mapa Oscuro */
         #map-preview { background: #0a0a0b; }
         .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
+.leaflet-control-attribution { display: none !important; }
+
     </style>
 </head>
 <body class="pb-32" oncontextmenu="return false;">
@@ -1351,7 +1353,7 @@
         }
     }
 
-    async function setupAfterDBLoad(isCached) {
+       async function setupAfterDBLoad(isCached) {
         if(db && db.finanzas && db.finanzas.tasa_usd) {
             tasaBCV = parseFloat(db.finanzas.tasa_usd);
             const displayEl = document.getElementById('tasa-bcv-display');
@@ -1362,36 +1364,51 @@
             const savedSedeId = await localforage.getItem('combox_sede_id');
             if (savedSedeId) {
                 currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
+                updateHeader();
             } else {
-                currentSede = db.sedes[0]; 
-            }
-            updateHeader(); 
-        }
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        let userLat = pos.coords.latitude;
+                        let userLng = pos.coords.longitude;
+                        let closestSede = null;
+                        let minDistance = Infinity;
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const pedidoParam = urlParams.get('pedido');
-        if(pedidoParam) {
-            const pairs = pedidoParam.split('_');
-            let hasNewItems = false;
-            pairs.forEach(pair => {
-                const [id, qty] = pair.split('-');
-                const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
-                if(productExists && qty && !isNaN(qty)) {
-                    cart[id] = parseInt(qty);
-                    hasNewItems = true;
+                        db.sedes.forEach(s => {
+                            let lat = NaN, lng = NaN;
+                            if(s.LINK_UBICACION) {
+                                const match = s.LINK_UBICACION.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+                                if(match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); }
+                            }
+
+                            if(!isNaN(lat) && !isNaN(lng)) {
+                                const R = 6371;
+                                const dLat = (lat - userLat) * Math.PI / 180;
+                                const dLon = (lng - userLng) * Math.PI / 180;
+                                const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(userLat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+                                let dist = R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+
+                                if(!getSchedule(s).isOpen) dist += 1000;
+
+                                if(dist < minDistance) { minDistance = dist; closestSede = s; }
+                            }
+                        });
+
+                        currentSede = closestSede || db.sedes[0];
+                        localforage.setItem('combox_sede_id', currentSede.ID_SEDE);
+                        updateHeader();
+                    }, () => { 
+                        currentSede = db.sedes[0]; 
+                        updateHeader(); 
+                    }, { timeout: 3000 });
+                } else {
+                    currentSede = db.sedes[0]; 
+                    updateHeader();
                 }
-            });
-            if(hasNewItems) {
-                saveCart();
-                updateOrder();
-                urlParams.delete('pedido');
-                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-                window.history.replaceState({}, document.title, newUrl);
-                setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
             }
         }
         
         renderPromos();
+
         
         if(!initialRenderDone) {
             render(); 
@@ -1794,10 +1811,16 @@ function getLocation() {
         localforage.setItem('combox_cliente_nombre', name).catch(e => console.error(e));
         localforage.setItem('combox_cliente_telefono', phone).catch(e => console.error(e));
         
-        if(checkoutType === 'delivery') {
-            const loc = document.getElementById('checkout-location').value.trim();
-            if(!loc || loc.includes('Obteniendo')) { customAlert('Indica tu ubicación.'); document.getElementById('checkout-location').focus(); return; }
+                if(checkoutType === 'delivery') {
+            const isManual = document.getElementById('manual-location-wrapper').style.display === 'block';
+            if(isManual) {
+                const loc = document.getElementById('checkout-location').value.trim();
+                if(!loc || loc.includes('Obteniendo')) { customAlert('Por favor, escribe tu ubicación.'); document.getElementById('checkout-location').focus(); return; }
+            } else if (!userMarker) {
+                customAlert('Espera a que el mapa calcule tu ubicación o escríbela manualmente dándole a "Editar".'); return;
+            }
         }
+
         
         let telefono = checkoutSede?.TELEFONO || '584244701273';
         let nombreSede = checkoutSede?.NOMBRE_SEDE || '';
@@ -1865,29 +1888,51 @@ function getLocation() {
         window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    function getSchedule(sede) {
+        function getSchedule(sede) {
         const now = new Date();
         let day = now.getDay();
         const days = ["DOMINGO","LUNES","MARTES","MIERCOLES","JUEVES","VIERNES","SABADO"];
-        let dayName = days[day];
+        const dayNamesEs = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+        const format = d => d.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
         
+        let dayName = days[day];
         let openIso = sede[`${dayName}_APERTURA`], closeIso = sede[`${dayName}_CIERRE`];
-        if(!openIso || !closeIso) return { isOpen: false, text: "Cerrado hoy", nextTime: "" };
+        
+        const getNextOpen = () => {
+            for(let i=1; i<=7; i++) {
+                let nextIdx = (day + i) % 7;
+                let nextOpenIso = sede[`${days[nextIdx]}_APERTURA`];
+                if(nextOpenIso) {
+                    let openDate = new Date(nextOpenIso);
+                    let dayStr = i === 1 ? "Mañana" : dayNamesEs[nextIdx];
+                    return { isOpen: false, text: "Cerrado", nextTime: `Abre ${dayStr} a las ${format(openDate)}` };
+                }
+            }
+            return { isOpen: false, text: "Cerrado temporalmente", nextTime: "" };
+        };
+
+        if(!openIso || !closeIso) return getNextOpen();
         
         let openDate = new Date(openIso), closeDate = new Date(closeIso);
-        
         let openMins = openDate.getHours()*60+openDate.getMinutes(), 
             closeMins = closeDate.getHours()*60+closeDate.getMinutes(), 
             nowMins = now.getHours()*60+now.getMinutes();
             
-        const format = d => d.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
         let isOpen = false;
-        
-        if(closeMins < openMins) { if(nowMins >= openMins) isOpen = true; }
+        if(closeMins < openMins) { if(nowMins >= openMins || nowMins <= closeMins) isOpen = true; } 
         else { if(nowMins >= openMins && nowMins <= closeMins) isOpen = true; }
         
-        return { isOpen, text: isOpen ? "Abierto" : "Cerrado", nextTime: isOpen ? `Cierra ${format(closeDate)}` : `Abre ${format(openDate)}` };
+        if (isOpen) {
+            return { isOpen: true, text: "Abierto", nextTime: `Cierra a las ${format(closeDate)}` };
+        } else {
+            if (nowMins < openMins) {
+                return { isOpen: false, text: "Cerrado", nextTime: `Abre hoy a las ${format(openDate)}` };
+            } else {
+                return getNextOpen();
+            }
+        }
     }
+
     
     function updateHeader() {
         if(!currentSede) return;

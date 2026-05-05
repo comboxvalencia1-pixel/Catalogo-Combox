@@ -518,30 +518,30 @@
     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest">Ubicación de Entrega</label>
 
     <!-- VISTA 1: Mapa Dinámico -->
-    <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.5)] border border-white/10 glass-contour-thin" style="display:none; height: 220px;">
+    <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 160px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
         <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
         
         <!-- Overlay: Tarifa en tiempo real -->
-        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/60 backdrop-blur-xl border border-white/20 text-white font-black px-4 py-1.5 rounded-full shadow-lg text-[10px] uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#0A0A0B] border border-white/20 text-white font-black px-4 py-1.5 rounded-full shadow-lg text-[10px] uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
             <span class="material-symbols-outlined text-neon-accent text-[16px]">two_wheeler</span>
             <span id="tariff-display">Calculando...</span>
         </div>
         
         <!-- Botón: Actualizar GPS -->
-        <button type="button" onclick="event.preventDefault(); getLocation();" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+        <button type="button" onclick="event.preventDefault(); getLocation();" class="absolute bottom-3 left-3 z-[1000] w-9 h-9 bg-[#0A0A0B] border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
             <span class="material-symbols-outlined text-[18px]">my_location</span>
         </button>
-    </div>
 
-    <!-- Botón: No es aquí -->
-    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="w-full bg-red-500/10 border border-red-500/20 text-red-500 font-[900] py-3.5 rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform" style="display:none;">
-        <span class="material-symbols-outlined text-lg">close</span> No es aquí
-    </button>
+        <!-- Botón: No es aquí (Movido adentro) -->
+        <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-3 left-14 z-[1000] bg-[#0A0A0B] border border-red-500/40 text-red-500 font-bold px-3 py-0 h-9 rounded-full text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 active:scale-95 transition-transform" style="display:none;">
+            <span class="material-symbols-outlined text-[14px]">edit_location</span> Editar
+        </button>
+    </div>
 
     <!-- VISTA 2: Input Manual (Respaldo) -->
     <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2">
         <div class="flex gap-2">
-            <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-sm flex-1" placeholder="Ej. Sector, Calle, Residencia, N°...">
+            <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-[#1A1A1D] border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-sm flex-1" placeholder="Ej. Sector, Calle, Residencia, N°...">
             <button type="button" class="w-14 bg-blue-500/10 border border-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center active:scale-90 flex-shrink-0 transition-transform" onclick="resetToMap()">
                 <span class="material-symbols-outlined text-xl">map</span>
             </button>
@@ -549,6 +549,7 @@
         <p class="text-[9px] text-zinc-500 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">info</span> Ingresa referencias claras para el motorizado.</p>
     </div>
 </div>
+
         <div class="pt-6 border-t border-white/10 mt-auto">
             <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
         </div>

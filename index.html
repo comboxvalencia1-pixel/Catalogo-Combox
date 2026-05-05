@@ -530,9 +530,9 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         </div>
         
         <!-- Botón: Actualizar GPS -->
-        <button type="button" onclick="event.preventDefault(); getLocation();" class="absolute bottom-3 left-3 z-[1000] w-9 h-9 bg-[#0A0A0B] border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
-            <span class="material-symbols-outlined text-[18px]">my_location</span>
-        </button>
+<button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-9 h-9 bg-[#0A0A0B] border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+    <span class="material-symbols-outlined text-[18px]">my_location</span>
+</button>
 
         <!-- Botón: No es aquí (Movido adentro) -->
         <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-3 right-3 z-[1000] bg-[#0A0A0B] border border-red-500/40 text-red-500 font-bold px-3 py-0 h-9 rounded-full text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 active:scale-95 transition-transform" style="display:none;">

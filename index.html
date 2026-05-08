@@ -2061,7 +2061,8 @@ function getLocation(userInitiated = false) {
         
         if(checkoutType === 'delivery') {
             let locationData = "";
-            const isManual = document.getElementById('manual-location-wrapper').style.display === 'block';
+
+            const isManual = document.getElementById('manual-location-wrapper').style.display !== 'none';
 
             if(isManual) {
                 // Si el usuario escribió la dirección a mano

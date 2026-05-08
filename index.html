@@ -1709,8 +1709,9 @@ function renderMapModal() {
     setTimeout(() => {
         if(globalSedesMap) globalSedesMap.remove();
         
-        // 🔥 FIX: preferCanvas: true también aquí
-        globalSedesMap = L.map('global-sedes-map', { zoomControl: false, attributionControl: false, preferCanvas: true }).setView([10.2543, -68.0101], 11);
+               const globalRenderer = L.svg({ padding: 2.5 });
+        globalSedesMap = L.map('global-sedes-map', { zoomControl: false, attributionControl: false, renderer: globalRenderer }).setView([10.2543, -68.0101], 11);
+
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(globalSedesMap);
 
         globalSedesMap.invalidateSize();
@@ -2018,7 +2019,6 @@ function updateCheckoutSede(id) {
         }
     }
 }
-
 async function renderMapPosition(lat, lng) {
     if(!checkoutSede) return;
     
@@ -2079,6 +2079,13 @@ async function renderMapPosition(lat, lng) {
 
     updateMarkerScales(map); 
 
+    // 🔥 FIX APLICADO: Borramos la ruta vieja inmediatamente y mostramos que estamos calculando
+    if (rutaLayer && map) {
+        map.removeLayer(rutaLayer);
+        rutaLayer = null;
+    }
+    document.getElementById('map-header-title').innerText = `CALCULANDO RUTA...`;
+
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
 
@@ -2102,6 +2109,7 @@ async function renderMapPosition(lat, lng) {
             document.getElementById('route-km').innerText = `${distanceKm.toFixed(1)} km`;
             document.getElementById('route-time').innerText = `${durationMin} min`;
 
+            // 🔥 FIX APLICADO: Dibujamos la nueva línea verde de manera limpia
             if (rutaLayer) map.removeLayer(rutaLayer);
             rutaLayer = L.geoJSON(route.geometry, {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
@@ -2118,6 +2126,7 @@ async function renderMapPosition(lat, lng) {
     }
 }
 
+
 function showManualLocationInput() {
     isEditingLocation = true; 
     document.getElementById('manual-location-wrapper').style.display = 'flex';
@@ -2127,6 +2136,17 @@ function showManualLocationInput() {
     const locInput = document.getElementById('checkout-location');
     locInput.placeholder = "Mueve el mapa para ubicar tu dirección";
     
+    // 🔥 FIX: Eliminamos la ruta verde de inmediato para limpiar el mapa visualmente
+    if (rutaLayer && map) {
+        map.removeLayer(rutaLayer);
+        rutaLayer = null;
+    }
+    
+    // Dejamos los textos limpios mientras el usuario elige
+    document.getElementById('map-header-title').innerText = `UBICANDO PIN...`;
+    document.getElementById('route-km').innerText = `-- km`;
+    document.getElementById('route-time').innerText = `-- min`;
+
     setTimeout(() => { if(map) map.invalidateSize(); }, 150);
 
     if (userMarker) {
@@ -2158,7 +2178,11 @@ function confirmManualPin() {
     document.getElementById('btn-confirm-pin').style.display = 'none';
     document.getElementById('btn-wrong-location').style.display = 'flex';
     
-    // 🔥 FIX: Esperamos que el DOM se acomode, forzamos tamaño y LUEGO dibujamos la ruta
+    // Cambiamos a verde de inmediato antes de calcular la nueva ruta
+    if (userMarker) {
+        userMarker.setIcon(greenDotIcon);
+    }
+    
     setTimeout(() => { 
         if(map) map.invalidateSize(); 
         if (pendingLatLng) {
@@ -2166,6 +2190,7 @@ function confirmManualPin() {
         }
     }, 50);
 }
+
 
 
 function getLocation(userInitiated = false) {
@@ -2180,45 +2205,38 @@ function getLocation(userInitiated = false) {
     const headerTitle = document.getElementById('map-header-title');
     if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
     
-    initLeafletMap();
-    setTimeout(() => map.invalidateSize(), 100); 
+    function initLeafletMap() {
+    if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
     
-    let watchId;
-    let timeoutId;
-    let bestPos = null;
-    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+    // 🔥 FIX: Volvemos a SVG pero con un "padding" enorme.
+    // Esto mantiene tu filtro negro perfecto sin que se corte al arrastrar la pantalla.
+    const customRenderer = L.svg({ padding: 2.5 });
 
-    watchId = navigator.geolocation.watchPosition(pos => {
-        if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) { bestPos = pos; }
-        if (pos.coords.accuracy > 2500) return; 
+    map = L.map('map-preview', { zoomControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CARTO'
+    }).addTo(map);
 
-        navigator.geolocation.clearWatch(watchId);
-        clearTimeout(timeoutId);
-        renderMapPosition(pos.coords.latitude, pos.coords.longitude);
-    }, (err) => {
-        navigator.geolocation.clearWatch(watchId);
-        clearTimeout(timeoutId);
+    document.getElementById('map-wrapper').addEventListener('touchstart', function() {
+        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, { passive: true });
+    
+    map.on('dragstart', function() {
+        document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
 
-        if (err.code === err.PERMISSION_DENIED && userInitiated) {
-            customAlert("Navegador bloqueó tu ubicación. Actívala en ajustes o ingresa tu dirección a mano.", "GPS Bloqueado");
-        }
-        
-        if (bestPos) {
-             renderMapPosition(bestPos.coords.latitude, bestPos.coords.longitude);
-        } else {
-             showManualLocationInput();
-        }
-    }, options);
+    map.on('zoomend', function() {
+        updateMarkerScales(map);
+    });
 
-    timeoutId = setTimeout(() => {
-        navigator.geolocation.clearWatch(watchId);
-        if (bestPos) {
-            renderMapPosition(bestPos.coords.latitude, bestPos.coords.longitude);
-        } else {
-            showManualLocationInput();
-        }
-    }, 12000); 
+    if (typeof misZonasGeoJSON !== 'undefined') {
+        zonesGeoLayer = L.geoJSON(misZonasGeoJSON, {
+            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
+            interactive: false 
+        }).addTo(map);
+    }
 }
+
 
 
 

@@ -523,7 +523,8 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
                 <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
             </div>
-                       <div id="checkout-location-container" class="flex flex-col gap-3">
+            
+            <div id="checkout-location-container" class="flex flex-col gap-3">
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
                 
                 <!-- INPUT MANUAL DE RESPALDO (AHORA ARRIBA DEL MAPA) -->
@@ -537,7 +538,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                 <!-- MAPA -->
                 <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
                     
-                    <!-- Header del Mapa Translúcido (MÁS CORTO Y CON MOTO) -->
+                    <!-- Header del Mapa Translúcido -->
                     <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 shadow-lg flex items-center justify-center gap-2 max-w-[90%] whitespace-nowrap">
                         <span class="material-symbols-outlined text-[#39FF14] text-[20px]">two_wheeler</span>
                         <h2 id="map-header-title" class="text-white font-black text-[10px] uppercase tracking-widest m-0">DELIVERY COMBOX: --$</h2>
@@ -550,7 +551,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                         Aceptar <span class="material-symbols-outlined text-[18px]">check_circle</span>
                     </button>
 
-                    <!-- Botones Inferiores Derechos (KM y Tiempo) Translúcidos -->
+                    <!-- Botones Inferiores Derechos -->
                     <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
                         <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
                             <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
@@ -560,7 +561,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                         </div>
                     </div>
 
-                    <!-- Botón Circular Editar (Lápiz Minimalista) -->
+                    <!-- Botón Circular Editar -->
                     <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
                         <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
                     </button>
@@ -571,10 +572,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                     </button>
                 </div>
             </div>
-
- 
-            </div>
-        </div>
+        </div> <!-- AHORA SÍ: ESTE ES EL CIERRE CORRECTO DEL ÁREA DE SCROLL -->
 
         <!-- BOTÓN FIJO AL FINAL -->
         <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-10">
@@ -582,6 +580,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         </div>
     </div>
 </div>
+
 
 <div class="modal" id="install-modal">
     <div class="modal-overlay" onclick="toggleModal('install-modal', false)"></div>

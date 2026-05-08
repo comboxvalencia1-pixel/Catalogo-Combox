@@ -1696,7 +1696,6 @@ function renderMapModal() {
         </div>
     `}).join('');
 
-    // NUEVO MAPA CON EL BANNER "TOCA UNA SEDE PARA IR"
     html += `
     <div class="relative w-full h-64 mt-2 rounded-2xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b]">
         <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-5 py-2 border border-white/20 shadow-lg flex items-center justify-center pointer-events-none w-max max-w-[90%]">
@@ -1707,18 +1706,26 @@ function renderMapModal() {
     
     document.getElementById('mapa-list-container').innerHTML = html;
 
-    // FIX: Aumentamos a 400ms para asegurar que el modal se abrió por completo y Leaflet no renderice cuadros negros
     setTimeout(() => {
         if(globalSedesMap) globalSedesMap.remove();
-        globalSedesMap = L.map('global-sedes-map', { zoomControl: false, attributionControl: false }).setView([10.2543, -68.0101], 11);
+        
+        // 🔥 FIX: preferCanvas: true también aquí
+        globalSedesMap = L.map('global-sedes-map', { zoomControl: false, attributionControl: false, preferCanvas: true }).setView([10.2543, -68.0101], 11);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(globalSedesMap);
 
-        // Forzar renderizado
         globalSedesMap.invalidateSize();
 
         globalSedesMap.on('zoomend', function() {
             updateMarkerScales(globalSedesMap);
         });
+
+        // 🔥 FIX: Inyectar las zonas de delivery en el mapa general
+        if (typeof misZonasGeoJSON !== 'undefined') {
+            L.geoJSON(misZonasGeoJSON, {
+                style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
+                interactive: false 
+            }).addTo(globalSedesMap);
+        }
 
         let bounds = [];
         db.sedes.forEach(s => {
@@ -1732,11 +1739,9 @@ function renderMapModal() {
             let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
             let letreroClass = sched.isOpen ? "" : "opacity-60";
 
-            // Lógica para colocar el letrero ¡MÁS CERCA! adentro del mapa
             let isClosest = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
             let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
 
-            // AHORA EL ONCLICK LLEVA A LA UBICACIÓN GPS REAL
             const iconHtml = `
                 <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative" onclick="window.open('${s.LINK_UBICACION}', '_blank')">
                     ${badgeCerca}
@@ -1957,7 +1962,8 @@ const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature
 function initLeafletMap() {
     if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
     
-    map = L.map('map-preview', { zoomControl: false }).setView([10.2543, -68.0101], 13);
+    // 🔥 FIX: preferCanvas: true evita que los polígonos y líneas se corten al arrastrar
+    map = L.map('map-preview', { zoomControl: false, preferCanvas: true }).setView([10.2543, -68.0101], 13);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; CARTO'
     }).addTo(map);
@@ -1976,10 +1982,12 @@ function initLeafletMap() {
 
     if (typeof misZonasGeoJSON !== 'undefined') {
         zonesGeoLayer = L.geoJSON(misZonasGeoJSON, {
-            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 })
+            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
+            interactive: false // Evita que el polígono bloquee clicks
         }).addTo(map);
     }
 }
+
 
 function updateMarkerScales(mapInstance) {
     if(!mapInstance) return;
@@ -2147,14 +2155,18 @@ function confirmManualPin() {
     map.off('move');
     map.off('moveend');
     
-    if (pendingLatLng) {
-        renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
-    }
     document.getElementById('btn-confirm-pin').style.display = 'none';
     document.getElementById('btn-wrong-location').style.display = 'flex';
     
-    setTimeout(() => { if(map) map.invalidateSize(); }, 250);
+    // 🔥 FIX: Esperamos que el DOM se acomode, forzamos tamaño y LUEGO dibujamos la ruta
+    setTimeout(() => { 
+        if(map) map.invalidateSize(); 
+        if (pendingLatLng) {
+            renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
+        }
+    }, 50);
 }
+
 
 function getLocation(userInitiated = false) {
     isEditingLocation = false;

@@ -262,10 +262,11 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         .max-content-width { max-width: 1200px; margin-left: auto; margin-right: auto; }
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
 
-        /* Estilos del Mapa Oscuro */
+                /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
         #map-preview { background: #0a0a0b; }
-        .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
-.leaflet-control-attribution { display: none !important; }
+        .leaflet-tile { filter: brightness(0.8) contrast(1.2); }
+        .leaflet-control-attribution { display: none !important; }
+
 
     </style>
 </head>
@@ -522,8 +523,17 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
                 <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
             </div>
-            <div id="checkout-location-container" class="flex flex-col gap-3">
+                       <div id="checkout-location-container" class="flex flex-col gap-3">
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
+                
+                <!-- INPUT MANUAL DE RESPALDO (AHORA ARRIBA DEL MAPA) -->
+                <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-1">
+                    <div class="flex gap-2">
+                        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-sm flex-1" placeholder="Ej: Calle 5, Residencia X...">
+                    </div>
+                    <p id="manual-location-hint" class="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-red-500">location_on</span> Mueve el pin de forma manual en el mapa.</p>
+                </div>
+
                 <!-- MAPA -->
                 <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
                     
@@ -535,6 +545,11 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 
                     <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
                     
+                    <!-- Botón Aceptar Nueva Ubicación -->
+                    <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-6 py-3 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-2 border border-white/20" style="display:none; margin-top: 40px;">
+                        Aceptar <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                    </button>
+
                     <!-- Botones Inferiores Derechos (KM y Tiempo) Translúcidos -->
                     <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
                         <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
@@ -555,6 +570,8 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                         <span class="material-symbols-outlined text-[18px]">my_location</span>
                     </button>
                 </div>
+            </div>
+
 
                 <!-- INPUT MANUAL DE RESPALDO (Ya no oculta el mapa y no tiene el botón azul) -->
                 <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mt-3">
@@ -948,6 +965,21 @@ let rutaLayer;
 let marcadoresSedesMap = [];
 let sedeMasCercanaCalculada = null;
 let tarifaFinalCalculada = 0;
+let pendingLatLng = null; // Guarda la posición mientras mueves el pin
+
+// Iconos globales del mapa
+const greenDotIcon = L.divIcon({
+    className: 'bg-transparent',
+    html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
+    iconSize: [20, 20], iconAnchor: [10, 10]
+});
+
+const redPinIcon = L.divIcon({
+    className: 'bg-transparent',
+    html: `<span class="material-symbols-outlined text-[40px] text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,1)]" style="font-variation-settings: 'FILL' 1;">location_on</span>`,
+    iconSize: [40, 40], iconAnchor: [20, 40]
+});
+
 
 function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -1781,7 +1813,16 @@ function renderMapModal() {
     
     function closeCheckout() { toggleModal('checkout-modal', false, null); setTimeout(() => toggleModal('cart-modal', true), 150); }
     
-    function updateCheckoutSede(id) { if(db?.sedes) checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; }
+    function updateCheckoutSede(id) { 
+    if(db?.sedes) {
+        checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
+        if (userMarker) {
+            const pos = userMarker.getLatLng();
+            renderMapPosition(pos.lat, pos.lng);
+        }
+    }
+}
+
     
     function updateLocationBtnState() {
         const loc = document.getElementById('checkout-location');
@@ -1851,13 +1892,21 @@ function calculateTariff(lat, lng) {
 }
 
 // Controladores de Vista
+function confirmManualPin() {
+    if (pendingLatLng) {
+        renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
+    }
+    document.getElementById('btn-confirm-pin').style.display = 'none';
+}
+
 function showManualLocationInput() {
-    // Mostramos el input manual pero NO ocultamos el mapa
     document.getElementById('manual-location-wrapper').style.display = 'flex';
     const locInput = document.getElementById('checkout-location');
     locInput.placeholder = "Coloca las coordenadas o texto referencial";
     locInput.focus();
+    if (userMarker) userMarker.setIcon(redPinIcon); // Cambia a pin rojo
 }
+
 // Borramos la función resetToMap() porque ya no la necesitamos, el mapa nunca desaparece.
 
     
@@ -1884,34 +1933,46 @@ async function renderMapPosition(lat, lng) {
     
     map.setView([lat, lng], 14); 
     
+    // Verificamos si estamos en modo manual para dejar el pin rojo
+    const isManual = document.getElementById('manual-location-wrapper').style.display !== 'none';
+    const activeIcon = isManual ? redPinIcon : greenDotIcon;
+    
     if (userMarker) {
         userMarker.setLatLng([lat, lng]);
+        userMarker.setIcon(activeIcon);
     } else {
-        userMarker = L.marker([lat, lng], {
-            draggable: true, // ESTO HACE QUE EL CLIENTE PUEDA MOVER EL PUNTO CON EL DEDO
-            icon: L.divIcon({
-                className: 'bg-transparent',
-                html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
-                iconSize: [20, 20], iconAnchor: [10, 10]
-            })
-        }).addTo(map);
+        userMarker = L.marker([lat, lng], { draggable: true, icon: activeIcon }).addTo(map);
 
-        // Cuando el cliente suelta el punto, calculamos de nuevo
+        userMarker.on('dragstart', function() {
+            userMarker.setIcon(redPinIcon);
+            document.getElementById('manual-location-wrapper').style.display = 'flex';
+            document.getElementById('btn-confirm-pin').style.display = 'flex';
+        });
+
         userMarker.on('dragend', function(e) {
-            const newPos = e.target.getLatLng();
-            renderMapPosition(newPos.lat, newPos.lng);
+            pendingLatLng = e.target.getLatLng();
+            // ¡NO recalculamos aquí! Esperamos a que presione el botón "Aceptar"
         });
     }
 
-    // Pintar sedes
+    // Pintar sedes (Icono de Tienda Roja + Nombre)
     marcadoresSedesMap.forEach(m => map.removeLayer(m));
     marcadoresSedesMap = [];
     
     db.sedes.forEach(s => {
         const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
         const isSelected = (s.ID_SEDE === checkoutSede.ID_SEDE);
-        const iconHtml = `<div class="text-3xl filter drop-shadow-lg ${isSelected ? '' : 'grayscale opacity-50'}">🏪</div>`;
-        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [30, 30], iconAnchor:[15, 30] });
+        
+        const iconHtml = `
+            <div class="flex flex-col items-center justify-center translate-y-[-10px] ${isSelected ? '' : 'grayscale opacity-50'}">
+                <span class="material-symbols-outlined text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]" style="font-size: 36px; font-variation-settings: 'FILL' 1;">storefront</span>
+                <div class="bg-black/90 backdrop-blur-md border border-white/20 px-2 py-1.5 rounded-lg flex flex-col items-center mt-0 shadow-lg">
+                    <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
+                    <span class="text-[7px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                </div>
+            </div>`;
+            
+        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [80, 80], iconAnchor:[40, 40] });
         marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
     });
 
@@ -1927,25 +1988,19 @@ async function renderMapPosition(lat, lng) {
             const distanceKm = route.distance / 1000;
             const durationMin = Math.ceil(route.duration / 60);
 
-            // --- TU LÓGICA DE PRECIOS EXACTA ---
-            const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; // Lee la tarifa mínima desde la base de datos
+            const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
             let rawPrice = distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
 
             let decimalPart = rawPrice % 1;
-            // Redondea siempre hacia abajo (ej. 2.8 = 2), a menos que sea 0.9 o más (ej. 2.9 = 3)
             let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.9 ? 1 : 0);
 
-            // Verificamos que no cobre menos del mínimo de la sede
             tarifaFinalCalculada = Math.max(min, roundedPrice);
-
             let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
 
-            // UI
             document.getElementById('map-header-title').innerText = `DELIVERY COMBOX: ${displayPrice}$`;
             document.getElementById('route-km').innerText = `${distanceKm.toFixed(1)} km`;
             document.getElementById('route-time').innerText = `${durationMin} min`;
 
-            // Dibujar Ruta
             if (rutaLayer) map.removeLayer(rutaLayer);
             rutaLayer = L.geoJSON(route.geometry, {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
@@ -1957,6 +2012,7 @@ async function renderMapPosition(lat, lng) {
         document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;
     }
 }
+
 
 
 

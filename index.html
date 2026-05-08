@@ -541,13 +541,21 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
             </div>
             
             <div id="checkout-location-container" class="flex flex-col gap-3">
-    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
+    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Ubicación de Entrega</label>
 
-    <!-- MAPA (Ahora es el protagonista) -->
+    <!-- 1. INPUT ÚNICO DE DIRECCIÓN (AHORA ARRIBA) -->
+    <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-2">
+        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
+        <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin en el mapa para mayor precisión.
+        </p>
+    </div>
+
+    <!-- 2. MAPA (AHORA ABAJO) -->
     <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
         
         <!-- Header del Mapa Translúcido -->
-        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 shadow-lg flex items-center justify-center gap-2 max-w-[90%] whitespace-nowrap">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 shadow-lg flex items-center justify-center gap-2 max-w-[90%] whitespace-nowrap pointer-events-none">
             <span class="material-symbols-outlined text-[#39FF14] text-[20px]">two_wheeler</span>
             <h2 id="map-header-title" class="text-white font-black text-[10px] uppercase tracking-widest m-0">DELIVERY COMBOX: --$</h2>
         </div>
@@ -578,16 +586,8 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
             <span class="material-symbols-outlined text-[18px]">my_location</span>
         </button>
     </div> <!-- Cierre de map-wrapper -->
-
-    <!-- INPUT ÚNICO DE DIRECCIÓN/REFERENCIA -->
-    <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mt-2">
-        <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest">Referencia o Dirección Manual</label>
-        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
-        <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin en el mapa para mayor precisión.
-        </p>
-    </div>
 </div>  <!-- Cierre de checkout-location-container -->
+
         </div> <!-- Cierre de checkout-scroll-area -->
 
         <!-- BOTÓN FIJO AL FINAL (Fuera del scroll para que siempre esté a la mano) -->
@@ -1676,11 +1676,11 @@ async function setupAfterDBLoad(isCached) {
 
     let globalSedesMap = null; // Variable para mantener el mapa de sedes
 
+
 function renderMapModal() {
     const sorted = getSortedSedes();
     let html = sorted.map(s => {
         const active = currentSede?.ID_SEDE === s.ID_SEDE;
-        const esLaMasCercana = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
         const bgClass = active ? 'bg-zinc-800/90 border-zinc-500 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-white/5 border-white/10';
         return `
         <div class="flex items-center justify-between p-4 rounded-2xl ${bgClass} border gap-3 mb-3">
@@ -1692,18 +1692,29 @@ function renderMapModal() {
                 <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-500/20 text-blue-400 p-2.5 rounded-full active:scale-95 flex items-center gap-2 border border-blue-500/30">
                     <span class="material-symbols-outlined text-[20px]">near_me</span> <span class="text-[10px] font-black uppercase tracking-widest">Ir</span>
                 </button>
-                ${esLaMasCercana ? '<span class="bg-blue-500/20 text-blue-400 text-[8px] font-black px-2 py-0.5 rounded border border-blue-500/30 uppercase tracking-widest mt-1">¡Más Cerca!</span>' : ''}
             </div>
         </div>
     `}).join('');
 
-    html += `<div id="global-sedes-map" class="w-full h-64 mt-2 rounded-2xl border border-white/10 z-0 bg-[#0a0a0b] shadow-inner relative z-10"></div>`;
+    // NUEVO MAPA CON EL BANNER "TOCA UNA SEDE PARA IR"
+    html += `
+    <div class="relative w-full h-64 mt-2 rounded-2xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b]">
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-5 py-2 border border-white/20 shadow-lg flex items-center justify-center pointer-events-none w-max max-w-[90%]">
+            <span class="text-white font-black text-[10px] uppercase tracking-widest text-center">👇 Toca una sede para ir</span>
+        </div>
+        <div id="global-sedes-map" class="w-full h-full z-0"></div>
+    </div>`;
+    
     document.getElementById('mapa-list-container').innerHTML = html;
 
+    // FIX: Aumentamos a 400ms para asegurar que el modal se abrió por completo y Leaflet no renderice cuadros negros
     setTimeout(() => {
         if(globalSedesMap) globalSedesMap.remove();
         globalSedesMap = L.map('global-sedes-map', { zoomControl: false, attributionControl: false }).setView([10.2543, -68.0101], 11);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(globalSedesMap);
+
+        // Forzar renderizado
+        globalSedesMap.invalidateSize();
 
         globalSedesMap.on('zoomend', function() {
             updateMarkerScales(globalSedesMap);
@@ -1721,8 +1732,14 @@ function renderMapModal() {
             let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
             let letreroClass = sched.isOpen ? "" : "opacity-60";
 
+            // Lógica para colocar el letrero ¡MÁS CERCA! adentro del mapa
+            let isClosest = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
+            let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
+
+            // AHORA EL ONCLICK LLEVA A LA UBICACIÓN GPS REAL
             const iconHtml = `
-                <div class="sede-marker-content flex flex-col items-center justify-center selected-sede cursor-pointer" onclick="selectLocation('${s.ID_SEDE}')">
+                <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative" onclick="window.open('${s.LINK_UBICACION}', '_blank')">
+                    ${badgeCerca}
                     <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
                         <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
                     </div>
@@ -1748,8 +1765,8 @@ function renderMapModal() {
             if(bounds.length > 0) globalSedesMap.fitBounds(bounds, { padding: [30, 30] });
         }
         
-        setTimeout(() => updateMarkerScales(globalSedesMap), 300);
-    }, 250);
+        setTimeout(() => updateMarkerScales(globalSedesMap), 500);
+    }, 400);
 }
 
 
@@ -1816,11 +1833,22 @@ function renderMapModal() {
         accent.className = "w-1.5 h-6 bg-white rounded-full";
     }
     
-    const select = document.getElementById('checkout-sede-select');
+        const select = document.getElementById('checkout-sede-select');
     if(db?.sedes) {
-        select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}" ${currentSede?.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`).join('');
-        checkoutSede = currentSede;
+        // Renderizamos las opciones
+        select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE}</option>`).join('');
+        
+        // Auto-seleccionar sede más cercana si es delivery, o la actual si es pickup
+        if(type === 'delivery' && sedeMasCercanaCalculada) {
+            checkoutSede = sedeMasCercanaCalculada;
+        } else {
+            checkoutSede = currentSede;
+        }
+        
+        // Aplicamos la selección visual al menú desplegable
+        if(checkoutSede) select.value = checkoutSede.ID_SEDE;
     }
+
 
     // --- EL FIX EMPIEZA AQUÍ ---
     // 1. Abrimos la vista del modal inmediatamente sin bloqueos
@@ -1925,7 +1953,8 @@ function calculateTariff(lat, lng) {
     
 const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"COMBOX MAPA","styleUrl":"#poly-BDBDBD-3301-43-nodesc","fill-opacity":0.16862745098039217,"fill":"#bdbdbd","stroke-opacity":1,"stroke":"#bdbdbd","stroke-width":3.301},"id":0},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"TARIFA","styleUrl":"#poly-FFFFFF-3901-20-nodesc","fill-opacity":0.0784313725490196,"fill":"#ffffff","stroke-opacity":1,"stroke":"#ffffff","stroke-width":3.901}}]}
 
-       function initLeafletMap() {
+ 
+function initLeafletMap() {
     if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
     
     map = L.map('map-preview', { zoomControl: false }).setView([10.2543, -68.0101], 13);
@@ -1974,6 +2003,8 @@ function updateCheckoutSede(id) {
         }
 
         if (userMarker) {
+            if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
+            
             const pos = userMarker.getLatLng();
             renderMapPosition(pos.lat, pos.lng); 
         }
@@ -1983,7 +2014,7 @@ function updateCheckoutSede(id) {
 async function renderMapPosition(lat, lng) {
     if(!checkoutSede) return;
     
-    setTimeout(() => map.invalidateSize(), 100); 
+    setTimeout(() => { if(map) map.invalidateSize(); }, 100); 
     map.setView([lat, lng], map.getZoom() > 13 ? map.getZoom() : 14); 
     
     const activeIcon = isEditingLocation ? redPinIcon : greenDotIcon;
@@ -2069,7 +2100,10 @@ async function renderMapPosition(lat, lng) {
             }).addTo(map);
 
             map.fitBounds(rutaLayer.getBounds(), { padding: [40, 40] });
-            setTimeout(() => updateMarkerScales(map), 300);
+            setTimeout(() => {
+                if(map) map.invalidateSize();
+                updateMarkerScales(map);
+            }, 300);
         }
     } catch(e) {
         document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;
@@ -2118,6 +2152,8 @@ function confirmManualPin() {
     }
     document.getElementById('btn-confirm-pin').style.display = 'none';
     document.getElementById('btn-wrong-location').style.display = 'flex';
+    
+    setTimeout(() => { if(map) map.invalidateSize(); }, 250);
 }
 
 function getLocation(userInitiated = false) {
@@ -2171,7 +2207,6 @@ function getLocation(userInitiated = false) {
         }
     }, 12000); 
 }
-
 
 
 

@@ -525,61 +525,64 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
             </div>
             
             <div id="checkout-location-container" class="flex flex-col gap-3">
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
-                
-                <!-- INPUT MANUAL DE RESPALDO (AHORA ARRIBA DEL MAPA) -->
-                <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-1">
-                    <div class="flex gap-2">
-                        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-sm flex-1" placeholder="Ej: Calle 5, Residencia X...">
-                    </div>
-                    <p id="manual-location-hint" class="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-red-500">location_on</span> Mueve el pin de forma manual en el mapa.</p>
-                </div>
+    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
 
-                <!-- MAPA -->
-                <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
-                    
-                    <!-- Header del Mapa Translúcido -->
-                    <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 shadow-lg flex items-center justify-center gap-2 max-w-[90%] whitespace-nowrap">
-                        <span class="material-symbols-outlined text-[#39FF14] text-[20px]">two_wheeler</span>
-                        <h2 id="map-header-title" class="text-white font-black text-[10px] uppercase tracking-widest m-0">DELIVERY COMBOX: --$</h2>
-                    </div>
-
-                    <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
-                    
-                    <!-- Botón Aceptar Nueva Ubicación -->
-                    <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-6 py-3 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-2 border border-white/20" style="display:none; margin-top: 40px;">
-                        Aceptar <span class="material-symbols-outlined text-[18px]">check_circle</span>
-                    </button>
-
-                    <!-- Botones Inferiores Derechos -->
-                    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
-                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
-                            <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
-                        </div>
-                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
-                            <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
-                        </div>
-                    </div>
-
-                    <!-- Botón Circular Editar -->
-                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
-                        <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
-                    </button>
-
-                    <!-- Botón GPS Translúcido -->
-                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
-                        <span class="material-symbols-outlined text-[18px]">my_location</span>
-                    </button>
-                </div>
-            </div>
-        </div> <!-- AHORA SÍ: ESTE ES EL CIERRE CORRECTO DEL ÁREA DE SCROLL -->
-
-        <!-- BOTÓN FIJO AL FINAL -->
-        <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-10">
-            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
+    <!-- MAPA (Ahora es el protagonista) -->
+    <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+        
+        <!-- Header del Mapa Translúcido -->
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 shadow-lg flex items-center justify-center gap-2 max-w-[90%] whitespace-nowrap">
+            <span class="material-symbols-outlined text-[#39FF14] text-[20px]">two_wheeler</span>
+            <h2 id="map-header-title" class="text-white font-black text-[10px] uppercase tracking-widest m-0">DELIVERY COMBOX: --$</h2>
         </div>
+
+        <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
+        
+        <!-- Botón Aceptar Nueva Ubicación -->
+        <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-6 py-3 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-2 border border-white/20" style="display:none; margin-top: 40px;">
+            Aceptar <span class="material-symbols-outlined text-[18px]">check_circle</span>
+        </button>
+
+        <!-- Indicadores de Ruta (KM/Tiempo) -->
+        <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
+            <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
+            </div>
+            <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
+            </div>
+        </div>
+
+        <!-- Botones de Control -->
+        <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
+            <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
+        </button>
+
+        <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+            <span class="material-symbols-outlined text-[18px]">my_location</span>
+        </button>
+    </div> <!-- Cierre de map-wrapper -->
+
+    <!-- INPUT ÚNICO DE DIRECCIÓN/REFERENCIA -->
+    <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mt-2">
+        <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest">Referencia o Dirección Manual</label>
+        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
+        <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin en el mapa para mayor precisión.
+        </p>
     </div>
-</div>
+</div>  <!-- Cierre de checkout-location-container -->
+        </div> <!-- Cierre de checkout-scroll-area -->
+
+        <!-- BOTÓN FIJO AL FINAL (Fuera del scroll para que siempre esté a la mano) -->
+        <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-20">
+            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all" onclick="submitOrder()">
+                Solicitar Pedido <span class="material-symbols-outlined">send</span>
+            </button>
+        </div>
+    </div> <!-- Cierre de modal-content -->
+</div> <!-- Cierre de modal -->
+
 
 
 <div class="modal" id="install-modal">

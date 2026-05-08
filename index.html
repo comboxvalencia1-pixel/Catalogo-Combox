@@ -389,7 +389,9 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
     <div class="flex items-center justify-between mb-6 px-1">
         <div class="flex items-center gap-3">
             <div class="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-            <h2 class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
+
+            <h2 id="header-promociones" class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
+
         </div>
         <button onclick="setCat('PROMOCIONES'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
     </div>
@@ -523,23 +525,37 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
             <div id="checkout-location-container" class="flex flex-col gap-3">
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
 
-                <!-- MAPA -->
-                <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 160px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+                                <!-- MAPA -->
+                <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+                    
+                    <!-- Header del Mapa Translúcido -->
+                    <div class="absolute top-3 left-3 right-3 z-[1000] bg-black/60 backdrop-blur-md rounded-xl p-2 text-center border border-white/20 shadow-lg">
+                        <h2 id="map-header-title" class="text-white font-black text-xs uppercase tracking-widest">MAPA COMBOX: Calculando...</h2>
+                    </div>
+
                     <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
                     
-                    <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#0A0A0B] border border-white/20 text-white font-black px-4 py-1.5 rounded-full shadow-lg text-[10px] uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
-                        <span class="material-symbols-outlined text-neon-accent text-[16px]">two_wheeler</span>
-                        <span id="tariff-display">Calculando...</span>
+                    <!-- Botones Inferiores Derechos (KM y Tiempo) Translúcidos -->
+                    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                            <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
+                        </div>
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                            <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
+                        </div>
                     </div>
-                    
-                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-9 h-9 bg-[#0A0A0B] border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
-                        <span class="material-symbols-outlined text-[18px]">my_location</span>
+
+                    <!-- Botón Circular Editar (Lápiz) Translúcido -->
+                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
+                        ✏️
                     </button>
 
-                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-3 right-3 z-[1000] bg-[#0A0A0B] border border-red-500/40 text-red-500 font-bold px-3 py-0 h-9 rounded-full text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 active:scale-95 transition-transform" style="display:none;">
-                        <span class="material-symbols-outlined text-[14px]">edit_location</span> Editar
+                    <!-- Botón GPS Translúcido -->
+                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+                        <span class="material-symbols-outlined text-[18px]">my_location</span>
                     </button>
                 </div>
+
 
                 <!-- INPUT MANUAL DE RESPALDO -->
                 <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2">
@@ -929,7 +945,18 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
     
     const searchContainer = document.getElementById('search-container');
     
-    let map, userMarker, zonesGeoLayer;
+let map, userMarker, zonesGeoLayer;
+let rutaLayer; 
+let marcadoresSedesMap = [];
+let sedeMasCercanaCalculada = null;
+let tarifaFinalCalculada = 0;
+
+function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
+    const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
 
     // Bloqueo de zoom estricto (Mobile Safari / Chrome)
     document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
@@ -1277,6 +1304,19 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         inputs.forEach(input => {
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
         });
+
+        const locInput = document.getElementById('checkout-location');
+        if(locInput) {
+            locInput.addEventListener('input', function(e) {
+                const coincidencia = e.target.value.match(/\(\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*\)/);
+                if (coincidencia) {
+                    const lat = parseFloat(coincidencia[1]);
+                    const lng = parseFloat(coincidencia[2]);
+                    resetToMap();
+                    setTimeout(() => renderMapPosition(lat, lng), 300);
+                }
+            });
+        }
         
         const globalSearch = document.getElementById('global-search');
         if(globalSearch){
@@ -1365,47 +1405,77 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
     }
 
 async function setupAfterDBLoad(isCached) {
-        if(db && db.finanzas && db.finanzas.tasa_usd) {
+    // Variables dinámicas de AppScript
+    if (db && db.finanzas) {
+        if(db.finanzas.tasa_usd) {
             tasaBCV = parseFloat(db.finanzas.tasa_usd);
             const displayEl = document.getElementById('tasa-bcv-display');
             if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
         }
-        
-        if(db && db.sedes && db.sedes.length) { 
-            const savedSedeId = await localforage.getItem('combox_sede_id');
-            if (savedSedeId) {
-                currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
-            } else {
-                currentSede = db.sedes[0]; 
-            }
-            updateHeader(); 
+        if(db.finanzas.HEADER_PROMOCIONES) {
+            document.getElementById('header-promociones').innerText = db.finanzas.HEADER_PROMOCIONES;
         }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const pedidoParam = urlParams.get('pedido');
-        if(pedidoParam) {
-            const pairs = pedidoParam.split('_');
-            let hasNewItems = false;
-            pairs.forEach(pair => {
-                const [id, qty] = pair.split('-');
-                const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
-                if(productExists && qty && !isNaN(qty)) {
-                    cart[id] = parseInt(qty);
-                    hasNewItems = true;
+        if(db.finanzas.mensaje_bienvenida && db.finanzas.mensaje_bienvenida.trim() !== "") {
+            document.getElementById('welcome-message-text').innerText = db.finanzas.mensaje_bienvenida;
+            setTimeout(() => toggleModal('welcome-modal', true), 1000);
+        }
+    }
+    
+    if(db && db.sedes && db.sedes.length) { 
+        // Geolocalización automática para sede más cercana
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                let distMinima = Infinity;
+                db.sedes.forEach(s => {
+                    const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                    const dist = calcularDistanciaHaversine(pos.coords.latitude, pos.coords.longitude, lat, lng);
+                    const isOpen = getSchedule(s).isOpen;
+                    if (isOpen && dist < distMinima) {
+                        distMinima = dist;
+                        sedeMasCercanaCalculada = s;
+                    }
+                });
+                
+                if (sedeMasCercanaCalculada) {
+                    currentSede = sedeMasCercanaCalculada;
+                    localforage.setItem('combox_sede_id', currentSede.ID_SEDE);
+                    updateHeader();
                 }
-            });
-            if(hasNewItems) {
-                saveCart();
-                updateOrder();
-                urlParams.delete('pedido');
-                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-                window.history.replaceState({}, document.title, newUrl);
-                setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
-            }
+            }, () => {}, {timeout: 5000});
         }
-        
-        renderPromos();
 
+        const savedSedeId = await localforage.getItem('combox_sede_id');
+        if (savedSedeId && !sedeMasCercanaCalculada) {
+            currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
+        } else if (!sedeMasCercanaCalculada) {
+            currentSede = db.sedes[0]; 
+        }
+        updateHeader(); 
+    }
+
+    // ... código existente del carrito ...
+    const urlParams = new URLSearchParams(window.location.search);
+    const pedidoParam = urlParams.get('pedido');
+    if(pedidoParam) {
+        const pairs = pedidoParam.split('_');
+        let hasNewItems = false;
+        pairs.forEach(pair => {
+            const [id, qty] = pair.split('-');
+            const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
+            if(productExists && qty && !isNaN(qty)) {
+                cart[id] = parseInt(qty);
+                hasNewItems = true;
+            }
+        });
+        if(hasNewItems) {
+            saveCart(); updateOrder(); urlParams.delete('pedido');
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            window.history.replaceState({}, document.title, newUrl);
+            setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
+        }
+    }
+    
+    renderPromos();
         
         if(!initialRenderDone) {
             render(); 
@@ -1748,31 +1818,80 @@ const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature
     function initLeafletMap() {
     if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
     
-    // Coordenadas centradas en Naguanagua / Valencia
-    map = L.map('map-preview', { zoomControl: false }).setView([10.2543, -68.0101], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    // ICONO PERSONALIZADO COMBOX ROJO
-    const comboxIcon = L.divIcon({
-        className: 'bg-transparent',
-        html: `<div class="flex flex-col items-center justify-center" style="margin-top:-35px">
-                  <div class="bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg border border-white/20 mb-1">COMBOX</div>
-                  <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center border-2 border-white shadow-xl relative">
-                     <span class="material-symbols-outlined text-white text-[16px]">storefront</span>
-                     <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white"></div>
-                  </div>
-               </div>`,
-        iconSize: [40, 50], iconAnchor: [20, 50]
-    });
+    map = L.map('map-preview', { zoomControl: false }).setView([10.2543, -68.0101], 13);
+    // MAPA OSCURO CARTO DB
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CARTO'
+    }).addTo(map);
 
     if (typeof misZonasGeoJSON !== 'undefined') {
         zonesGeoLayer = L.geoJSON(misZonasGeoJSON, {
-            pointToLayer: (f, l) => f.properties.name === "COMBOX" ? L.marker(l, {icon: comboxIcon}) : L.marker(l),
-            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.25 })
+            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 })
         }).addTo(map);
-        map.fitBounds(zonesGeoLayer.getBounds());
     }
 }
+
+async function renderMapPosition(lat, lng) {
+    if(!checkoutSede) return;
+    
+    map.setView([lat, lng], 14); 
+    
+    if (userMarker) userMarker.setLatLng([lat, lng]);
+    else userMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            className: 'bg-transparent',
+            html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
+            iconSize: [20, 20], iconAnchor: [10, 10]
+        })
+    }).addTo(map);
+
+    // Pintar sedes
+    marcadoresSedesMap.forEach(m => map.removeLayer(m));
+    marcadoresSedesMap = [];
+    
+    db.sedes.forEach(s => {
+        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+        const isSelected = (s.ID_SEDE === checkoutSede.ID_SEDE);
+        const iconHtml = `<div class="text-3xl filter drop-shadow-lg ${isSelected ? '' : 'grayscale opacity-50'}">🏪</div>`;
+        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [30, 30], iconAnchor:[15, 30] });
+        marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
+    });
+
+    // OSRM Calculo
+    const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
+
+    try {
+        const res = await fetch(osrmUrl);
+        const data = await res.json();
+        if (data.code === 'Ok') {
+            const route = data.routes[0];
+            const distanceKm = route.distance / 1000;
+            const durationMin = Math.ceil(route.duration / 60);
+
+            // Calcular Precio
+            tarifaFinalCalculada = distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1); // Valor por defecto 1 si no existe
+            const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5;
+            if (tarifaFinalCalculada < min) tarifaFinalCalculada = min;
+
+            // UI
+            document.getElementById('map-header-title').innerText = `MAPA COMBOX: ${tarifaFinalCalculada.toFixed(2)}$`;
+            document.getElementById('route-km').innerText = `${distanceKm.toFixed(1)} km`;
+            document.getElementById('route-time').innerText = `${durationMin} min`;
+
+            // Dibujar Ruta
+            if (rutaLayer) map.removeLayer(rutaLayer);
+            rutaLayer = L.geoJSON(route.geometry, {
+                style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
+            }).addTo(map);
+
+            map.fitBounds(rutaLayer.getBounds(), { padding: [30, 30] });
+        }
+    } catch(e) {
+        document.getElementById('map-header-title').innerText = `MAPA COMBOX: ERROR DE RUTA`;
+    }
+}
+
 
 function getLocation(userInitiated = false) {
     const tariffEl = document.getElementById('tariff-display');
@@ -1854,7 +1973,7 @@ function renderMapPosition(lat, lng) {
 }
 
     
-        function submitOrder() {
+            function submitOrder() {
         const name = document.getElementById('checkout-name').value.trim();
         const phone = document.getElementById('checkout-phone').value.trim();
 
@@ -1863,17 +1982,6 @@ function renderMapPosition(lat, lng) {
         
         localforage.setItem('combox_cliente_nombre', name).catch(e => console.error(e));
         localforage.setItem('combox_cliente_telefono', phone).catch(e => console.error(e));
-        
-                if(checkoutType === 'delivery') {
-            const isManual = document.getElementById('manual-location-wrapper').style.display === 'block';
-            if(isManual) {
-                const loc = document.getElementById('checkout-location').value.trim();
-                if(!loc || loc.includes('Obteniendo')) { customAlert('Por favor, escribe tu ubicación.'); document.getElementById('checkout-location').focus(); return; }
-            } else if (!userMarker) {
-                customAlert('Espera a que el mapa calcule tu ubicación o escríbela manualmente dándole a "Editar".'); return;
-            }
-        }
-
         
         let telefono = checkoutSede?.TELEFONO || '584244701273';
         let nombreSede = checkoutSede?.NOMBRE_SEDE || '';
@@ -1900,7 +2008,7 @@ function renderMapPosition(lat, lng) {
         
         let msg = '';
         
-                if(checkoutType === 'delivery') {
+        if(checkoutType === 'delivery') {
             let locationData = "";
             const isManual = document.getElementById('manual-location-wrapper').style.display === 'block';
 
@@ -1911,10 +2019,10 @@ function renderMapPosition(lat, lng) {
                 // Si el usuario usó el GPS del mapa
                 const lat = userMarker.getLatLng().lat;
                 const lng = userMarker.getLatLng().lng;
-                const tarifaCalculada = document.getElementById('tariff-display').innerText;
-                locationData = `📍 GPS: https://maps.google.com/?q=${lat},${lng}\n💰 (${tarifaCalculada})`;
+                
+                // Usamos la variable global calculada por OSRM
+                locationData = `📍 GPS: https://maps.google.com/?q=${lat},${lng}\n💰 TARIFA DELIVERY: $${tarifaFinalCalculada.toFixed(2)}`;
             } else {
-                // Caso de emergencia si no hay ni manual ni GPS
                 locationData = "Ubicación no especificada (Contactar al cliente)";
             }
 
@@ -1940,6 +2048,7 @@ function renderMapPosition(lat, lng) {
         
         window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`, '_blank');
     }
+
 
         function getSchedule(sede) {
         const now = new Date();
@@ -1996,7 +2105,7 @@ function renderMapPosition(lat, lng) {
         dot.className = `w-1.5 h-1.5 rounded-full ${sched.isOpen ? 'bg-neon-accent animate-pulse shadow-[0_0_8px_#39FF14]' : 'bg-red-500 animate-pulse shadow-[0_0_8px_#ff0000]'}`;
     }
     
-    function renderSedesModal() {
+       function renderSedesModal() {
         const sorted = getSortedSedes();
         document.getElementById('sedes-list-container').innerHTML = sorted.map(s => {
             const sched = getSchedule(s);
@@ -2005,8 +2114,11 @@ function renderMapPosition(lat, lng) {
             
             const bgClass = active ? 'bg-zinc-800/90 border-zinc-500 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-white/5 border-white/10';
             const iconClass = active ? 'bg-white/20 text-white' : 'bg-white/5 text-white/30';
+            
+            // LÓGICA NUEVA: Verificamos si esta sede es la calculada por el GPS
+            const esLaMasCercana = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
 
-            return `<button class="w-full flex items-center justify-between p-4 md:p-5 rounded-3xl ${bgClass} border transition-all" onclick="selectLocation('${s.ID_SEDE}')">
+            return `<button class="w-full flex items-center justify-between p-4 md:p-5 rounded-3xl ${bgClass} border transition-all relative overflow-hidden" onclick="selectLocation('${s.ID_SEDE}')">
                 <div class="flex items-center gap-3 min-w-0 flex-1">
                     <div class="w-10 h-10 flex-shrink-0 md:w-12 md:h-12 rounded-2xl ${iconClass} flex items-center justify-center">
                         <span class="material-symbols-outlined text-[20px] md:text-[24px]">storefront</span>
@@ -2016,15 +2128,18 @@ function renderMapPosition(lat, lng) {
                         <span class="block text-[9px] md:text-[10px] text-zinc-400 uppercase font-black truncate">${sub?.trim() || 'Sucursal'}</span>
                     </div>
                 </div>
-            <div class="flex flex-col items-end gap-1 flex-shrink-0">
-    <div class="flex items-center gap-1.5 flex-shrink-0 ${sched.isOpen ? 'bg-neon-accent/10 border-neon-accent/20' : 'bg-red-500/10 border-red-500/20'} px-2 py-1 rounded-full border">
-        <span class="w-1.5 h-1.5 flex-shrink-0 rounded-full ${sched.isOpen ? 'bg-neon-accent' : 'bg-red-500'}"></span>
-        <span class="text-[8px] md:text-[9px] font-black whitespace-nowrap ${sched.isOpen ? 'text-neon-accent' : 'text-red-500'} uppercase">${sched.text}</span>
-    </div>
-</div>
+                <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                    <div class="flex items-center gap-1.5 flex-shrink-0 ${sched.isOpen ? 'bg-neon-accent/10 border-neon-accent/20' : 'bg-red-500/10 border-red-500/20'} px-2 py-1 rounded-full border">
+                        <span class="w-1.5 h-1.5 flex-shrink-0 rounded-full ${sched.isOpen ? 'bg-neon-accent' : 'bg-red-500'}"></span>
+                        <span class="text-[8px] md:text-[9px] font-black whitespace-nowrap ${sched.isOpen ? 'text-neon-accent' : 'text-red-500'} uppercase">${sched.text}</span>
+                    </div>
+                    <!-- LÓGICA NUEVA: Si es la más cercana, inyectamos la etiqueta -->
+                    ${esLaMasCercana ? '<span class="bg-blue-500/20 text-blue-400 text-[8px] font-black px-2 py-0.5 rounded border border-blue-500/30 uppercase tracking-widest mt-1">¡Más Cerca!</span>' : ''}
+                </div>
             </button>`;
         }).join('');
     }
+
     
     function selectLocation(id) { 
         if(db?.sedes) {
@@ -2717,5 +2832,14 @@ function renderMapPosition(lat, lng) {
     
     init();
 </script>
+<div class="modal" id="welcome-modal">
+    <div class="modal-overlay" onclick="toggleModal('welcome-modal', false)"></div>
+    <div class="modal-content flex flex-col items-center p-6 text-center glass-contour" style="background: #0A0A0B;">
+        <span class="text-5xl mb-4">📢</span>
+        <h3 class="text-2xl font-black text-white uppercase tracking-tighter mb-2">¡Bienvenido!</h3>
+        <p id="welcome-message-text" class="text-zinc-300 text-sm mb-6 font-medium leading-relaxed"></p>
+        <button onclick="toggleModal('welcome-modal', false)" class="w-full bg-primary text-white font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">Entendido</button>
+    </div>
+</div>
 </body>
 </html>

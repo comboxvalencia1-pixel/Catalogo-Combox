@@ -262,10 +262,26 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         .max-content-width { max-width: 1200px; margin-left: auto; margin-right: auto; }
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
 
-                /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
+                        /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
         #map-preview { background: #0a0a0b; }
         .leaflet-tile { filter: brightness(0.8) contrast(1.2); }
         .leaflet-control-attribution { display: none !important; }
+
+        /* Escala dinámica para los iconos del mapa */
+        .sede-marker-content {
+            --map-icon-scale: 1;
+            transform: scale(var(--map-icon-scale)) translateY(-10px);
+            transform-origin: bottom center;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+        .sede-marker-content.selected-sede {
+            transform: scale(calc(var(--map-icon-scale) * 1.15)) translateY(-10px);
+            z-index: 1000 !important;
+        }
+        .sede-marker-content:active {
+            transform: scale(calc(var(--map-icon-scale) * 0.9)) translateY(-10px);
+        }
+
 
 
     </style>
@@ -1681,19 +1697,20 @@ function renderMapModal() {
         </div>
     `}).join('');
 
-    // Agregamos el contenedor para el minimapa
     html += `<div id="global-sedes-map" class="w-full h-64 mt-2 rounded-2xl border border-white/10 z-0 bg-[#0a0a0b] shadow-inner relative z-10"></div>`;
-
     document.getElementById('mapa-list-container').innerHTML = html;
 
-    // Inicializamos el mapa después de inyectar el HTML
     setTimeout(() => {
         if(globalSedesMap) globalSedesMap.remove();
         globalSedesMap = L.map('global-sedes-map', { zoomControl: false, attributionControl: false }).setView([10.2543, -68.0101], 11);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(globalSedesMap);
 
+        globalSedesMap.on('zoomend', function() {
+            updateMarkerScales(globalSedesMap);
+        });
+
         let bounds = [];
-                db.sedes.forEach(s => {
+        db.sedes.forEach(s => {
             const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
             bounds.push([lat, lng]);
             
@@ -1701,14 +1718,17 @@ function renderMapModal() {
             const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
             const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
             
+            let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
+            let letreroClass = sched.isOpen ? "" : "opacity-60";
+
             const iconHtml = `
-                <div class="flex flex-col items-center justify-center translate-y-[-10px]">
-                    <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1">
+                <div class="sede-marker-content flex flex-col items-center justify-center selected-sede cursor-pointer" onclick="selectLocation('${s.ID_SEDE}')">
+                    <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
                         <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
                     </div>
-                    <div class="bg-black/30 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg">
+                    <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
                         <div class="flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
+                            <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
                             <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
                         </div>
                         <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
@@ -1718,29 +1738,18 @@ function renderMapModal() {
             L.marker([lat, lng], { icon }).addTo(globalSedesMap);
         });
 
-
-        // Intentamos ubicar al usuario y ponerle un punto verde
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
-                const uLat = pos.coords.latitude;
-                const uLng = pos.coords.longitude;
-                L.marker([uLat, uLng], {
-                    icon: L.divIcon({
-                        className: 'bg-transparent',
-                        html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
-                        iconSize: [20, 20], iconAnchor: [10, 10]
-                    })
-                }).addTo(globalSedesMap);
-                bounds.push([uLat, uLng]);
+                L.marker([pos.coords.latitude, pos.coords.longitude], { icon: greenDotIcon }).addTo(globalSedesMap);
+                bounds.push([pos.coords.latitude, pos.coords.longitude]);
                 globalSedesMap.fitBounds(bounds, { padding: [30, 30] });
-            }, () => {
-                if(bounds.length > 0) globalSedesMap.fitBounds(bounds, { padding: [30, 30] });
-            });
+            }, () => { if(bounds.length > 0) globalSedesMap.fitBounds(bounds, { padding: [30, 30] }); });
         } else {
             if(bounds.length > 0) globalSedesMap.fitBounds(bounds, { padding: [30, 30] });
         }
+        
+        setTimeout(() => updateMarkerScales(globalSedesMap), 300);
     }, 250);
-
 }
 
 
@@ -1838,15 +1847,7 @@ function renderMapModal() {
     
     function closeCheckout() { toggleModal('checkout-modal', false, null); setTimeout(() => toggleModal('cart-modal', true), 150); }
     
-    function updateCheckoutSede(id) { 
-    if(db?.sedes) {
-        checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
-        if (userMarker) {
-            const pos = userMarker.getLatLng();
-            renderMapPosition(pos.lat, pos.lng);
-        }
-    }
-}
+    
 
     
     function updateLocationBtnState() {
@@ -1916,50 +1917,7 @@ function calculateTariff(lat, lng) {
     return foundTariff;
 }
 
-function showManualLocationInput() {
-    isEditingLocation = true; // Activamos el modo fluido
-    document.getElementById('manual-location-wrapper').style.display = 'flex';
-    document.getElementById('btn-confirm-pin').style.display = 'flex';
-    
-    const locInput = document.getElementById('checkout-location');
-    locInput.placeholder = "Mueve el mapa para ubicar tu dirección";
-    
-    if (userMarker) {
-        userMarker.setIcon(redPinIcon);
-        // Centramos el pin de inmediato
-        userMarker.setLatLng(map.getCenter());
-        pendingLatLng = map.getCenter();
-    }
-    
-    // EL TRUCO MAGICO: El pin sigue el centro exacto del mapa mientras lo arrastras
-    map.on('move', function() {
-        if(isEditingLocation && userMarker) {
-            userMarker.setLatLng(map.getCenter());
-        }
-    });
-    
-    map.on('moveend', function() {
-        if(isEditingLocation) {
-            pendingLatLng = map.getCenter();
-        }
-    });
 
-    // Auto-scroll para centrar la vista
-    document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function confirmManualPin() {
-    isEditingLocation = false; // Apagamos el modo fluido
-    
-    // Limpiamos los eventos para que el pin deje de seguir al mapa
-    map.off('move');
-    map.off('moveend');
-    
-    if (pendingLatLng) {
-        renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
-    }
-    document.getElementById('btn-confirm-pin').style.display = 'none';
-}
 
 
 // Borramos la función resetToMap() porque ya no la necesitamos, el mapa nunca desaparece.
@@ -1971,18 +1929,20 @@ const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature
     if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
     
     map = L.map('map-preview', { zoomControl: false }).setView([10.2543, -68.0101], 13);
-    // MAPA OSCURO CARTO DB
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; CARTO'
     }).addTo(map);
 
-    // NUEVO: Auto-escrolleo al tocar o mover el mapa
     document.getElementById('map-wrapper').addEventListener('touchstart', function() {
         this.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, { passive: true });
     
     map.on('dragstart', function() {
         document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    map.on('zoomend', function() {
+        updateMarkerScales(map);
     });
 
     if (typeof misZonasGeoJSON !== 'undefined') {
@@ -1992,47 +1952,82 @@ const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature
     }
 }
 
+function updateMarkerScales(mapInstance) {
+    if(!mapInstance) return;
+    const zoom = mapInstance.getZoom();
+    let scale = 1;
+    if (zoom <= 11) scale = 0.6;
+    else if (zoom === 12) scale = 0.75;
+    else if (zoom === 13) scale = 0.9;
+    
+    const containers = mapInstance.getContainer().querySelectorAll('.sede-marker-content');
+    containers.forEach(el => el.style.setProperty('--map-icon-scale', scale));
+}
+
+function updateCheckoutSede(id) { 
+    if(db?.sedes) {
+        checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
+        
+        const select = document.getElementById('checkout-sede-select');
+        if(select && select.value !== id) {
+            select.value = id;
+        }
+
+        if (userMarker) {
+            const pos = userMarker.getLatLng();
+            renderMapPosition(pos.lat, pos.lng); 
+        }
+    }
+}
 
 async function renderMapPosition(lat, lng) {
     if(!checkoutSede) return;
     
-    map.setView([lat, lng], 14); 
+    setTimeout(() => map.invalidateSize(), 100); 
+    map.setView([lat, lng], map.getZoom() > 13 ? map.getZoom() : 14); 
     
-    // Usamos la variable isEditingLocation para saber qué pin pintar
     const activeIcon = isEditingLocation ? redPinIcon : greenDotIcon;
     
     if (userMarker) {
         userMarker.setLatLng([lat, lng]);
         userMarker.setIcon(activeIcon);
-        userMarker.dragging.disable(); // Anulamos el arrastre nativo siempre
+        userMarker.dragging.disable(); 
     } else {
-        // Se crea el marcador sin arrastre (draggable: false)
         userMarker = L.marker([lat, lng], { draggable: false, icon: activeIcon }).addTo(map);
     }
 
-    // Pintar sedes con el NUEVO DISEÑO NEÓN
     marcadoresSedesMap.forEach(m => map.removeLayer(m));
     marcadoresSedesMap = [];
     
     db.sedes.forEach(s => {
         const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
         const isSelected = (s.ID_SEDE === checkoutSede.ID_SEDE);
-        
-        // Consultar horario para el punto de estado
         const sched = getSchedule(s);
+        
         const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
         const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
         
+        let iconWrapperClass = "";
+        let letreroClass = "";
+        
+        if (!isSelected) {
+            if (sched.isOpen) {
+                iconWrapperClass = "brightness-75"; 
+                letreroClass = "opacity-80";
+            } else {
+                iconWrapperClass = "grayscale opacity-60"; 
+                letreroClass = "opacity-60";
+            }
+        }
+
         const iconHtml = `
-            <div class="flex flex-col items-center justify-center translate-y-[-10px] ${isSelected ? 'scale-110 transition-transform z-50' : 'grayscale opacity-60 z-10'}">
-                <!-- Círculo Neón Rojo -->
-                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1">
+            <div class="sede-marker-content flex flex-col items-center justify-center ${isSelected ? 'selected-sede' : 'z-[500] cursor-pointer'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
                     <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
                 </div>
-                <!-- Letrero Translúcido -->
-                <div class="bg-black/30 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg">
+                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
                     <div class="flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
+                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
                         <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
                     </div>
                     <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
@@ -2043,7 +2038,8 @@ async function renderMapPosition(lat, lng) {
         marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
     });
 
-    // OSRM Calculo de Ruta Real
+    updateMarkerScales(map); 
+
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
 
@@ -2057,7 +2053,6 @@ async function renderMapPosition(lat, lng) {
 
             const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
             let rawPrice = distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
-
             let decimalPart = rawPrice % 1;
             let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.9 ? 1 : 0);
 
@@ -2073,60 +2068,93 @@ async function renderMapPosition(lat, lng) {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
             }).addTo(map);
 
-            map.fitBounds(rutaLayer.getBounds(), { padding: [30, 30] });
+            map.fitBounds(rutaLayer.getBounds(), { padding: [40, 40] });
+            setTimeout(() => updateMarkerScales(map), 300);
         }
     } catch(e) {
         document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;
     }
 }
 
+function showManualLocationInput() {
+    isEditingLocation = true; 
+    document.getElementById('manual-location-wrapper').style.display = 'flex';
+    document.getElementById('btn-confirm-pin').style.display = 'flex';
+    document.getElementById('btn-wrong-location').style.display = 'none'; 
+    
+    const locInput = document.getElementById('checkout-location');
+    locInput.placeholder = "Mueve el mapa para ubicar tu dirección";
+    
+    setTimeout(() => { if(map) map.invalidateSize(); }, 150);
 
+    if (userMarker) {
+        userMarker.setIcon(redPinIcon);
+        userMarker.setLatLng(map.getCenter());
+        pendingLatLng = map.getCenter();
+    }
+    
+    map.on('move', function() {
+        if(isEditingLocation && userMarker) {
+            userMarker.setLatLng(map.getCenter());
+        }
+    });
+    
+    map.on('moveend', function() {
+        if(isEditingLocation) {
+            pendingLatLng = map.getCenter();
+        }
+    });
 
+    document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
 
+function confirmManualPin() {
+    isEditingLocation = false; 
+    map.off('move');
+    map.off('moveend');
+    
+    if (pendingLatLng) {
+        renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
+    }
+    document.getElementById('btn-confirm-pin').style.display = 'none';
+    document.getElementById('btn-wrong-location').style.display = 'flex';
+}
 
 function getLocation(userInitiated = false) {
-    // Usamos el ID correcto que tienes en tu HTML y evitamos errores si no existe
+    isEditingLocation = false;
+    document.getElementById('btn-confirm-pin').style.display = 'none';
+    document.getElementById('manual-location-wrapper').style.display = 'none';
+    document.getElementById('btn-wrong-location').style.display = 'flex';
+    
+    const locInput = document.getElementById('checkout-location');
+    if(locInput) locInput.value = '';
+
     const headerTitle = document.getElementById('map-header-title');
     if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
     
     initLeafletMap();
-
+    setTimeout(() => map.invalidateSize(), 100); 
+    
     let watchId;
     let timeoutId;
     let bestPos = null;
-
-    // Pedimos alta precisión
     const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
     watchId = navigator.geolocation.watchPosition(pos => {
-        // Vamos guardando la mejor coordenada que el teléfono logre conseguir
-        if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) {
-            bestPos = pos;
-        }
-
-        // Relajamos la exigencia de Safari. Si la precisión baja de 2500m, lo aceptamos de inmediato.
+        if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) { bestPos = pos; }
         if (pos.coords.accuracy > 2500) return; 
 
         navigator.geolocation.clearWatch(watchId);
         clearTimeout(timeoutId);
         renderMapPosition(pos.coords.latitude, pos.coords.longitude);
-
     }, (err) => {
         navigator.geolocation.clearWatch(watchId);
         clearTimeout(timeoutId);
 
-        if (err.code === err.PERMISSION_DENIED) {
-            if (userInitiated) {
-                customAlert(
-                    "Safari bloqueó tu ubicación. Para activarla: \n\n1. Toca el ícono 'aA' en la barra de arriba.\n2. Ve a 'Configuración del sitio web'.\n3. En 'Ubicación' selecciona 'Permitir'.\n\nO ingresa tu dirección a mano.", 
-                    "GPS Bloqueado"
-                );
-            }
-        } else if (err.code === err.TIMEOUT && userInitiated && !bestPos) {
-            customAlert("El GPS tardó mucho en responder. Intenta de nuevo o ingresa tu dirección a mano.", "Tiempo agotado");
+        if (err.code === err.PERMISSION_DENIED && userInitiated) {
+            customAlert("Navegador bloqueó tu ubicación. Actívala en ajustes o ingresa tu dirección a mano.", "GPS Bloqueado");
         }
         
-        // Si hay error pero el teléfono guardó una ubicación aproximada, la usamos para no trabarnos
         if (bestPos) {
              renderMapPosition(bestPos.coords.latitude, bestPos.coords.longitude);
         } else {
@@ -2134,19 +2162,21 @@ function getLocation(userInitiated = false) {
         }
     }, options);
 
-    // Un cronómetro: Si pasan 12 segundos y Safari sigue buscando la "precisión perfecta", lo cortamos y usamos lo que tengamos
     timeoutId = setTimeout(() => {
         navigator.geolocation.clearWatch(watchId);
         if (bestPos) {
             renderMapPosition(bestPos.coords.latitude, bestPos.coords.longitude);
         } else {
-            if (userInitiated) {
-                customAlert("Tu dispositivo no logró obtener una señal GPS precisa. Por favor, escribe tu dirección manualmente.", "Señal débil");
-            }
             showManualLocationInput();
         }
     }, 12000); 
 }
+
+
+
+
+
+
     
             function submitOrder() {
         const name = document.getElementById('checkout-name').value.trim();

@@ -1405,21 +1405,29 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     }
 
 async function setupAfterDBLoad(isCached) {
-    // Variables dinámicas de AppScript
+    // 1. Aquí dejas el bloque de finanzas si aún usas esa pestaña para la tasa
     if (db && db.finanzas) {
         if(db.finanzas.tasa_usd) {
             tasaBCV = parseFloat(db.finanzas.tasa_usd);
             const displayEl = document.getElementById('tasa-bcv-display');
             if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
         }
-        if(db.finanzas.HEADER_PROMOCIONES) {
-            document.getElementById('header-promociones').innerText = db.finanzas.HEADER_PROMOCIONES;
+    }
+    
+    // 2. NUEVO BLOQUE: Buscamos en la pestaña parametros_web
+    if (db && db.parametros_web) {
+        // Buscamos el header
+        if (db.parametros_web.HEADER_PROMOCIONES) {
+            document.getElementById('header-promociones').innerText = db.parametros_web.HEADER_PROMOCIONES;
         }
-        if(db.finanzas.mensaje_bienvenida && db.finanzas.mensaje_bienvenida.trim() !== "") {
-            document.getElementById('welcome-message-text').innerText = db.finanzas.mensaje_bienvenida;
+        
+        // Si tienes el mensaje de bienvenida aquí, también lo actualizas desde esta pestaña
+        if(db.parametros_web.mensaje_bienvenida && db.parametros_web.mensaje_bienvenida.trim() !== "") {
+            document.getElementById('welcome-message-text').innerText = db.parametros_web.mensaje_bienvenida;
             setTimeout(() => toggleModal('welcome-modal', true), 1000);
         }
     }
+    
     
     if(db && db.sedes && db.sedes.length) { 
         // Geolocalización automática para sede más cercana
@@ -1894,8 +1902,10 @@ async function renderMapPosition(lat, lng) {
 
 
 function getLocation(userInitiated = false) {
-    const tariffEl = document.getElementById('tariff-display');
-    tariffEl.innerText = "BUSCANDO GPS...";
+    // Usamos el ID correcto que tienes en tu HTML y evitamos errores si no existe
+    const headerTitle = document.getElementById('map-header-title');
+    if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
+    
     initLeafletMap();
 
     let watchId;
@@ -1954,24 +1964,6 @@ function getLocation(userInitiated = false) {
         }
     }, 12000); 
 }
-
-// Función encargada de dibujar el punto en el mapa (separamos esto para mantener el código limpio)
-function renderMapPosition(lat, lng) {
-    const tariffEl = document.getElementById('tariff-display');
-    map.setView([lat, lng], 15); 
-    
-    if (userMarker) userMarker.setLatLng([lat, lng]);
-    else userMarker = L.marker([lat, lng], {
-        icon: L.divIcon({
-            className: 'bg-transparent',
-            html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
-            iconSize: [20, 20], iconAnchor: [10, 10]
-        })
-    }).addTo(map);
-    
-    tariffEl.innerText = calculateTariff(lat, lng);
-}
-
     
             function submitOrder() {
         const name = document.getElementById('checkout-name').value.trim();

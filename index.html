@@ -1456,25 +1456,30 @@ async function setupAfterDBLoad(isCached) {
         }
     }
     
-        // 2. NUEVO BLOQUE: Buscamos en la pestaña parametros_web (A prueba de Arrays)
-    if (db && db.parametros_web) {
-        // Detectamos si Apps Script envió una lista (Array) y tomamos la primera fila [0], o si es un Objeto directo
-        let parametros = Array.isArray(db.parametros_web) ? db.parametros_web[0] : db.parametros_web;
+                // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion (según tu JSON)
+    if (db && db.configuracion) {
+        // Detectamos si Apps Script envió una lista y tomamos la primera fila, o si es un Objeto directo
+        let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
 
-        // Buscamos el header
-        if (parametros && parametros.HEADER_PROMOCIONES) {
-            document.getElementById('header-promociones').innerText = parametros.HEADER_PROMOCIONES;
+        // Buscamos el header usando exactamente el nombre que viene en tu JSON
+        let tituloPromo = parametros.HEADER_PROMOCIONES;
+
+        if (tituloPromo) {
+            // Actualizamos el texto dinámicamente
+            document.getElementById('header-promociones').innerText = tituloPromo;
         } else {
-            // Si sigue sin salir, esto dejará un mensaje en la consola de tu navegador para saber exactamente cómo se llama la variable
-            console.warn("Revisa el JSON: No se encontró HEADER_PROMOCIONES. Los datos que llegaron son:", parametros);
+            console.warn("No se encontró HEADER_PROMOCIONES en configuracion:", parametros);
         }
         
-        // Si tienes el mensaje de bienvenida aquí, también lo actualizas desde esta pestaña
-        if(parametros && parametros.mensaje_bienvenida && parametros.mensaje_bienvenida.trim() !== "") {
-            document.getElementById('welcome-message-text').innerText = parametros.mensaje_bienvenida;
+        // Mensaje de bienvenida
+        let msjBienvenida = parametros.mensaje_bienvenida;
+        if(msjBienvenida && msjBienvenida.trim() !== "") {
+            document.getElementById('welcome-message-text').innerText = msjBienvenida;
             setTimeout(() => toggleModal('welcome-modal', true), 1000);
         }
     }
+
+
 
     
     if(db && db.sedes && db.sedes.length) { 

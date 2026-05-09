@@ -1963,8 +1963,11 @@ const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature
 function initLeafletMap() {
     if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
     
-    // 🔥 FIX: preferCanvas: true evita que los polígonos y líneas se corten al arrastrar
-    map = L.map('map-preview', { zoomControl: false, preferCanvas: true }).setView([10.2543, -68.0101], 13);
+    // 🔥 FIX: Volvemos a SVG pero con un "padding" enorme.
+    // Esto mantiene tu filtro negro perfecto sin que se corte al arrastrar la pantalla.
+    const customRenderer = L.svg({ padding: 2.5 });
+
+    map = L.map('map-preview', { zoomControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 13);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; CARTO'
     }).addTo(map);
@@ -1984,10 +1987,11 @@ function initLeafletMap() {
     if (typeof misZonasGeoJSON !== 'undefined') {
         zonesGeoLayer = L.geoJSON(misZonasGeoJSON, {
             style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
-            interactive: false // Evita que el polígono bloquee clicks
+            interactive: false 
         }).addTo(map);
     }
 }
+
 
 
 function updateMarkerScales(mapInstance) {

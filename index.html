@@ -2209,37 +2209,24 @@ function getLocation(userInitiated = false) {
     const headerTitle = document.getElementById('map-header-title');
     if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
     
-    function initLeafletMap() {
-    if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
-    
-    // 🔥 FIX: Volvemos a SVG pero con un "padding" enorme.
-    // Esto mantiene tu filtro negro perfecto sin que se corte al arrastrar la pantalla.
-    const customRenderer = L.svg({ padding: 2.5 });
+    initLeafletMap(); 
 
-    map = L.map('map-preview', { zoomControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 13);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CARTO'
-    }).addTo(map);
-
-    document.getElementById('map-wrapper').addEventListener('touchstart', function() {
-        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, { passive: true });
-    
-    map.on('dragstart', function() {
-        document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    map.on('zoomend', function() {
-        updateMarkerScales(map);
-    });
-
-    if (typeof misZonasGeoJSON !== 'undefined') {
-        zonesGeoLayer = L.geoJSON(misZonasGeoJSON, {
-            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
-            interactive: false 
-        }).addTo(map);
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                renderMapPosition(position.coords.latitude, position.coords.longitude);
+            },
+            function(error) {
+                if(headerTitle) headerTitle.innerText = "UBICA EL PIN MANUALMENTE";
+                renderMapPosition(10.2543, -68.0101); 
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    } else {
+        renderMapPosition(10.2543, -68.0101);
     }
 }
+
 
 
 

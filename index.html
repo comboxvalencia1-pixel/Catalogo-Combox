@@ -1381,16 +1381,16 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
         }
 
         
-        const globalSearch = document.getElementById('global-search');
-        if(globalSearch){
-            globalSearch.addEventListener('focus', function(e) {
-                window.scrollTo({top: window.scrollY}); 
-            });
-        }
-    });
+            const globalSearch = document.getElementById('global-search');
+    if(globalSearch){
+        globalSearch.addEventListener('focus', function(e) {
+            window.scrollTo({top: window.scrollY}); 
+        });
+    }
 
-    async function init() {
-        loadSavedCV();
+async function init() {
+    loadSavedCV();
+
         
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('sugerencias')) {
@@ -1456,15 +1456,18 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
                     await setupAfterDBLoad(false); 
                 }
             }
-        } catch(e) { 
-            console.error("Error cargando DB:", e); 
-            if (loadedFromCache) {
-                const s = document.getElementById('splash'); 
-                if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
-            } else {
-                customAlert("No hay conexión a internet y no hay datos guardados para arrancar la aplicación.");
-            }
-        }
+       } catch(e) { 
+    console.error("Error cargando DB:", e); 
+    
+    // Forzar la desaparición del splash para que la alerta sea visible
+    const s = document.getElementById('splash'); 
+    if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
+
+    if (!loadedFromCache) {
+        customAlert("No hay conexión a internet y no hay datos guardados para arrancar la aplicación.");
+    }
+}
+
     }
 
 async function setupAfterDBLoad(isCached) {

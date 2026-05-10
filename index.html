@@ -837,6 +837,17 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 
 <script>
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
+
+    // SALVAVIDAS: Forzar la desaparición del splash screen después de 7 segundos máximo
+    setTimeout(() => {
+        const s = document.getElementById('splash');
+        if(s) {
+            console.warn("Forzando cierre de splash por seguridad.");
+            s.style.opacity = '0';
+            setTimeout(() => s.remove(), 600);
+        }
+    }, 7000);
+
     const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
     
     // Inyección de Service Worker local para fuentes e iconos rápidos
@@ -1471,102 +1482,99 @@ async function init() {
     }
 
 async function setupAfterDBLoad(isCached) {
-    // 1. Aquí dejas el bloque de finanzas si aún usas esa pestaña para la tasa
-    if (db && db.finanzas) {
-        if(db.finanzas.tasa_usd) {
-            tasaBCV = parseFloat(db.finanzas.tasa_usd);
-            const displayEl = document.getElementById('tasa-bcv-display');
-            if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
-        }
-    }
-    
-                // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion (según tu JSON)
-    if (db && db.configuracion) {
-        // Detectamos si Apps Script envió una lista y tomamos la primera fila, o si es un Objeto directo
-        let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
-
-        // Buscamos el header usando exactamente el nombre que viene en tu JSON
-        let tituloPromo = parametros.HEADER_PROMOCIONES;
-
-        if (tituloPromo) {
-            // Actualizamos el texto dinámicamente
-            document.getElementById('header-promociones').innerText = tituloPromo;
-        } else {
-            console.warn("No se encontró HEADER_PROMOCIONES en configuracion:", parametros);
-        }
-        
-        // Mensaje de bienvenida
-        let msjBienvenida = parametros.mensaje_bienvenida;
-        if(msjBienvenida && msjBienvenida.trim() !== "") {
-            document.getElementById('welcome-message-text').innerText = msjBienvenida;
-            setTimeout(() => toggleModal('welcome-modal', true), 1000);
-        }
-    }
-
-
-
-    
-    if(db && db.sedes && db.sedes.length) { 
-        // Geolocalización automática para sede más cercana
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                let distMinima = Infinity;
-                db.sedes.forEach(s => {
-                    const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
-                    const dist = calcularDistanciaHaversine(pos.coords.latitude, pos.coords.longitude, lat, lng);
-                    const isOpen = getSchedule(s).isOpen;
-                    if (isOpen && dist < distMinima) {
-                        distMinima = dist;
-                        sedeMasCercanaCalculada = s;
-                    }
-                });
-                
-                if (sedeMasCercanaCalculada) {
-                    currentSede = sedeMasCercanaCalculada;
-                    localforage.setItem('combox_sede_id', currentSede.ID_SEDE);
-                    updateHeader();
-                }
-            }, () => {}, {timeout: 5000});
-        }
-
-        const savedSedeId = await localforage.getItem('combox_sede_id');
-        if (savedSedeId && !sedeMasCercanaCalculada) {
-            currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
-        } else if (!sedeMasCercanaCalculada) {
-            currentSede = db.sedes[0]; 
-        }
-        updateHeader(); 
-    }
-
-    // ... código existente del carrito ...
-    const urlParams = new URLSearchParams(window.location.search);
-    const pedidoParam = urlParams.get('pedido');
-    if(pedidoParam) {
-        const pairs = pedidoParam.split('_');
-        let hasNewItems = false;
-        pairs.forEach(pair => {
-            const [id, qty] = pair.split('-');
-            const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
-            if(productExists && qty && !isNaN(qty)) {
-                cart[id] = parseInt(qty);
-                hasNewItems = true;
+    try {
+        // 1. Bloque de finanzas seguro
+        if (db && db.finanzas) {
+            let finanzasData = Array.isArray(db.finanzas) ? db.finanzas[0] : db.finanzas;
+            if(finanzasData && finanzasData.tasa_usd) {
+                tasaBCV = parseFloat(finanzasData.tasa_usd);
+                const displayEl = document.getElementById('tasa-bcv-display');
+                if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
             }
-        });
-        if(hasNewItems) {
-            saveCart(); updateOrder(); urlParams.delete('pedido');
-            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-            window.history.replaceState({}, document.title, newUrl);
-            setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
         }
-    }
-    
-    renderPromos();
         
+        // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion seguro
+        if (db && db.configuracion) {
+            let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
+
+            // Verificamos que parametros exista antes de buscar sus propiedades
+            if (parametros) {
+                let tituloPromo = parametros.HEADER_PROMOCIONES;
+                if (tituloPromo) {
+                    document.getElementById('header-promociones').innerText = tituloPromo;
+                } else {
+                    console.warn("No se encontró HEADER_PROMOCIONES");
+                }
+                
+                let msjBienvenida = parametros.mensaje_bienvenida;
+                if(msjBienvenida && msjBienvenida.trim() !== "") {
+                    document.getElementById('welcome-message-text').innerText = msjBienvenida;
+                    setTimeout(() => toggleModal('welcome-modal', true), 1000);
+                }
+            }
+        }
+
+        if(db && db.sedes && db.sedes.length) { 
+            // Geolocalización automática para sede más cercana
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    let distMinima = Infinity;
+                    db.sedes.forEach(s => {
+                        const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                        const dist = calcularDistanciaHaversine(pos.coords.latitude, pos.coords.longitude, lat, lng);
+                        const isOpen = getSchedule(s).isOpen;
+                        if (isOpen && dist < distMinima) {
+                            distMinima = dist;
+                            sedeMasCercanaCalculada = s;
+                        }
+                    });
+                    
+                    if (sedeMasCercanaCalculada) {
+                        currentSede = sedeMasCercanaCalculada;
+                        localforage.setItem('combox_sede_id', currentSede.ID_SEDE);
+                        updateHeader();
+                    }
+                }, () => {}, {timeout: 5000});
+            }
+
+            const savedSedeId = await localforage.getItem('combox_sede_id');
+            if (savedSedeId && !sedeMasCercanaCalculada) {
+                currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
+            } else if (!sedeMasCercanaCalculada) {
+                currentSede = db.sedes[0]; 
+            }
+            updateHeader(); 
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const pedidoParam = urlParams.get('pedido');
+        if(pedidoParam) {
+            const pairs = pedidoParam.split('_');
+            let hasNewItems = false;
+            pairs.forEach(pair => {
+                const [id, qty] = pair.split('-');
+                const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
+                if(productExists && qty && !isNaN(qty)) {
+                    cart[id] = parseInt(qty);
+                    hasNewItems = true;
+                }
+            });
+            if(hasNewItems) {
+                saveCart(); updateOrder(); urlParams.delete('pedido');
+                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                window.history.replaceState({}, document.title, newUrl);
+                setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
+            }
+        }
+        
+        renderPromos();
+            
         if(!initialRenderDone) {
             render(); 
             initialRenderDone = true;
             updateOrder(); 
             
+            // ELIMINACIÓN DEL SPLASH NORMAL
             setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
 
             const productId = urlParams.get('id');
@@ -1575,7 +1583,15 @@ async function setupAfterDBLoad(isCached) {
             render();
             updateOrder(); 
         }
+
+    } catch(err) {
+        console.error("Error procesando los datos:", err);
+        // FORZAR LA DESAPARICIÓN DEL SPLASH INCLUSO SI ALGO FALLA ARRIBA
+        const s = document.getElementById('splash');
+        if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
     }
+}
+
 
     function getSortedSedes() {
         if (!db?.sedes) return [];

@@ -264,7 +264,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 
                         /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
         #map-preview { background: #0a0a0b; }
-        .leaflet-tile { filter: brightness(0.8) contrast(1.2); }
+        .leaflet-tile { filter: brightness(1.0) contrast(1.1); }
         .leaflet-control-attribution { display: none !important; }
 
         /* Escala dinámica para los iconos del mapa */
@@ -551,24 +551,26 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         </p>
     </div>
 
-    <!-- 2. MAPA (AHORA ABAJO) -->
+       <!-- 2. MAPA (AHORA ABAJO) -->
     <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
         
-        <!-- Header del Mapa Translúcido -->
-        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 shadow-lg flex items-center justify-center gap-2 max-w-[90%] whitespace-nowrap pointer-events-none">
-            <span class="material-symbols-outlined text-[#39FF14] text-[20px]">two_wheeler</span>
-            <h2 id="map-header-title" class="text-white font-black text-[10px] uppercase tracking-widest m-0">DELIVERY COMBOX: --$</h2>
+        <!-- Marca de Agua Superior Izquierda -->
+        <div class="absolute top-4 left-4 z-[1000] pointer-events-none opacity-50">
+            <span class="text-white font-[900] text-xl tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">COMBOX</span>
         </div>
 
         <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
         
-        <!-- Botón Aceptar Nueva Ubicación -->
-        <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-6 py-3 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-2 border border-white/20" style="display:none; margin-top: 40px;">
-            Aceptar <span class="material-symbols-outlined text-[18px]">check_circle</span>
+        <!-- Botón Aceptar Nueva Ubicación (Más pequeño) -->
+        <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-4 py-2 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-1 border border-white/20 text-[10px] uppercase tracking-widest" style="display:none; margin-top: 35px;">
+            Aceptar <span class="material-symbols-outlined text-[14px]">check_circle</span>
         </button>
 
-        <!-- Indicadores de Ruta (KM/Tiempo) -->
+        <!-- Indicadores de Ruta y Tarifa Inferior Derecha -->
         <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
+            <div class="bg-primary/90 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[12px] uppercase flex items-center justify-center gap-1.5 min-w-[80px]">
+                <span class="material-symbols-outlined text-[16px] text-white">two_wheeler</span> <span id="map-tariff-text">--$</span>
+            </div>
             <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
                 <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
             </div>
@@ -586,6 +588,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
             <span class="material-symbols-outlined text-[18px]">my_location</span>
         </button>
     </div> <!-- Cierre de map-wrapper -->
+
 </div>  <!-- Cierre de checkout-location-container -->
 
         </div> <!-- Cierre de checkout-scroll-area -->
@@ -834,6 +837,17 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 
 <script>
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
+
+    // SALVAVIDAS: Forzar la desaparición del splash screen después de 7 segundos máximo
+    setTimeout(() => {
+        const s = document.getElementById('splash');
+        if(s) {
+            console.warn("Forzando cierre de splash por seguridad.");
+            s.style.opacity = '0';
+            setTimeout(() => s.remove(), 600);
+        }
+    }, 7000);
+
     const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
     
     // Inyección de Service Worker local para fuentes e iconos rápidos
@@ -1339,37 +1353,55 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
         }
     }, { passive: true });
 
-       document.addEventListener("DOMContentLoaded", () => {
-        const inputs = document.querySelectorAll('#checkout-name, #checkout-phone, #checkout-location');
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
-        });
-
-        const locInput = document.getElementById('checkout-location');
+               const locInput = document.getElementById('checkout-location');
         if(locInput) {
             locInput.addEventListener('input', function(e) {
-                // Nueva fórmula súper inteligente que acepta "(10.2, -68.4)", "10.2,-68.4", "10.2 -68.4"
                 const coincidencia = e.target.value.match(/[(]?\s*(-?\d+\.\d+)\s*[,;\s]+\s*(-?\d+\.\d+)\s*[)]?/);
                 if (coincidencia) {
                     const lat = parseFloat(coincidencia[1]);
                     const lng = parseFloat(coincidencia[2]);
-                    // Ya no ocultamos el mapa, solo actualizamos el punto
+                    
+                    document.getElementById('map-wrapper').style.display = 'block';
+                    isEditingLocation = true; // Activa el pin rojo
+                    
+                    // Seleccionar sede más cercana automáticamente
+                    if (db && db.sedes) {
+                        let distMinima = Infinity;
+                        let sedeCercana = null;
+                        db.sedes.forEach(s => {
+                            const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                            const dist = calcularDistanciaHaversine(lat, lng, sLat, sLng);
+                            const sched = getSchedule(s);
+                            if (sched.isOpen && dist < distMinima) {
+                                distMinima = dist;
+                                sedeCercana = s;
+                            }
+                        });
+                        if (sedeCercana) {
+                            checkoutSede = sedeCercana;
+                            const select = document.getElementById('checkout-sede-select');
+                            if(select) select.value = sedeCercana.ID_SEDE;
+                        }
+                    }
                     setTimeout(() => renderMapPosition(lat, lng), 300);
+                } else if (e.target.value.trim() !== '') {
+                    // Si se escribe texto normal, se oculta el mapa
+                    document.getElementById('map-wrapper').style.display = 'none';
                 }
             });
         }
 
         
-        const globalSearch = document.getElementById('global-search');
-        if(globalSearch){
-            globalSearch.addEventListener('focus', function(e) {
-                window.scrollTo({top: window.scrollY}); 
-            });
-        }
-    });
+            const globalSearch = document.getElementById('global-search');
+    if(globalSearch){
+        globalSearch.addEventListener('focus', function(e) {
+            window.scrollTo({top: window.scrollY}); 
+        });
+    }
 
-    async function init() {
-        loadSavedCV();
+async function init() {
+    loadSavedCV();
+
         
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('sugerencias')) {
@@ -1435,114 +1467,114 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
                     await setupAfterDBLoad(false); 
                 }
             }
-        } catch(e) { 
-            console.error("Error cargando DB:", e); 
-            if (loadedFromCache) {
-                const s = document.getElementById('splash'); 
-                if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
-            } else {
-                customAlert("No hay conexión a internet y no hay datos guardados para arrancar la aplicación.");
-            }
-        }
+       } catch(e) { 
+    console.error("Error cargando DB:", e); 
+    
+    // Forzar la desaparición del splash para que la alerta sea visible
+    const s = document.getElementById('splash'); 
+    if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
+
+    if (!loadedFromCache) {
+        customAlert("No hay conexión a internet y no hay datos guardados para arrancar la aplicación.");
+    }
+}
+
     }
 
 async function setupAfterDBLoad(isCached) {
-    // 1. Aquí dejas el bloque de finanzas si aún usas esa pestaña para la tasa
-    if (db && db.finanzas) {
-        if(db.finanzas.tasa_usd) {
-            tasaBCV = parseFloat(db.finanzas.tasa_usd);
-            const displayEl = document.getElementById('tasa-bcv-display');
-            if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
-        }
-    }
-    
-                // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion (según tu JSON)
-    if (db && db.configuracion) {
-        // Detectamos si Apps Script envió una lista y tomamos la primera fila, o si es un Objeto directo
-        let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
-
-        // Buscamos el header usando exactamente el nombre que viene en tu JSON
-        let tituloPromo = parametros.HEADER_PROMOCIONES;
-
-        if (tituloPromo) {
-            // Actualizamos el texto dinámicamente
-            document.getElementById('header-promociones').innerText = tituloPromo;
-        } else {
-            console.warn("No se encontró HEADER_PROMOCIONES en configuracion:", parametros);
-        }
-        
-        // Mensaje de bienvenida
-        let msjBienvenida = parametros.mensaje_bienvenida;
-        if(msjBienvenida && msjBienvenida.trim() !== "") {
-            document.getElementById('welcome-message-text').innerText = msjBienvenida;
-            setTimeout(() => toggleModal('welcome-modal', true), 1000);
-        }
-    }
-
-
-
-    
-    if(db && db.sedes && db.sedes.length) { 
-        // Geolocalización automática para sede más cercana
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                let distMinima = Infinity;
-                db.sedes.forEach(s => {
-                    const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
-                    const dist = calcularDistanciaHaversine(pos.coords.latitude, pos.coords.longitude, lat, lng);
-                    const isOpen = getSchedule(s).isOpen;
-                    if (isOpen && dist < distMinima) {
-                        distMinima = dist;
-                        sedeMasCercanaCalculada = s;
-                    }
-                });
-                
-                if (sedeMasCercanaCalculada) {
-                    currentSede = sedeMasCercanaCalculada;
-                    localforage.setItem('combox_sede_id', currentSede.ID_SEDE);
-                    updateHeader();
-                }
-            }, () => {}, {timeout: 5000});
-        }
-
-        const savedSedeId = await localforage.getItem('combox_sede_id');
-        if (savedSedeId && !sedeMasCercanaCalculada) {
-            currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
-        } else if (!sedeMasCercanaCalculada) {
-            currentSede = db.sedes[0]; 
-        }
-        updateHeader(); 
-    }
-
-    // ... código existente del carrito ...
-    const urlParams = new URLSearchParams(window.location.search);
-    const pedidoParam = urlParams.get('pedido');
-    if(pedidoParam) {
-        const pairs = pedidoParam.split('_');
-        let hasNewItems = false;
-        pairs.forEach(pair => {
-            const [id, qty] = pair.split('-');
-            const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
-            if(productExists && qty && !isNaN(qty)) {
-                cart[id] = parseInt(qty);
-                hasNewItems = true;
+    try {
+        // 1. Bloque de finanzas seguro
+        if (db && db.finanzas) {
+            let finanzasData = Array.isArray(db.finanzas) ? db.finanzas[0] : db.finanzas;
+            if(finanzasData && finanzasData.tasa_usd) {
+                tasaBCV = parseFloat(finanzasData.tasa_usd);
+                const displayEl = document.getElementById('tasa-bcv-display');
+                if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
             }
-        });
-        if(hasNewItems) {
-            saveCart(); updateOrder(); urlParams.delete('pedido');
-            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-            window.history.replaceState({}, document.title, newUrl);
-            setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
         }
-    }
-    
-    renderPromos();
         
+        // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion seguro
+        if (db && db.configuracion) {
+            let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
+
+            // Verificamos que parametros exista antes de buscar sus propiedades
+            if (parametros) {
+                let tituloPromo = parametros.HEADER_PROMOCIONES;
+                if (tituloPromo) {
+                    document.getElementById('header-promociones').innerText = tituloPromo;
+                } else {
+                    console.warn("No se encontró HEADER_PROMOCIONES");
+                }
+                
+                let msjBienvenida = parametros.mensaje_bienvenida;
+                if(msjBienvenida && msjBienvenida.trim() !== "") {
+                    document.getElementById('welcome-message-text').innerText = msjBienvenida;
+                    setTimeout(() => toggleModal('welcome-modal', true), 1000);
+                }
+            }
+        }
+
+        if(db && db.sedes && db.sedes.length) { 
+            // Geolocalización automática para sede más cercana
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    let distMinima = Infinity;
+                    db.sedes.forEach(s => {
+                        const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                        const dist = calcularDistanciaHaversine(pos.coords.latitude, pos.coords.longitude, lat, lng);
+                        const isOpen = getSchedule(s).isOpen;
+                        if (isOpen && dist < distMinima) {
+                            distMinima = dist;
+                            sedeMasCercanaCalculada = s;
+                        }
+                    });
+                    
+                    if (sedeMasCercanaCalculada) {
+                        currentSede = sedeMasCercanaCalculada;
+                        localforage.setItem('combox_sede_id', currentSede.ID_SEDE);
+                        updateHeader();
+                    }
+                }, () => {}, {timeout: 5000});
+            }
+
+            const savedSedeId = await localforage.getItem('combox_sede_id');
+            if (savedSedeId && !sedeMasCercanaCalculada) {
+                currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
+            } else if (!sedeMasCercanaCalculada) {
+                currentSede = db.sedes[0]; 
+            }
+            updateHeader(); 
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const pedidoParam = urlParams.get('pedido');
+        if(pedidoParam) {
+            const pairs = pedidoParam.split('_');
+            let hasNewItems = false;
+            pairs.forEach(pair => {
+                const [id, qty] = pair.split('-');
+                const productExists = getAllSourceData().find(x => getUnifiedId(x) === id);
+                if(productExists && qty && !isNaN(qty)) {
+                    cart[id] = parseInt(qty);
+                    hasNewItems = true;
+                }
+            });
+            if(hasNewItems) {
+                saveCart(); updateOrder(); urlParams.delete('pedido');
+                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                window.history.replaceState({}, document.title, newUrl);
+                setTimeout(() => toggleModal('cart-modal', true, renderCart), 800);
+            }
+        }
+        
+        renderPromos();
+            
         if(!initialRenderDone) {
             render(); 
             initialRenderDone = true;
             updateOrder(); 
             
+            // ELIMINACIÓN DEL SPLASH NORMAL
             setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
 
             const productId = urlParams.get('id');
@@ -1551,7 +1583,15 @@ async function setupAfterDBLoad(isCached) {
             render();
             updateOrder(); 
         }
+
+    } catch(err) {
+        console.error("Error procesando los datos:", err);
+        // FORZAR LA DESAPARICIÓN DEL SPLASH INCLUSO SI ALGO FALLA ARRIBA
+        const s = document.getElementById('splash');
+        if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
     }
+}
+
 
     function getSortedSedes() {
         if (!db?.sedes) return [];
@@ -2032,7 +2072,8 @@ async function renderMapPosition(lat, lng) {
     if(!checkoutSede) return;
     
     setTimeout(() => { if(map) map.invalidateSize(); }, 100); 
-    map.setView([lat, lng], map.getZoom() > 13 ? map.getZoom() : 14); 
+        map.setView([lat, lng], isEditingLocation ? 13 : 14); 
+ 
     
     const activeIcon = isEditingLocation ? redPinIcon : greenDotIcon;
     
@@ -2070,7 +2111,7 @@ async function renderMapPosition(lat, lng) {
 
         const iconHtml = `
             <div class="sede-marker-content flex flex-col items-center justify-center ${isSelected ? 'selected-sede' : 'z-[500] cursor-pointer'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
-                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-primary flex items-center justify-center mb-1 ${iconWrapperClass}">
                     <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
                 </div>
                 <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
@@ -2093,7 +2134,9 @@ async function renderMapPosition(lat, lng) {
         map.removeLayer(rutaLayer);
         rutaLayer = null;
     }
-    document.getElementById('map-header-title').innerText = `CALCULANDO RUTA...`;
+        // Actualizamos textos a estado de espera
+    const tariffEl = document.getElementById('map-tariff-text');
+    if(tariffEl) tariffEl.innerText = `...`;
 
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
@@ -2114,11 +2157,10 @@ async function renderMapPosition(lat, lng) {
             tarifaFinalCalculada = Math.max(min, roundedPrice);
             let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
 
-            document.getElementById('map-header-title').innerText = `DELIVERY COMBOX: ${displayPrice}$`;
+            if(tariffEl) tariffEl.innerText = `${displayPrice}$`;
             document.getElementById('route-km').innerText = `${distanceKm.toFixed(1)} km`;
             document.getElementById('route-time').innerText = `${durationMin} min`;
 
-            // 🔥 FIX APLICADO: Dibujamos la nueva línea verde de manera limpia
             if (rutaLayer) map.removeLayer(rutaLayer);
             rutaLayer = L.geoJSON(route.geometry, {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
@@ -2131,9 +2173,9 @@ async function renderMapPosition(lat, lng) {
             }, 300);
         }
     } catch(e) {
-        document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;
+        if(tariffEl) tariffEl.innerText = `ERROR`;
     }
-}
+
 
 
 function showManualLocationInput() {
@@ -2145,14 +2187,10 @@ function showManualLocationInput() {
     const locInput = document.getElementById('checkout-location');
     locInput.placeholder = "Mueve el mapa para ubicar tu dirección";
     
-    // 🔥 FIX: Eliminamos la ruta verde de inmediato para limpiar el mapa visualmente
-    if (rutaLayer && map) {
-        map.removeLayer(rutaLayer);
-        rutaLayer = null;
-    }
+    if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
     
-    // Dejamos los textos limpios mientras el usuario elige
-    document.getElementById('map-header-title').innerText = `UBICANDO PIN...`;
+    const tariffEl = document.getElementById('map-tariff-text');
+    if(tariffEl) tariffEl.innerText = `...`;
     document.getElementById('route-km').innerText = `-- km`;
     document.getElementById('route-time').innerText = `-- min`;
 
@@ -2164,6 +2202,8 @@ function showManualLocationInput() {
         pendingLatLng = map.getCenter();
     }
     
+    map.setZoom(13); // Alejamos la cámara un poco
+    
     map.on('move', function() {
         if(isEditingLocation && userMarker) {
             userMarker.setLatLng(map.getCenter());
@@ -2173,11 +2213,32 @@ function showManualLocationInput() {
     map.on('moveend', function() {
         if(isEditingLocation) {
             pendingLatLng = map.getCenter();
+            
+            // Lógica para auto-seleccionar sede al terminar de mover el mapa
+            if (db && db.sedes) {
+                let distMinima = Infinity;
+                let sedeCercana = null;
+                db.sedes.forEach(s => {
+                    const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                    const dist = calcularDistanciaHaversine(pendingLatLng.lat, pendingLatLng.lng, sLat, sLng);
+                    const sched = getSchedule(s);
+                    if (sched.isOpen && dist < distMinima) {
+                        distMinima = dist;
+                        sedeCercana = s;
+                    }
+                });
+                if (sedeCercana && (!checkoutSede || checkoutSede.ID_SEDE !== sedeCercana.ID_SEDE)) {
+                    checkoutSede = sedeCercana;
+                    const select = document.getElementById('checkout-sede-select');
+                    if(select) select.value = sedeCercana.ID_SEDE;
+                }
+            }
         }
     });
 
     document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+
 
 function confirmManualPin() {
     isEditingLocation = false; 
@@ -2212,7 +2273,7 @@ function getLocation(userInitiated = false) {
     if(locInput) locInput.value = '';
 
     const headerTitle = document.getElementById('map-header-title');
-    if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
+    if (headerTitle) headerTitle.innerText = "Calculando";
     
     initLeafletMap(); 
 

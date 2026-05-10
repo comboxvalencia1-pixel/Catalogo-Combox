@@ -264,7 +264,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 
                         /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
         #map-preview { background: #0a0a0b; }
-        .leaflet-tile { filter: brightness(0.8) contrast(1.2); }
+        .leaflet-tile { filter: brightness(1.0) contrast(1.1); }
         .leaflet-control-attribution { display: none !important; }
 
         /* Escala dinámica para los iconos del mapa */
@@ -551,24 +551,26 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         </p>
     </div>
 
-    <!-- 2. MAPA (AHORA ABAJO) -->
+       <!-- 2. MAPA (AHORA ABAJO) -->
     <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
         
-        <!-- Header del Mapa Translúcido -->
-        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 shadow-lg flex items-center justify-center gap-2 max-w-[90%] whitespace-nowrap pointer-events-none">
-            <span class="material-symbols-outlined text-[#39FF14] text-[20px]">two_wheeler</span>
-            <h2 id="map-header-title" class="text-white font-black text-[10px] uppercase tracking-widest m-0">DELIVERY COMBOX: --$</h2>
+        <!-- Marca de Agua Superior Izquierda -->
+        <div class="absolute top-4 left-4 z-[1000] pointer-events-none opacity-50">
+            <span class="text-white font-[900] text-xl tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">COMBOX</span>
         </div>
 
         <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
         
-        <!-- Botón Aceptar Nueva Ubicación -->
-        <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-6 py-3 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-2 border border-white/20" style="display:none; margin-top: 40px;">
-            Aceptar <span class="material-symbols-outlined text-[18px]">check_circle</span>
+        <!-- Botón Aceptar Nueva Ubicación (Más pequeño) -->
+        <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-4 py-2 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-1 border border-white/20 text-[10px] uppercase tracking-widest" style="display:none; margin-top: 35px;">
+            Aceptar <span class="material-symbols-outlined text-[14px]">check_circle</span>
         </button>
 
-        <!-- Indicadores de Ruta (KM/Tiempo) -->
+        <!-- Indicadores de Ruta y Tarifa Inferior Derecha -->
         <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
+            <div class="bg-primary/90 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[12px] uppercase flex items-center justify-center gap-1.5 min-w-[80px]">
+                <span class="material-symbols-outlined text-[16px] text-white">two_wheeler</span> <span id="map-tariff-text">--$</span>
+            </div>
             <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
                 <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
             </div>
@@ -586,6 +588,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
             <span class="material-symbols-outlined text-[18px]">my_location</span>
         </button>
     </div> <!-- Cierre de map-wrapper -->
+
 </div>  <!-- Cierre de checkout-location-container -->
 
         </div> <!-- Cierre de checkout-scroll-area -->
@@ -1339,22 +1342,40 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
         }
     }, { passive: true });
 
-       document.addEventListener("DOMContentLoaded", () => {
-        const inputs = document.querySelectorAll('#checkout-name, #checkout-phone, #checkout-location');
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
-        });
-
-        const locInput = document.getElementById('checkout-location');
+               const locInput = document.getElementById('checkout-location');
         if(locInput) {
             locInput.addEventListener('input', function(e) {
-                // Nueva fórmula súper inteligente que acepta "(10.2, -68.4)", "10.2,-68.4", "10.2 -68.4"
                 const coincidencia = e.target.value.match(/[(]?\s*(-?\d+\.\d+)\s*[,;\s]+\s*(-?\d+\.\d+)\s*[)]?/);
                 if (coincidencia) {
                     const lat = parseFloat(coincidencia[1]);
                     const lng = parseFloat(coincidencia[2]);
-                    // Ya no ocultamos el mapa, solo actualizamos el punto
+                    
+                    document.getElementById('map-wrapper').style.display = 'block';
+                    isEditingLocation = true; // Activa el pin rojo
+                    
+                    // Seleccionar sede más cercana automáticamente
+                    if (db && db.sedes) {
+                        let distMinima = Infinity;
+                        let sedeCercana = null;
+                        db.sedes.forEach(s => {
+                            const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                            const dist = calcularDistanciaHaversine(lat, lng, sLat, sLng);
+                            const sched = getSchedule(s);
+                            if (sched.isOpen && dist < distMinima) {
+                                distMinima = dist;
+                                sedeCercana = s;
+                            }
+                        });
+                        if (sedeCercana) {
+                            checkoutSede = sedeCercana;
+                            const select = document.getElementById('checkout-sede-select');
+                            if(select) select.value = sedeCercana.ID_SEDE;
+                        }
+                    }
                     setTimeout(() => renderMapPosition(lat, lng), 300);
+                } else if (e.target.value.trim() !== '') {
+                    // Si se escribe texto normal, se oculta el mapa
+                    document.getElementById('map-wrapper').style.display = 'none';
                 }
             });
         }
@@ -1962,8 +1983,7 @@ function calculateTariff(lat, lng) {
 // Borramos la función resetToMap() porque ya no la necesitamos, el mapa nunca desaparece.
 
     
-const misZonasGeoJSON = 
-{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"TARIFA","styleUrl":"#poly-FFFFFF-1-0-nodesc","fill-opacity":0,"fill":"#ffffff","stroke-opacity":1,"stroke":"#ffffff","stroke-width":0.001}}]}
+const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"COMBOX MAPA","styleUrl":"#poly-BDBDBD-3301-43-nodesc","fill-opacity":0.16862745098039217,"fill":"#bdbdbd","stroke-opacity":1,"stroke":"#bdbdbd","stroke-width":3.301},"id":0},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"TARIFA","styleUrl":"#poly-FFFFFF-3901-20-nodesc","fill-opacity":0.0784313725490196,"fill":"#ffffff","stroke-opacity":1,"stroke":"#ffffff","stroke-width":3.901}}]}
 
  
 function initLeafletMap() {
@@ -2033,7 +2053,8 @@ async function renderMapPosition(lat, lng) {
     if(!checkoutSede) return;
     
     setTimeout(() => { if(map) map.invalidateSize(); }, 100); 
-    map.setView([lat, lng], map.getZoom() > 13 ? map.getZoom() : 14); 
+        map.setView([lat, lng], isEditingLocation ? 13 : 14); 
+ 
     
     const activeIcon = isEditingLocation ? redPinIcon : greenDotIcon;
     
@@ -2071,7 +2092,7 @@ async function renderMapPosition(lat, lng) {
 
         const iconHtml = `
             <div class="sede-marker-content flex flex-col items-center justify-center ${isSelected ? 'selected-sede' : 'z-[500] cursor-pointer'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
-                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-primary flex items-center justify-center mb-1 ${iconWrapperClass}">
                     <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
                 </div>
                 <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
@@ -2094,7 +2115,9 @@ async function renderMapPosition(lat, lng) {
         map.removeLayer(rutaLayer);
         rutaLayer = null;
     }
-    document.getElementById('map-header-title').innerText = `CALCULANDO RUTA...`;
+        // Actualizamos textos a estado de espera
+    const tariffEl = document.getElementById('map-tariff-text');
+    if(tariffEl) tariffEl.innerText = `...`;
 
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
@@ -2115,11 +2138,10 @@ async function renderMapPosition(lat, lng) {
             tarifaFinalCalculada = Math.max(min, roundedPrice);
             let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
 
-            document.getElementById('map-header-title').innerText = `DELIVERY COMBOX: ${displayPrice}$`;
+            if(tariffEl) tariffEl.innerText = `${displayPrice}$`;
             document.getElementById('route-km').innerText = `${distanceKm.toFixed(1)} km`;
             document.getElementById('route-time').innerText = `${durationMin} min`;
 
-            // 🔥 FIX APLICADO: Dibujamos la nueva línea verde de manera limpia
             if (rutaLayer) map.removeLayer(rutaLayer);
             rutaLayer = L.geoJSON(route.geometry, {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
@@ -2132,9 +2154,9 @@ async function renderMapPosition(lat, lng) {
             }, 300);
         }
     } catch(e) {
-        document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;
+        if(tariffEl) tariffEl.innerText = `ERROR`;
     }
-}
+
 
 
 function showManualLocationInput() {
@@ -2146,14 +2168,10 @@ function showManualLocationInput() {
     const locInput = document.getElementById('checkout-location');
     locInput.placeholder = "Mueve el mapa para ubicar tu dirección";
     
-    // 🔥 FIX: Eliminamos la ruta verde de inmediato para limpiar el mapa visualmente
-    if (rutaLayer && map) {
-        map.removeLayer(rutaLayer);
-        rutaLayer = null;
-    }
+    if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
     
-    // Dejamos los textos limpios mientras el usuario elige
-    document.getElementById('map-header-title').innerText = `UBICANDO PIN...`;
+    const tariffEl = document.getElementById('map-tariff-text');
+    if(tariffEl) tariffEl.innerText = `...`;
     document.getElementById('route-km').innerText = `-- km`;
     document.getElementById('route-time').innerText = `-- min`;
 
@@ -2165,6 +2183,8 @@ function showManualLocationInput() {
         pendingLatLng = map.getCenter();
     }
     
+    map.setZoom(13); // Alejamos la cámara un poco
+    
     map.on('move', function() {
         if(isEditingLocation && userMarker) {
             userMarker.setLatLng(map.getCenter());
@@ -2174,11 +2194,32 @@ function showManualLocationInput() {
     map.on('moveend', function() {
         if(isEditingLocation) {
             pendingLatLng = map.getCenter();
+            
+            // Lógica para auto-seleccionar sede al terminar de mover el mapa
+            if (db && db.sedes) {
+                let distMinima = Infinity;
+                let sedeCercana = null;
+                db.sedes.forEach(s => {
+                    const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                    const dist = calcularDistanciaHaversine(pendingLatLng.lat, pendingLatLng.lng, sLat, sLng);
+                    const sched = getSchedule(s);
+                    if (sched.isOpen && dist < distMinima) {
+                        distMinima = dist;
+                        sedeCercana = s;
+                    }
+                });
+                if (sedeCercana && (!checkoutSede || checkoutSede.ID_SEDE !== sedeCercana.ID_SEDE)) {
+                    checkoutSede = sedeCercana;
+                    const select = document.getElementById('checkout-sede-select');
+                    if(select) select.value = sedeCercana.ID_SEDE;
+                }
+            }
         }
     });
 
     document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+
 
 function confirmManualPin() {
     isEditingLocation = false; 
@@ -2213,7 +2254,7 @@ function getLocation(userInitiated = false) {
     if(locInput) locInput.value = '';
 
     const headerTitle = document.getElementById('map-header-title');
-    if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
+    if (headerTitle) headerTitle.innerText = "Calculando";
     
     initLeafletMap(); 
 

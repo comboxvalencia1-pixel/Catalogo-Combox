@@ -2665,8 +2665,7 @@ function getLocation(userInitiated = false) {
         });
         
         if(promos.length) { 
-            section.classList.remove('hidden'); 
-            document.querySelector('#promo-section button').setAttribute('onclick', "setCat('PROMOCIONES'); scrollToCatalog();");
+            section.classList.remove('hidden');
             const containerClass = 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth';
             document.getElementById('promo-carousel').className = containerClass;
             document.getElementById('promo-carousel').innerHTML = promos.map(p => createCard(p, true)).join(''); 

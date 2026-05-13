@@ -442,7 +442,10 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 <div class="modal modal-bottom" id="cart-modal">
     <div class="modal-overlay" onclick="toggleModal('cart-modal', false)"></div>
     <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3 glass-contour-top" style="background: #0A0A0B;">
-        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
+        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-2 flex-shrink-0"></div>
+        <div class="w-full text-center mb-4 flex justify-center items-center">
+            <span class="text-primary font-[900] text-2xl tracking-tighter">COM</span><span class="text-white font-[900] text-2xl tracking-tighter">BOX</span>
+        </div>
         <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-3">
                 <div class="w-1.5 h-6 bg-primary rounded-full"></div>
@@ -474,9 +477,9 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
             </div>
             
             <div class="flex flex-col gap-3 mt-2">
-                <button class="w-full bg-[#39FF14] text-black font-[900] py-4 rounded-2xl text-[16px] uppercase shadow-lg shadow-[#39FF14]/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openMethodModal()">
-                    Confirmar Productos <span class="material-symbols-outlined text-[24px]">check_circle</span>
-                </button>
+                <button class="w-full bg-[#39FF14] text-black font-[900] py-4 rounded-2xl text-[13px] uppercase shadow-lg shadow-[#39FF14]/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openMethodModal()">
+    Confirmar Productos <span class="material-symbols-outlined text-[22px]">check_circle</span>
+</button>
             </div>
 
             <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Pedido</button>
@@ -524,13 +527,19 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         
         <!-- ÁREA QUE HACE SCROLL (Sube y baja) -->
         <div class="space-y-5 overflow-y-auto hide-scrollbar pb-6 flex-1 min-h-0" id="checkout-scroll-area">
-            <div>
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
-                <div class="relative">
-                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
-                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
-                </div>
-            </div>
+           <div>
+    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
+    <div class="relative mb-4">
+        <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
+        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+    </div>
+    <div id="pickup-map-container" class="relative w-full h-48 mb-2 rounded-2xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b]" style="display:none;">
+        <div class="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-1.5 border border-white/20 shadow-lg pointer-events-none">
+            <span class="text-white font-black text-[9px] uppercase tracking-widest text-center">Toca para seleccionar</span>
+        </div>
+        <div id="checkout-pickup-map" class="w-full h-full z-0"></div>
+    </div>
+</div>
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
                 <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
@@ -980,12 +989,14 @@ let sedeMasCercanaCalculada = null;
 let tarifaFinalCalculada = 0;
 let pendingLatLng = null;
 let isEditingLocation = false;
+let isManualLocation = false;
+let pickupMap = null;
 
 // Iconos globales del mapa
 const greenDotIcon = L.divIcon({
     className: 'bg-transparent',
-    html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
-    iconSize: [20, 20], iconAnchor: [10, 10]
+    html: `<div class="w-3 h-3 bg-neon-accent rounded-full border-[1.5px] border-white shadow-[0_0_10px_#39FF14] animate-pulse"></div>`,
+    iconSize: [12, 12], iconAnchor: [6, 6]
 });
 
 const redPinIcon = L.divIcon({
@@ -1485,13 +1496,14 @@ async function setupAfterDBLoad(isCached) {
             console.warn("No se encontró HEADER_PROMOCIONES en configuracion:", parametros);
         }
         
-        // Mensaje de bienvenida
-        let msjBienvenida = parametros.mensaje_bienvenida;
-        if(msjBienvenida && msjBienvenida.trim() !== "") {
-            document.getElementById('welcome-message-text').innerText = msjBienvenida;
-            setTimeout(() => toggleModal('welcome-modal', true), 1000);
+       // Mensaje de bienvenida (solo se muestra con datos frescos de red, no de caché)
+        if (!isCached) {
+            let msjBienvenida = parametros.mensaje_bienvenida;
+            if(msjBienvenida && msjBienvenida.trim() !== "") {
+                document.getElementById('welcome-message-text').innerText = msjBienvenida;
+                setTimeout(() => toggleModal('welcome-modal', true), 1000);
+            }
         }
-    }
 
 
 
@@ -1699,29 +1711,27 @@ async function setupAfterDBLoad(isCached) {
 function renderMapModal() {
     const sorted = getSortedSedes();
     
-    // El mapa va primero
     let html = `
     <div class="relative w-full h-56 mb-4 rounded-2xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b]">
-        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-5 py-2 border border-white/20 shadow-lg flex items-center justify-center pointer-events-none w-max max-w-[90%]">
-            <span class="text-white font-black text-[10px] uppercase tracking-widest text-center">👇 Toca una sede para ir</span>
-        </div>
         <div id="global-sedes-map" class="w-full h-full z-0"></div>
     </div>`;
     
-    // Luego la lista sutil de sedes con los botones estilo pastilla
     html += sorted.map(s => {
         const active = currentSede?.ID_SEDE === s.ID_SEDE;
-        const bgClass = active ? 'bg-zinc-800/80 border-zinc-500 shadow-[0_0_10px_rgba(255,255,255,0.02)]' : 'bg-transparent border-white/5';
+        const bgClass = active ? 'bg-zinc-800/90 border-zinc-500 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-white/5 border-white/10';
+        let esLaMasCercana = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
+        
         return `
         <div class="flex items-center justify-between p-3 rounded-2xl ${bgClass} border gap-3 mb-2">
             <div class="flex flex-col min-w-0 flex-1">
                 <span class="text-white font-bold text-sm truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
                 <span class="text-[9px] text-zinc-500 uppercase font-bold truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
             </div>
-            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+            <div class="flex items-center gap-3 flex-shrink-0">
+               ${esLaMasCercana ? '<span class="text-blue-400 text-[8px] font-black uppercase tracking-widest text-right leading-tight">Más<br>Cerca</span>' : ''}
                <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-600 text-white px-5 py-1.5 rounded-full active:scale-95 flex items-center gap-1.5 shadow-[0_0_12px_rgba(37,99,235,0.5)] border border-blue-400 transition-all">
-    <span class="material-symbols-outlined text-[14px]">near_me</span> <span class="text-[9px] font-black uppercase tracking-widest">Ir</span>
-</button>
+                   <span class="material-symbols-outlined text-[14px]">near_me</span> <span class="text-[9px] font-black uppercase tracking-widest">Ir</span>
+               </button>
             </div>
         </div>
     `}).join('');
@@ -1832,6 +1842,7 @@ function renderMapModal() {
         title.innerText = 'Datos de Delivery';
         sedeLabel.innerText = 'Sede que enviará tu pedido';
         locContainer.style.display = 'block'; 
+        document.getElementById('pickup-map-container').style.display = 'none';
         submitBtn.innerHTML = 'Solicitar Delivery <span class="material-symbols-outlined">two_wheeler</span>';
         submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2";
         accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
@@ -1839,7 +1850,6 @@ function renderMapModal() {
         document.getElementById('btn-wrong-location').style.display = 'flex';
         document.getElementById('manual-location-wrapper').style.display = 'none';
         
-        // ¡FIX MAGICO PARA EL MAPA BLANCO! Le damos 350ms al modal para abrirse y forzamos al mapa a dibujarse bien
         setTimeout(() => { if (map) map.invalidateSize(); }, 350);
 
         const locInput = document.getElementById('checkout-location');
@@ -1848,13 +1858,14 @@ function renderMapModal() {
             getLocation(); 
         }
     } else {
-
         title.innerText = 'Datos de Pick-Up';
         sedeLabel.innerText = 'Sede donde retirarás';
         locContainer.style.display = 'none'; 
+        document.getElementById('pickup-map-container').style.display = 'block';
         submitBtn.innerHTML = 'Solicitar Pick-Up <span class="material-symbols-outlined">storefront</span>';
         submitBtn.className = "w-full bg-white text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-white/20 active:scale-[0.98] flex items-center justify-center gap-2";
         accent.className = "w-1.5 h-6 bg-white rounded-full";
+        setTimeout(() => renderPickupMap(), 350);
     }
     
         const select = document.getElementById('checkout-sede-select');
@@ -2033,11 +2044,12 @@ function updateCheckoutSede(id) {
             select.value = id;
         }
 
-        if (userMarker) {
+        if (checkoutType === 'delivery' && userMarker) {
             if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
-            
             const pos = userMarker.getLatLng();
             renderMapPosition(pos.lat, pos.lng); 
+        } else if (checkoutType === 'pickup') {
+            renderPickupMap();
         }
     }
 }
@@ -2047,7 +2059,7 @@ async function renderMapPosition(lat, lng) {
     setTimeout(() => { if(map) map.invalidateSize(); }, 100); 
     map.setView([lat, lng], map.getZoom() > 13 ? map.getZoom() : 14); 
     
-    const activeIcon = isEditingLocation ? redPinIcon : greenDotIcon;
+    const activeIcon = isManualLocation ? redPinIcon : greenDotIcon;
     
     if (userMarker) {
         userMarker.setLatLng([lat, lng]);
@@ -2194,24 +2206,19 @@ function showManualLocationInput() {
 
 function confirmManualPin() {
     isEditingLocation = false;
+    isManualLocation = true; // Fuerza a mostrar el pin rojo
     document.getElementById('btn-confirm-pin').style.display = 'none';
     document.getElementById('btn-wrong-location').style.display = 'flex';
     
-    // Cambiamos el texto arriba para dar feedback
     let headerTitle = document.getElementById('map-header-title');
     if(headerTitle) headerTitle.innerText = "Calculando ruta...";
 
-    // Aquí llamas a tu función que recalcula el delivery y dibuja la línea verde
-    calculateDelivery(); 
+    if(pendingLatLng) {
+        renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
+    }
 
-    // FIX PARA EL MAPA: Forzamos a Leaflet a recalcular su tamaño y cargar los cuadros faltantes
     if (typeof map !== 'undefined' && map !== null) {
-        setTimeout(() => {
-            map.invalidateSize(); // Obliga a renderizar los cuadros grises
-            
-            // Opcional: Si tienes acceso al grupo de capas de la ruta verde, ajustamos el zoom
-            // map.fitBounds(layerGroupDeTuRuta.getBounds(), { padding: [20, 20] });
-        }, 400); // 400ms da tiempo a que el CSS termine cualquier animación
+        setTimeout(() => map.invalidateSize(), 400); 
     }
 }
 
@@ -2220,6 +2227,7 @@ function confirmManualPin() {
 
 function getLocation(userInitiated = false) {
     isEditingLocation = false;
+    isManualLocation = false; // Vuelve a modo GPS (verde)
     document.getElementById('btn-confirm-pin').style.display = 'none';
     document.getElementById('manual-location-wrapper').style.display = 'none';
     document.getElementById('btn-wrong-location').style.display = 'flex';
@@ -2396,7 +2404,7 @@ function getLocation(userInitiated = false) {
             const [main, sub] = s.NOMBRE_SEDE.split(',');
             
             const bgClass = active ? 'bg-zinc-800/90 border-zinc-500 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-white/5 border-white/10';
-            const iconClass = active ? 'bg-white/20 text-white' : 'bg-white/5 text-white/30';
+            const iconClass = active ? 'bg-primary text-white shadow-[0_0_10px_rgba(227,6,19,0.5)]' : 'bg-white/5 text-white/30';
             
             // LÓGICA NUEVA: Verificamos si esta sede es la calculada por el GPS
             const esLaMasCercana = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
@@ -3111,6 +3119,38 @@ function getLocation(userInitiated = false) {
             toggleProductModal(true); 
         }, 15);
     }
+    function renderPickupMap() {
+    if(pickupMap) pickupMap.remove();
+    const customRenderer = L.svg({ padding: 1.5 });
+    pickupMap = L.map('checkout-pickup-map', { zoomControl: false, attributionControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 11);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(pickupMap);
+    
+    let bounds = [];
+    db.sedes.forEach(s => {
+        const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
+        bounds.push([lat, lng]);
+        const isSelected = checkoutSede && checkoutSede.ID_SEDE === s.ID_SEDE;
+        const sched = getSchedule(s);
+        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
+        
+        let iconWrapperClass = isSelected ? "" : "grayscale opacity-60";
+        
+        const iconHtml = `
+            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer ${isSelected ? 'selected-sede z-[500]' : 'z-[400]'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+                <div class="w-9 h-9 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+                    <span class="material-symbols-outlined text-white" style="font-size: 20px;">storefront</span>
+                </div>
+                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1 rounded-xl flex flex-col items-center shadow-lg">
+                    <span class="text-[7px] font-bold text-zinc-300 uppercase truncate max-w-[70px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                </div>
+            </div>`;
+        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [80, 80], iconAnchor:[40, 40] });
+        L.marker([lat, lng], { icon }).addTo(pickupMap);
+    });
+    
+    if(bounds.length > 0) pickupMap.fitBounds(bounds, { padding: [20, 20] });
+    setTimeout(() => updateMarkerScales(pickupMap), 200);
+}
     
     init();
 </script>

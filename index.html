@@ -1481,22 +1481,17 @@ async function setupAfterDBLoad(isCached) {
         }
     }
     
-                // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion (según tu JSON)
+    // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion
     if (db && db.configuracion) {
-        // Detectamos si Apps Script envió una lista y tomamos la primera fila, o si es un Objeto directo
         let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
-
-        // Buscamos el header usando exactamente el nombre que viene en tu JSON
         let tituloPromo = parametros.HEADER_PROMOCIONES;
 
         if (tituloPromo) {
-            // Actualizamos el texto dinámicamente
             document.getElementById('header-promociones').innerText = tituloPromo;
         } else {
             console.warn("No se encontró HEADER_PROMOCIONES en configuracion:", parametros);
         }
         
-       // Mensaje de bienvenida (solo se muestra con datos frescos de red, no de caché)
         if (!isCached) {
             let msjBienvenida = parametros.mensaje_bienvenida;
             if(msjBienvenida && msjBienvenida.trim() !== "") {
@@ -1504,12 +1499,11 @@ async function setupAfterDBLoad(isCached) {
                 setTimeout(() => toggleModal('welcome-modal', true), 1000);
             }
         }
-
-
+    } // 🔥 ¡ESTA ES LA LLAVE QUE FALTABA PARA CERRAR EL IF DE CONFIGURACIÓN! 🔥
 
     
+    // 3. Bloque de Sedes (Ahora corre libremente)
     if(db && db.sedes && db.sedes.length) { 
-        // Geolocalización automática para sede más cercana
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition((pos) => {
                 let distMinima = Infinity;
@@ -1540,7 +1534,7 @@ async function setupAfterDBLoad(isCached) {
         updateHeader(); 
     }
 
-    // ... código existente del carrito ...
+    // 4. Parámetros de URL y Carrito
     const urlParams = new URLSearchParams(window.location.search);
     const pedidoParam = urlParams.get('pedido');
     if(pedidoParam) {
@@ -1564,20 +1558,22 @@ async function setupAfterDBLoad(isCached) {
     
     renderPromos();
         
-        if(!initialRenderDone) {
-            render(); 
-            initialRenderDone = true;
-            updateOrder(); 
-            
-            setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
+    // 5. APAGADO DEL SPLASH
+    if(!initialRenderDone) {
+        render(); 
+        initialRenderDone = true;
+        updateOrder(); 
+        
+        // ¡Ahora sí se va a ejecutar!
+        setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
 
-            const productId = urlParams.get('id');
-            if(productId) { setTimeout(() => openProductView(productId), 500); }
-        } else {
-            render();
-            updateOrder(); 
-        }
+        const productId = urlParams.get('id');
+        if(productId) { setTimeout(() => openProductView(productId), 500); }
+    } else {
+        render();
+        updateOrder(); 
     }
+}
 
     function getSortedSedes() {
         if (!db?.sedes) return [];

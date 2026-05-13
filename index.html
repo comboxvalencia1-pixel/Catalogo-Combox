@@ -264,7 +264,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 
                         /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
         #map-preview { background: #0a0a0b; }
-        .leaflet-tile { filter: brightness(1.0) contrast(1.0); }
+        .leaflet-tile { filter: brightness(0.8) contrast(1.2); }
         .leaflet-control-attribution { display: none !important; }
 
         /* Escala dinámica para los iconos del mapa */
@@ -442,11 +442,9 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
 <div class="modal modal-bottom" id="cart-modal">
     <div class="modal-overlay" onclick="toggleModal('cart-modal', false)"></div>
     <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3 glass-contour-top" style="background: #0A0A0B;">
-        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-2 flex-shrink-0"></div>
-        <div class="w-full text-center mb-4 flex justify-center items-center">
-            <span class="text-primary font-[900] text-2xl tracking-tighter">COM</span><span class="text-white font-[900] text-2xl tracking-tighter">BOX</span>
-        </div>
+        <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
         <div class="flex items-center justify-between mb-5">
+            
             <div class="flex items-center gap-3">
                 <div class="w-1.5 h-6 bg-primary rounded-full"></div>
                 <h2 class="text-xl font-black text-white uppercase tracking-tighter">Tu Pedido</h2>

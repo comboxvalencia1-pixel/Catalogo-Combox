@@ -9,18 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#E30613" />
 
-    <script src="https://cdn.tailwindcss.com/3.3.5?plugins=forms,container-queries"></script>
-    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
     
-    <!-- Librerías de Leaflet para el Mapa Gratuito -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
-    
-    <script id="tailwind-config">
+   <!-- 1. PRIMERO LA CONFIGURACIÓN DE TAILWIND -->
+    <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -39,6 +30,22 @@
             }
         };
     </script>
+
+    <!-- 2. LUEGO EL CDN DE TAILWIND COMPLETAMENTE LIMPIO -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 3. LUEGO TU LOCALFORAGE -->
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    
+    <!-- Librerías de Leaflet para el Mapa Gratuito -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
+    
+ 
     <style>
         /* Bloqueo de zoom estricto y selección global */
         html { 

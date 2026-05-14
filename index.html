@@ -1324,32 +1324,36 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     }, {passive: true});
     
     window.addEventListener('scroll', () => {
-        if (document.body.classList.contains('modal-open')) return;
-        
-        const currentScrollY = window.scrollY;
-        const isAtBottom = (window.innerHeight + currentScrollY) >= document.body.offsetHeight - 500;
-        
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                const searchInput = document.getElementById('global-search');
-                const isFocused = document.activeElement === searchInput;
-                const searchValue = searchInput ? searchInput.value.trim() : '';
+    if (document.body.classList.contains('modal-open')) return;
 
-                if (isFocused || searchValue !== '' || currentScrollY <= 300) {
-                    searchContainer.classList.remove('search-hidden');
-                } else if (currentScrollY > lastScrollY) {
-                    searchContainer.classList.add('search-hidden');
-                } else {
-                    searchContainer.classList.remove('search-if (isAtBottom && catalogLimit < totalFilteredItemsCount) {
-                    catalogLimit += 24;
-                    appendCatalogItems(); // Usamos inyección en lugar de re-renderizado
-                }
-                lastScrollY = currentScrollY;
-                ticking = false;
-            });
-            ticking = true;
-        }
-    }, { passive: true });
+    const currentScrollY = window.scrollY;
+    const isAtBottom = (window.innerHeight + currentScrollY) >= document.body.offsetHeight - 500;
+
+    if (!ticking) {
+        window.requestAnimationFrame(() => {
+            const searchInput = document.getElementById('global-search');
+            const isFocused = document.activeElement === searchInput;
+            const searchValue = searchInput ? searchInput.value.trim() : '';
+
+            if (isFocused || searchValue !== '' || currentScrollY <= 300) {
+                searchContainer.classList.remove('search-hidden');
+            } else if (currentScrollY > lastScrollY) {
+                searchContainer.classList.add('search-hidden');
+            } else {
+                searchContainer.classList.remove('search-hidden');
+            }
+
+            if (isAtBottom && catalogLimit < totalFilteredItemsCount) {
+                catalogLimit += 24;
+                appendCatalogItems(); // Usamos inyección en lugar de re-renderizado
+            }
+            
+            lastScrollY = currentScrollY;
+            ticking = false;
+        });
+        ticking = true;
+    }
+}, { passive: true });
 
        document.addEventListener("DOMContentLoaded", () => {
         const inputs = document.querySelectorAll('#checkout-name, #checkout-phone, #checkout-location');

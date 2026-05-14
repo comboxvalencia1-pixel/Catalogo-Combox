@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html class="dark" lang="es">
 <head>
     <meta charset="utf-8"/>
@@ -9,12 +9,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#E30613" />
 
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
     
- <!-- 1. PRIMERO EL CDN DE TAILWIND -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-   <!-- 2. LUEGO LA CONFIGURACIÓN DE TAILWIND -->
-    <script>
+    <!-- Librerías de Leaflet para el Mapa Gratuito -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://plugins.kraken.ws/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -33,19 +39,6 @@
             }
         };
     </script>
-
-    <!-- 3. LUEGO TU LOCALFORAGE -->
-    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
-    
-    <!-- Librerías de Leaflet para el Mapa Gratuito -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
-    
- 
     <style>
         /* Bloqueo de zoom estricto y selección global */
         html { 
@@ -57,13 +50,14 @@
             touch-action: pan-y !important; 
             zoom: 1 !important;
         }
-       body { 
+        body { 
             background: #050505 !important; 
             color: #F4F4F5; 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             overflow-x: hidden; 
             overscroll-behavior-y: none; 
             min-height: 100dvh; 
+            background-attachment: fixed;
             -webkit-font-smoothing: antialiased; 
             -moz-osx-font-smoothing: grayscale; 
             touch-action: pan-y !important; 
@@ -96,7 +90,7 @@
 
         button, .nav-col, .type-tab, .cat-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .btn-bounce { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; }
+        .btn-bounce { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; will-change: transform; }
         .btn-bounce-active, .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
 
         .image-container { position: relative; width: 100%; overflow: hidden; background: rgba(255,255,255,0.03); }
@@ -130,7 +124,7 @@
             max-height: 0 !important; opacity: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: none !important; 
         }
 
-        /* header .absolute { transform: translateZ(0); will-change: opacity; } */
+        header .absolute { transform: translateZ(0); will-change: opacity; }
 
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
@@ -193,8 +187,8 @@
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s ease;
         }
         
-      /* Ajuste de PWA Banner dinámico */
-body.island-active #pwa-install-banner:not([class*="translate-y"]) {
+        /* Ajuste de PWA Banner dinámico */
+body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
     bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
     transform: translateX(-50%) !important;
 }
@@ -268,26 +262,10 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
         .max-content-width { max-width: 1200px; margin-left: auto; margin-right: auto; }
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
 
-                        /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
+                /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
         #map-preview { background: #0a0a0b; }
-        .leaflet-tile { filter: brightness(1.0) contrast(1.0); }
+        .leaflet-tile { filter: brightness(0.8) contrast(1.2); }
         .leaflet-control-attribution { display: none !important; }
-
-        /* Escala dinámica para los iconos del mapa */
-        .sede-marker-content {
-            --map-icon-scale: 1;
-            transform: scale(var(--map-icon-scale)) translateY(-10px);
-            transform-origin: bottom center;
-            transition: transform 0.3s ease, filter 0.3s ease;
-        }
-        .sede-marker-content.selected-sede {
-            transform: scale(calc(var(--map-icon-scale) * 1.15)) translateY(-10px);
-            z-index: 1000 !important;
-        }
-        .sede-marker-content:active {
-            transform: scale(calc(var(--map-icon-scale) * 0.9)) translateY(-10px);
-        }
-
 
 
     </style>
@@ -416,10 +394,10 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
             <h2 id="header-promociones" class="text-xl font-black text-white uppercase tracking-tight">PROMOCIONES 🔥</h2>
 
         </div>
+        <button onclick="setCat('PROMOCIONES'); scrollToCatalog();" class="text-[10px] font-black text-zinc-300 uppercase bg-white/10 border border-white/20 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0 transition-colors">VER TODO</button>
     </div>
     <div class="flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth" id="promo-carousel"></div>
 </section>
-
 
 <div id="catalog-anchor" class="pt-4"></div>
 <main class="mt-4 px-4 space-y-12 max-content-width" id="catalog-grid"></main>
@@ -450,7 +428,6 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
     <div class="modal-content flex flex-col max-h-[90vh] md:max-h-[90vh] p-5 pt-3 glass-contour-top" style="background: #0A0A0B;">
         <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 flex-shrink-0"></div>
         <div class="flex items-center justify-between mb-5">
-            
             <div class="flex items-center gap-3">
                 <div class="w-1.5 h-6 bg-primary rounded-full"></div>
                 <h2 class="text-xl font-black text-white uppercase tracking-tighter">Tu Pedido</h2>
@@ -480,10 +457,10 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
                 </div>
             </div>
             
-           <div class="flex flex-col gap-3 mt-8 mb-2">
-                <button class="w-full bg-[#39FF14] text-black font-[900] py-4 rounded-2xl text-[13px] uppercase shadow-lg shadow-[#39FF14]/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openMethodModal()">
-    Confirmar Productos <span class="material-symbols-outlined text-[22px]">check_circle</span>
-</button>
+            <div class="flex flex-col gap-3 mt-2">
+                <button class="w-full bg-[#39FF14] text-black font-[900] py-4 rounded-2xl text-[16px] uppercase shadow-lg shadow-[#39FF14]/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openMethodModal()">
+                    Confirmar Productos <span class="material-symbols-outlined text-[24px]">check_circle</span>
+                </button>
             </div>
 
             <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Pedido</button>
@@ -531,21 +508,13 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
         
         <!-- ÁREA QUE HACE SCROLL (Sube y baja) -->
         <div class="space-y-5 overflow-y-auto hide-scrollbar pb-6 flex-1 min-h-0" id="checkout-scroll-area">
-           <div>
-    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
-    <div class="relative mb-4">
-        <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
-        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
-    </div>
-   <!-- NUEVO CONTENEDOR DEL MAPA PICK-UP (AL FONDO) -->
-            <div id="pickup-map-container" class="relative w-full rounded-3xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b] mt-6 mb-2" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
-                <!-- Marca de agua COMBOX -->
-                <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
-                    <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
+                <div class="relative">
+                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
+                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
                 </div>
-                <div id="checkout-pickup-map" class="w-full h-full z-0"></div>
             </div>
-</div>
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
                 <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
@@ -556,68 +525,61 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
             </div>
             
             <div id="checkout-location-container" class="flex flex-col gap-3">
-    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Ubicación de Entrega</label>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Ubicación de Entrega</label>
+                
+                <!-- INPUT MANUAL DE RESPALDO (AHORA ARRIBA DEL MAPA) -->
+                <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-1">
+                    <div class="flex gap-2">
+                        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-sm flex-1" placeholder="Ej: Calle 5, Residencia X...">
+                    </div>
+                    <p id="manual-location-hint" class="text-[10px] text-zinc-400 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-red-500">location_on</span> Mueve el pin de forma manual en el mapa.</p>
+                </div>
 
-    <!-- 1. INPUT ÚNICO DE DIRECCIÓN (AHORA ARRIBA) -->
-    <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-2">
-        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
-        <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin en el mapa para mayor precisión.
-        </p>
-    </div>
+                <!-- MAPA -->
+                <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+                    
+                    <!-- Header del Mapa Translúcido -->
+                    <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-2 border border-white/20 shadow-lg flex items-center justify-center gap-2 max-w-[90%] whitespace-nowrap">
+                        <span class="material-symbols-outlined text-[#39FF14] text-[20px]">two_wheeler</span>
+                        <h2 id="map-header-title" class="text-white font-black text-[10px] uppercase tracking-widest m-0">DELIVERY COMBOX: --$</h2>
+                    </div>
 
-    <!-- 2. MAPA (AHORA ABAJO) -->
-<div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
-    
-    <!-- Marca de agua COMBOX -->
-    <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
-        <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
-    </div>
+                    <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
+                    
+                    <!-- Botón Aceptar Nueva Ubicación -->
+                    <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-6 py-3 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-2 border border-white/20" style="display:none; margin-top: 40px;">
+                        Aceptar <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                    </button>
 
-    <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
-    
-    <!-- Botón Aceptar Nueva Ubicación -->
-    <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-4 py-2 text-xs rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-1.5 border border-white/20" style="display:none; margin-top: 40px;">
-        Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
-    </button>
+                    <!-- Botones Inferiores Derechos -->
+                    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                            <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
+                        </div>
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                            <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
+                        </div>
+                    </div>
 
-    <!-- Indicadores de Ruta y Tarifa inferior derecha -->
-    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none items-end">
-        <div class="bg-black/80 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
-            <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
-            <span id="map-header-title">--$</span>
+                    <!-- Botón Circular Editar -->
+                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
+                        <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
+                    </button>
+
+                    <!-- Botón GPS Translúcido -->
+                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+                        <span class="material-symbols-outlined text-[18px]">my_location</span>
+                    </button>
+                </div>
+            </div>
+        </div> <!-- AHORA SÍ: ESTE ES EL CIERRE CORRECTO DEL ÁREA DE SCROLL -->
+
+        <!-- BOTÓN FIJO AL FINAL -->
+        <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-10">
+            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="submitOrder()">Solicitar <span class="material-symbols-outlined">send</span></button>
         </div>
-        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
-            <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
-        </div>
-        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
-            <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
-        </div>
     </div>
-
-    <!-- Botones de Control -->
-    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
-        <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
-    </button>
-
-    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
-        <span class="material-symbols-outlined text-[18px]">my_location</span>
-    </button>
 </div>
-<!-- Cierre de map-wrapper -->
-</div>  <!-- Cierre de checkout-location-container -->
-
-        </div> <!-- Cierre de checkout-scroll-area -->
-
-        <!-- BOTÓN FIJO AL FINAL (Fuera del scroll para que siempre esté a la mano) -->
-        <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-20">
-            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all" onclick="submitOrder()">
-                Solicitar Pedido <span class="material-symbols-outlined">send</span>
-            </button>
-        </div>
-    </div> <!-- Cierre de modal-content -->
-</div> <!-- Cierre de modal -->
-
 
 
 <div class="modal" id="install-modal">
@@ -993,19 +955,13 @@ let rutaLayer;
 let marcadoresSedesMap = [];
 let sedeMasCercanaCalculada = null;
 let tarifaFinalCalculada = 0;
-let pendingLatLng = null;
-let isEditingLocation = false;
-let isManualLocation = false;
-let pickupMap = null;
-
-const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"COMBOX MAPA","styleUrl":"#poly-BDBDBD-3301-43-nodesc","fill-opacity":0.16862745098039217,"fill":"#bdbdbd","stroke-opacity":1,"stroke":"#bdbdbd","stroke-width":3.301},"id":0},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"TARIFA","styleUrl":"#poly-FFFFFF-3901-20-nodesc","fill-opacity":0.0784313725490196,"fill":"#ffffff","stroke-opacity":1,"stroke":"#ffffff","stroke-width":3.901}}]}
-
+let pendingLatLng = null; // Guarda la posición mientras mueves el pin
 
 // Iconos globales del mapa
 const greenDotIcon = L.divIcon({
     className: 'bg-transparent',
-    html: `<div class="w-3 h-3 bg-neon-accent rounded-full border-[1.5px] border-white shadow-[0_0_10px_#39FF14] animate-pulse"></div>`,
-    iconSize: [12, 12], iconAnchor: [6, 6]
+    html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
+    iconSize: [20, 20], iconAnchor: [10, 10]
 });
 
 const redPinIcon = L.divIcon({
@@ -1333,36 +1289,35 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     }, {passive: true});
     
     window.addEventListener('scroll', () => {
-    if (document.body.classList.contains('modal-open')) return;
+        if (document.body.classList.contains('modal-open')) return;
+        
+        const currentScrollY = window.scrollY;
+        const isAtBottom = (window.innerHeight + currentScrollY) >= document.body.offsetHeight - 500;
+        
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                const searchInput = document.getElementById('global-search');
+                const isFocused = document.activeElement === searchInput;
+                const searchValue = searchInput ? searchInput.value.trim() : '';
 
-    const currentScrollY = window.scrollY;
-    const isAtBottom = (window.innerHeight + currentScrollY) >= document.body.offsetHeight - 500;
+                if (isFocused || searchValue !== '' || currentScrollY <= 300) {
+                    searchContainer.classList.remove('search-hidden');
+                } else if (currentScrollY > lastScrollY) {
+                    searchContainer.classList.add('search-hidden');
+                } else {
+                    searchContainer.classList.remove('search-hidden');
+                }
 
-    if (!ticking) {
-        window.requestAnimationFrame(() => {
-            const searchInput = document.getElementById('global-search');
-            const isFocused = document.activeElement === searchInput;
-            const searchValue = searchInput ? searchInput.value.trim() : '';
-
-            if (isFocused || searchValue !== '' || currentScrollY <= 300) {
-                searchContainer.classList.remove('search-hidden');
-            } else if (currentScrollY > lastScrollY) {
-                searchContainer.classList.add('search-hidden');
-            } else {
-                searchContainer.classList.remove('search-hidden');
-            }
-
-            if (isAtBottom && catalogLimit < totalFilteredItemsCount) {
-                catalogLimit += 24;
-                appendCatalogItems(); 
-            }
-            
-            lastScrollY = currentScrollY;
-            ticking = false;
-        });
-        ticking = true;
-    }
-}, { passive: true });
+                if (isAtBottom && catalogLimit < totalFilteredItemsCount) {
+                    catalogLimit += 24;
+                    renderCatalog();
+                }
+                lastScrollY = currentScrollY;
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
 
        document.addEventListener("DOMContentLoaded", () => {
         const inputs = document.querySelectorAll('#checkout-name, #checkout-phone, #checkout-location');
@@ -1373,25 +1328,15 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
         const locInput = document.getElementById('checkout-location');
         if(locInput) {
             locInput.addEventListener('input', function(e) {
-    const coincidencia = e.target.value.match(/[(]?\s*(-?\d+\.\d+)\s*[,;\s]+\s*(-?\d+\.\d+)\s*[)]?/);
-    const mapWrapper = document.getElementById('map-wrapper');
-    
-    if (coincidencia) {
-        const lat = parseFloat(coincidencia[1]);
-        const lng = parseFloat(coincidencia[2]);
-        mapWrapper.style.display = 'block'; // Muestra mapa
-        isEditingLocation = true; // Activa el icono del pin rojo
-        setTimeout(() => renderMapPosition(lat, lng), 300);
-    } else {
-        if (e.target.value.trim().length > 0) {
-            mapWrapper.style.display = 'none'; // Oculta mapa si se escribe texto manual
-        } else {
-            mapWrapper.style.display = 'block'; // Muestra mapa si se borra el texto
-            getLocation();
-        }
-    }
-});
-
+                // Nueva fórmula súper inteligente que acepta "(10.2, -68.4)", "10.2,-68.4", "10.2 -68.4"
+                const coincidencia = e.target.value.match(/[(]?\s*(-?\d+\.\d+)\s*[,;\s]+\s*(-?\d+\.\d+)\s*[)]?/);
+                if (coincidencia) {
+                    const lat = parseFloat(coincidencia[1]);
+                    const lng = parseFloat(coincidencia[2]);
+                    // Ya no ocultamos el mapa, solo actualizamos el punto
+                    setTimeout(() => renderMapPosition(lat, lng), 300);
+                }
+            });
         }
 
         
@@ -1403,18 +1348,7 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
         }
     });
 
-   async function init() {
-    // 1. Temporizador de emergencia: Si en 6 segundos la app no arranca, quita el splash rojo
-    const safetySplashTimer = setTimeout(() => {
-        const s = document.getElementById('splash');
-        if (s && s.style.opacity !== '0') {
-            console.warn("Forzando cierre del Splash por tiempo de espera.");
-            s.style.opacity = '0';
-            setTimeout(() => s.remove(), 600);
-        }
-    }, 6000);
-
-    try {
+    async function init() {
         loadSavedCV();
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -1451,49 +1385,46 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
             await setupAfterDBLoad(true);
         }
 
-        const freshDB = await fetchWithRetry(API);
-        
-        if(freshDB.catalogo) freshDB.catalogo.forEach((p, i) => p._index = i);
-        if(freshDB.combos) freshDB.combos.forEach((p, i) => p._index = i);
-        
-        const isDifferent = JSON.stringify(freshDB) !== cachedDataString;
-        
-        if (loadedFromCache && isDifferent) {
-            const toast = document.getElementById('update-toast');
-            if(toast) {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translate(-50%, -50%) scale(1)';
-                setTimeout(async () => {
-                    db = freshDB;
-                    await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
+        try {
+            const freshDB = await fetchWithRetry(API);
+            
+            if(freshDB.catalogo) freshDB.catalogo.forEach((p, i) => p._index = i);
+            if(freshDB.combos) freshDB.combos.forEach((p, i) => p._index = i);
+            
+            const isDifferent = JSON.stringify(freshDB) !== cachedDataString;
+            
+            if (loadedFromCache && isDifferent) {
+                const toast = document.getElementById('update-toast');
+                if(toast) {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translate(-50%, -50%) scale(1)';
+                    setTimeout(async () => {
+                        db = freshDB;
+                        await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
+                        await setupAfterDBLoad(false); 
+                        setTimeout(() => {
+                            toast.style.opacity = '0';
+                            toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                        }, 800);
+                    }, 1200);
+                }
+            } else {
+                db = freshDB;
+                await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
+                if (!loadedFromCache) {
                     await setupAfterDBLoad(false); 
-                    setTimeout(() => {
-                        toast.style.opacity = '0';
-                        toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
-                    }, 800);
-                }, 1200);
+                }
             }
-        } else {
-            db = freshDB;
-            await localforage.setItem('combox_db_v2', JSON.stringify({data: db, time: Date.now()})); 
-            if (!loadedFromCache) {
-                await setupAfterDBLoad(false); 
+        } catch(e) { 
+            console.error("Error cargando DB:", e); 
+            if (loadedFromCache) {
+                const s = document.getElementById('splash'); 
+                if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
+            } else {
+                customAlert("No hay conexión a internet y no hay datos guardados para arrancar la aplicación.");
             }
         }
-
-    } catch(e) { 
-        console.error("Error fatal en init:", e); 
-        // Si hay un error letal, mostramos una alerta para saber qué pasa
-        customAlert("Ocurrió un problema iniciando la app. Verifica tu conexión o recarga.");
-        
-        // Apagamos el splash de todas formas para que no se quede bloqueado
-        const s = document.getElementById('splash'); 
-        if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); }
-    } finally {
-        // Limpiamos el temporizador si todo salió bien o si ya falló
-        clearTimeout(safetySplashTimer);
     }
-}
 
 async function setupAfterDBLoad(isCached) {
     // 1. Aquí dejas el bloque de finanzas si aún usas esa pestaña para la tasa
@@ -1505,29 +1436,29 @@ async function setupAfterDBLoad(isCached) {
         }
     }
     
-    // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion
-    if (db && db.configuracion) {
-        let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
-        let tituloPromo = parametros.HEADER_PROMOCIONES;
+        // 2. NUEVO BLOQUE: Buscamos en la pestaña parametros_web (A prueba de Arrays)
+    if (db && db.parametros_web) {
+        // Detectamos si Apps Script envió una lista (Array) y tomamos la primera fila [0], o si es un Objeto directo
+        let parametros = Array.isArray(db.parametros_web) ? db.parametros_web[0] : db.parametros_web;
 
-        if (tituloPromo) {
-            document.getElementById('header-promociones').innerText = tituloPromo;
+        // Buscamos el header
+        if (parametros && parametros.HEADER_PROMOCIONES) {
+            document.getElementById('header-promociones').innerText = parametros.HEADER_PROMOCIONES;
         } else {
-            console.warn("No se encontró HEADER_PROMOCIONES en configuracion:", parametros);
+            // Si sigue sin salir, esto dejará un mensaje en la consola de tu navegador para saber exactamente cómo se llama la variable
+            console.warn("Revisa el JSON: No se encontró HEADER_PROMOCIONES. Los datos que llegaron son:", parametros);
         }
         
-        if (!isCached) {
-            let msjBienvenida = parametros.mensaje_bienvenida;
-            if(msjBienvenida && msjBienvenida.trim() !== "") {
-                document.getElementById('welcome-message-text').innerText = msjBienvenida;
-                setTimeout(() => toggleModal('welcome-modal', true), 1000);
-            }
+        // Si tienes el mensaje de bienvenida aquí, también lo actualizas desde esta pestaña
+        if(parametros && parametros.mensaje_bienvenida && parametros.mensaje_bienvenida.trim() !== "") {
+            document.getElementById('welcome-message-text').innerText = parametros.mensaje_bienvenida;
+            setTimeout(() => toggleModal('welcome-modal', true), 1000);
         }
-    } // 🔥 ¡ESTA ES LA LLAVE QUE FALTABA PARA CERRAR EL IF DE CONFIGURACIÓN! 🔥
+    }
 
     
-    // 3. Bloque de Sedes (Ahora corre libremente)
     if(db && db.sedes && db.sedes.length) { 
+        // Geolocalización automática para sede más cercana
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition((pos) => {
                 let distMinima = Infinity;
@@ -1558,7 +1489,7 @@ async function setupAfterDBLoad(isCached) {
         updateHeader(); 
     }
 
-    // 4. Parámetros de URL y Carrito
+    // ... código existente del carrito ...
     const urlParams = new URLSearchParams(window.location.search);
     const pedidoParam = urlParams.get('pedido');
     if(pedidoParam) {
@@ -1582,22 +1513,20 @@ async function setupAfterDBLoad(isCached) {
     
     renderPromos();
         
-    // 5. APAGADO DEL SPLASH
-    if(!initialRenderDone) {
-        render(); 
-        initialRenderDone = true;
-        updateOrder(); 
-        
-        // ¡Ahora sí se va a ejecutar!
-        setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
+        if(!initialRenderDone) {
+            render(); 
+            initialRenderDone = true;
+            updateOrder(); 
+            
+            setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
 
-        const productId = urlParams.get('id');
-        if(productId) { setTimeout(() => openProductView(productId), 500); }
-    } else {
-        render();
-        updateOrder(); 
+            const productId = urlParams.get('id');
+            if(productId) { setTimeout(() => openProductView(productId), 500); }
+        } else {
+            render();
+            updateOrder(); 
+        }
     }
-}
 
     function getSortedSedes() {
         if (!db?.sedes) return [];
@@ -1727,104 +1656,77 @@ async function setupAfterDBLoad(isCached) {
 
     let globalSedesMap = null; // Variable para mantener el mapa de sedes
 
-
 function renderMapModal() {
     const sorted = getSortedSedes();
-    
-    let html = `
-    <div class="relative w-full h-56 mb-4 rounded-2xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b]">
-        <!-- Marca de agua COMBOX -->
-        <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
-            <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
-        </div>
-        <div id="global-sedes-map" class="w-full h-full z-0"></div>
-    </div>`;
-    
-    html += sorted.map(s => {
+    let html = sorted.map(s => {
         const active = currentSede?.ID_SEDE === s.ID_SEDE;
+        const esLaMasCercana = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
         const bgClass = active ? 'bg-zinc-800/90 border-zinc-500 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-white/5 border-white/10';
-        let esLaMasCercana = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
-        
         return `
-        <div class="flex items-center justify-between p-3 rounded-2xl ${bgClass} border gap-3 mb-2">
+        <div class="flex items-center justify-between p-4 rounded-2xl ${bgClass} border gap-3 mb-3">
             <div class="flex flex-col min-w-0 flex-1">
-                <span class="text-white font-bold text-sm truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
-                <span class="text-[9px] text-zinc-500 uppercase font-bold truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
+                <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
             </div>
-            <div class="flex items-center gap-3 flex-shrink-0">
-               ${esLaMasCercana ? '<span class="text-blue-400 text-[8px] font-black uppercase tracking-widest text-right leading-tight">Más<br>Cerca</span>' : ''}
-               <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-600 text-white px-5 py-1.5 rounded-full active:scale-95 flex items-center gap-1.5 shadow-[0_0_12px_rgba(37,99,235,0.5)] border border-blue-400 transition-all">
-                   <span class="material-symbols-outlined text-[14px]">near_me</span> <span class="text-[9px] font-black uppercase tracking-widest">Ir</span>
-               </button>
+            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-500/20 text-blue-400 p-2.5 rounded-full active:scale-95 flex items-center gap-2 border border-blue-500/30">
+                    <span class="material-symbols-outlined text-[20px]">near_me</span> <span class="text-[10px] font-black uppercase tracking-widest">Ir</span>
+                </button>
+                ${esLaMasCercana ? '<span class="bg-blue-500/20 text-blue-400 text-[8px] font-black px-2 py-0.5 rounded border border-blue-500/30 uppercase tracking-widest mt-1">¡Más Cerca!</span>' : ''}
             </div>
         </div>
     `}).join('');
-    
+
+    // Agregamos el contenedor para el minimapa
+    html += `<div id="global-sedes-map" class="w-full h-64 mt-2 rounded-2xl border border-white/10 z-0 bg-[#0a0a0b] shadow-inner relative z-10"></div>`;
+
     document.getElementById('mapa-list-container').innerHTML = html;
 
+    // Inicializamos el mapa después de inyectar el HTML
     setTimeout(() => {
         if(globalSedesMap) globalSedesMap.remove();
-        
-        const globalRenderer = L.svg({ padding: 2.5 });
-        globalSedesMap = L.map('global-sedes-map', { zoomControl: false, attributionControl: false, renderer: globalRenderer }).setView([10.2543, -68.0101], 11);
-
+        globalSedesMap = L.map('global-sedes-map', { zoomControl: false, attributionControl: false }).setView([10.2543, -68.0101], 11);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(globalSedesMap);
-        globalSedesMap.invalidateSize();
-        globalSedesMap.on('zoomend', function() { updateMarkerScales(globalSedesMap); });
-
-        if (typeof misZonasGeoJSON !== 'undefined') {
-            L.geoJSON(misZonasGeoJSON, {
-                style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
-                interactive: false 
-            }).addTo(globalSedesMap);
-        }
 
         let bounds = [];
         db.sedes.forEach(s => {
             const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
             bounds.push([lat, lng]);
-            
-            const sched = getSchedule(s);
-            const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
-            const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
-            
-            let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
-            let letreroClass = sched.isOpen ? "" : "opacity-60";
-            let isClosest = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
-            let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
-
             const iconHtml = `
-                <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative" onclick="window.open('${s.LINK_UBICACION}', '_blank')">
-                    ${badgeCerca}
-                    <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
-                        <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
-                    </div>
-                    <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
-                            <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
-                        </div>
-                        <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                <div class="flex flex-col items-center justify-center translate-y-[-10px]">
+                    <span class="material-symbols-outlined text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]" style="font-size: 36px; font-variation-settings: 'FILL' 1;">storefront</span>
+                    <div class="bg-black/90 backdrop-blur-md border border-white/20 px-2 py-1.5 rounded-lg flex flex-col items-center mt-0 shadow-lg">
+                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
+                        <span class="text-[7px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
                     </div>
                 </div>`;
-            const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
+            const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [80, 80], iconAnchor:[40, 40] });
             L.marker([lat, lng], { icon }).addTo(globalSedesMap);
         });
 
+        // Intentamos ubicar al usuario y ponerle un punto verde
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
-                L.marker([pos.coords.latitude, pos.coords.longitude], { icon: greenDotIcon }).addTo(globalSedesMap);
-                bounds.push([pos.coords.latitude, pos.coords.longitude]);
+                const uLat = pos.coords.latitude;
+                const uLng = pos.coords.longitude;
+                L.marker([uLat, uLng], {
+                    icon: L.divIcon({
+                        className: 'bg-transparent',
+                        html: `<div class="w-5 h-5 bg-neon-accent rounded-full border-2 border-white shadow-[0_0_15px_#39FF14] animate-pulse"></div>`,
+                        iconSize: [20, 20], iconAnchor: [10, 10]
+                    })
+                }).addTo(globalSedesMap);
+                bounds.push([uLat, uLng]);
                 globalSedesMap.fitBounds(bounds, { padding: [30, 30] });
-            }, () => { if(bounds.length > 0) globalSedesMap.fitBounds(bounds, { padding: [30, 30] }); });
+            }, () => {
+                if(bounds.length > 0) globalSedesMap.fitBounds(bounds, { padding: [30, 30] });
+            });
         } else {
             if(bounds.length > 0) globalSedesMap.fitBounds(bounds, { padding: [30, 30] });
         }
-        
-        setTimeout(() => updateMarkerScales(globalSedesMap), 500);
-    }, 400);
-}
+    }, 250);
 
+}
 
 
     function renderChatModal() {
@@ -1838,11 +1740,10 @@ function renderMapModal() {
                     <span class="text-white font-bold text-base truncate">${s.NOMBRE_SEDE.split(',')[0]}</span>
                     <span class="text-[10px] text-zinc-400 uppercase font-black truncate">${s.NOMBRE_SEDE.split(',')[1] || 'Sucursal'}</span>
                 </div>
-               <button onclick="window.open('https://wa.me/${s.TELEFONO}?text=${encodeURIComponent('Hola Combox, me comunico con la sede de ' + s.NOMBRE_SEDE + '. Necesito información.')}', '_blank')" class="bg-[#25D366] text-white px-5 py-2 rounded-full active:scale-[0.90] transition-transform flex items-center gap-1.5 shadow-lg border border-[#1DA851] flex-shrink-0">
-    <svg class="w-4 h-4 fill-white drop-shadow-md" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> 
-    <span class="text-[10px] font-black tracking-widest text-white">WhatsApp</span>
-</button>
-
+                <button onclick="window.open('https://wa.me/${s.TELEFONO}?text=${encodeURIComponent('Hola Combox, me comunico con la sede de ' + s.NOMBRE_SEDE + '. Necesito información.')}', '_blank')" class="bg-[#25D366]/20 text-[#25D366] px-3 py-1.5 rounded-full active:scale-[0.90] transition-transform flex items-center gap-1.5 border border-[#25D366]/40 flex-shrink-0">
+                    <svg class="w-4 h-4 fill-current drop-shadow-md" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> 
+                    <span class="text-[9px] font-black uppercase tracking-widest">WhatsApp</span>
+                </button>
             </div>
         `}).join('');
     }
@@ -1866,7 +1767,6 @@ function renderMapModal() {
         title.innerText = 'Datos de Delivery';
         sedeLabel.innerText = 'Sede que enviará tu pedido';
         locContainer.style.display = 'block'; 
-        document.getElementById('pickup-map-container').style.display = 'none';
         submitBtn.innerHTML = 'Solicitar Delivery <span class="material-symbols-outlined">two_wheeler</span>';
         submitBtn.className = "w-full bg-neon-accent text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2";
         accent.className = "w-1.5 h-6 bg-neon-accent rounded-full";
@@ -1874,6 +1774,7 @@ function renderMapModal() {
         document.getElementById('btn-wrong-location').style.display = 'flex';
         document.getElementById('manual-location-wrapper').style.display = 'none';
         
+        // ¡FIX MAGICO PARA EL MAPA BLANCO! Le damos 350ms al modal para abrirse y forzamos al mapa a dibujarse bien
         setTimeout(() => { if (map) map.invalidateSize(); }, 350);
 
         const locInput = document.getElementById('checkout-location');
@@ -1882,32 +1783,20 @@ function renderMapModal() {
             getLocation(); 
         }
     } else {
+
         title.innerText = 'Datos de Pick-Up';
         sedeLabel.innerText = 'Sede donde retirarás';
         locContainer.style.display = 'none'; 
-        document.getElementById('pickup-map-container').style.display = 'block';
         submitBtn.innerHTML = 'Solicitar Pick-Up <span class="material-symbols-outlined">storefront</span>';
         submitBtn.className = "w-full bg-white text-black font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-white/20 active:scale-[0.98] flex items-center justify-center gap-2";
         accent.className = "w-1.5 h-6 bg-white rounded-full";
-        setTimeout(() => renderPickupMap(), 350);
     }
     
-        const select = document.getElementById('checkout-sede-select');
+    const select = document.getElementById('checkout-sede-select');
     if(db?.sedes) {
-        // Renderizamos las opciones
-        select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE}</option>`).join('');
-        
-        // Auto-seleccionar sede más cercana si es delivery, o la actual si es pickup
-        if(type === 'delivery' && sedeMasCercanaCalculada) {
-            checkoutSede = sedeMasCercanaCalculada;
-        } else {
-            checkoutSede = currentSede;
-        }
-        
-        // Aplicamos la selección visual al menú desplegable
-        if(checkoutSede) select.value = checkoutSede.ID_SEDE;
+        select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}" ${currentSede?.ID_SEDE === s.ID_SEDE ? 'selected' : ''}>${s.NOMBRE_SEDE}</option>`).join('');
+        checkoutSede = currentSede;
     }
-
 
     // --- EL FIX EMPIEZA AQUÍ ---
     // 1. Abrimos la vista del modal inmediatamente sin bloqueos
@@ -1934,7 +1823,15 @@ function renderMapModal() {
     
     function closeCheckout() { toggleModal('checkout-modal', false, null); setTimeout(() => toggleModal('cart-modal', true), 150); }
     
-    
+    function updateCheckoutSede(id) { 
+    if(db?.sedes) {
+        checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
+        if (userMarker) {
+            const pos = userMarker.getLatLng();
+            renderMapPosition(pos.lat, pos.lng);
+        }
+    }
+}
 
     
     function updateLocationBtnState() {
@@ -2004,138 +1901,92 @@ function calculateTariff(lat, lng) {
     return foundTariff;
 }
 
- 
-function initLeafletMap() {
+// Controladores de Vista
+function confirmManualPin() {
+    if (pendingLatLng) {
+        renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
+    }
+    document.getElementById('btn-confirm-pin').style.display = 'none';
+}
+
+function showManualLocationInput() {
+    document.getElementById('manual-location-wrapper').style.display = 'flex';
+    const locInput = document.getElementById('checkout-location');
+    locInput.placeholder = "Coloca las coordenadas o texto referencial";
+    locInput.focus();
+    if (userMarker) userMarker.setIcon(redPinIcon); // Cambia a pin rojo
+}
+
+// Borramos la función resetToMap() porque ya no la necesitamos, el mapa nunca desaparece.
+
+    
+const misZonasGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"COMBOX MAPA","styleUrl":"#poly-BDBDBD-3301-43-nodesc","fill-opacity":0.16862745098039217,"fill":"#bdbdbd","stroke-opacity":1,"stroke":"#bdbdbd","stroke-width":3.301},"id":0},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-68.0182977,10.2995944,0],[-68.0308287,10.2987493,0],[-68.0867449,10.3091358,0],[-68.0916796,10.3049563,0],[-68.0687203,10.2989609,0],[-68.0566825,10.2986233,0],[-68.0337445,10.2902629,0],[-68.0322004,10.2726968,0],[-68.0314605,10.2670804,0],[-68.0339822,10.2620552,0],[-68.0335478,10.2570722,0],[-68.0317402,10.2529337,0],[-68.0307854,10.2490066,0],[-68.0283391,10.245227,0],[-68.0215152,10.2443614,0],[-68.0195947,10.2418223,0],[-68.0211504,10.2392831,0],[-68.0191763,10.2341836,0],[-68.0230601,10.2336347,0],[-68.0238753,10.2330437,0],[-68.0282019,10.2302035,0],[-68.0255401,10.2287611,0],[-68.0215908,10.2294725,0],[-68.0254512,10.2268407,0],[-68.0150853,10.2226676,0],[-68.023796,10.2208978,0],[-68.0315413,10.2174808,0],[-68.0359751,10.2168368,0],[-68.038821,10.2127928,0],[-68.037514,10.212055,0],[-68.0346837,10.2099655,0],[-68.0402004,10.2069469,0],[-68.0421121,10.203168,0],[-68.0349279,10.1977222,0],[-68.0394467,10.1942389,0],[-68.0472272,10.1932476,0],[-68.0518485,10.194499,0],[-68.0526504,10.1955393,0],[-68.0544608,10.1967008,0],[-68.0570866,10.1979889,0],[-68.0575238,10.2007976,0],[-68.0562872,10.2041133,0],[-68.0502523,10.2092662,0],[-68.057706,10.2153058,0],[-68.0576496,10.2129409,0],[-68.0624079,10.2118483,0],[-68.0643793,10.2171516,0],[-68.0681961,10.2162885,0],[-68.0686413,10.2130206,0],[-68.0633359,10.2085702,0],[-68.0669677,10.2078363,0],[-68.0646769,10.2050329,0],[-68.062716,10.2018783,0],[-68.063931,10.1966119,0],[-68.0615622,10.1857274,0],[-68.0597336,10.1763144,0],[-68.0603152,10.1716636,0],[-68.0518414,10.173391,0],[-68.0506727,10.1766795,0],[-68.0454105,10.1788306,0],[-68.0415777,10.1777096,0],[-68.0369296,10.1797989,0],[-68.0357505,10.1866289,0],[-68.0305371,10.1883478,0],[-68.0267288,10.1869262,0],[-68.0239233,10.188961,0],[-68.0156247,10.1876165,0],[-68.017409,10.1831245,0],[-68.0257592,10.1802797,0],[-68.0322196,10.1743059,0],[-68.0489363,10.1613197,0],[-68.0577561,10.1539089,0],[-68.0663181,10.1489903,0],[-68.0707697,10.1568903,0],[-68.0772442,10.1623186,0],[-68.083786,10.1597524,0],[-68.0829462,10.1525395,0],[-68.0897924,10.1454001,0],[-68.1027533,10.1350929,0],[-68.1279012,10.11604,0],[-68.1387583,10.1044222,0],[-68.1526194,10.1118158,0],[-68.1570182,10.1070841,0],[-68.1578122,10.1026904,0],[-68.169871,10.0962688,0],[-68.165943,10.0848607,0],[-68.1653632,10.0686359,0],[-68.131933,10.0606916,0],[-68.1084162,10.0510583,0],[-68.0953708,10.0566361,0],[-68.0826691,10.0444656,0],[-68.081082,10.0613667,0],[-68.0685076,10.092635,0],[-68.0537028,10.1082256,0],[-68.0327171,10.1131685,0],[-68.0211732,10.1056906,0],[-68.004823,10.1051409,0],[-67.9926357,10.1130418,0],[-67.9940091,10.1257795,0],[-67.985941,10.1206571,0],[-67.9804479,10.1187453,0],[-67.9692045,10.1239422,0],[-67.958347,10.1154713,0],[-67.9481549,10.115714,0],[-67.9388211,10.1178153,0],[-67.9305813,10.1244899,0],[-67.9186085,10.1319678,0],[-67.9164203,10.1428246,0],[-67.9117426,10.1516111,0],[-67.9008204,10.1547369,0],[-67.8869107,10.1540823,0],[-67.8846764,10.1614007,0],[-67.8791804,10.1650863,0],[-67.8695134,10.1719709,0],[-67.8668852,10.1732484,0],[-67.8639566,10.1765958,0],[-67.859215,10.1849377,0],[-67.8529927,10.1874926,0],[-67.8467702,10.1972703,0],[-67.8386807,10.2013673,0],[-67.8348395,10.2117575,0],[-67.8320715,10.2227808,0],[-67.8267713,10.2311857,0],[-67.8180588,10.2302142,0],[-67.8090036,10.229264,0],[-67.7952706,10.2316079,0],[-67.7905499,10.2379216,0],[-67.7833614,10.2447736,0],[-67.7873308,10.2490918,0],[-67.7926086,10.269742,0],[-67.7965584,10.2876069,0],[-67.7947564,10.3037947,0],[-67.8093266,10.3043092,0],[-67.8162522,10.2917917,0],[-67.8215172,10.2974191,0],[-67.8272115,10.2967127,0],[-67.8276136,10.2873831,0],[-67.8133389,10.2796579,0],[-67.8138543,10.2639814,0],[-67.8431219,10.2540788,0],[-67.8662957,10.2511637,0],[-67.878655,10.2420193,0],[-67.8826029,10.253652,0],[-67.8737627,10.2703736,0],[-67.8514896,10.2911488,0],[-67.8765954,10.2899667,0],[-67.8596004,10.3044062,0],[-67.8756499,10.3296546,0],[-67.8824738,10.3421938,0],[-67.8892334,10.341835,0],[-67.8904997,10.3355655,0],[-67.8851564,10.3190786,0],[-67.8895979,10.3130624,0],[-67.8957831,10.30817,0],[-67.9012814,10.2990552,0],[-67.9158826,10.2912121,0],[-67.9236127,10.2831307,0],[-67.9250729,10.2571027,0],[-67.9186363,10.24425,0],[-67.9079106,10.2291024,0],[-67.9268904,10.2098492,0],[-67.9490831,10.2120479,0],[-67.9397521,10.2196515,0],[-67.9388321,10.2383201,0],[-67.9377284,10.2561048,0],[-67.936367,10.2673861,0],[-67.9335217,10.2772953,0],[-67.9296462,10.2824751,0],[-67.9357144,10.2890762,0],[-67.9289248,10.3055298,0],[-67.9348815,10.3090637,0],[-67.9395078,10.3046173,0],[-67.9450438,10.3022953,0],[-67.9496356,10.2984954,0],[-67.9565019,10.2973135,0],[-67.9564157,10.2884467,0],[-67.9539694,10.2853665,0],[-67.9578209,10.2817225,0],[-67.9642044,10.2815832,0],[-67.9717792,10.2787764,0],[-67.9818209,10.2764965,0],[-67.993365,10.2757997,0],[-67.9995446,10.28017,0],[-67.9946199,10.2872008,0],[-67.9961916,10.2899561,0],[-67.9987074,10.2928803,0],[-68.006668,10.2966386,0],[-68.0182977,10.2995944,0]]]},"properties":{"name":"TARIFA","styleUrl":"#poly-FFFFFF-3901-20-nodesc","fill-opacity":0.0784313725490196,"fill":"#ffffff","stroke-opacity":1,"stroke":"#ffffff","stroke-width":3.901}}]}
+
+    function initLeafletMap() {
     if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
     
-    // 🔥 FIX: Volvemos a SVG pero con un "padding" enorme.
-    // Esto mantiene tu filtro negro perfecto sin que se corte al arrastrar la pantalla.
-    const customRenderer = L.svg({ padding: 2.5 });
-
-    map = L.map('map-preview', { zoomControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 13);
+    map = L.map('map-preview', { zoomControl: false }).setView([10.2543, -68.0101], 13);
+    // MAPA OSCURO CARTO DB
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; CARTO'
     }).addTo(map);
 
-    document.getElementById('map-wrapper').addEventListener('touchstart', function() {
-        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, { passive: true });
-    
-    map.on('dragstart', function() {
-        document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    map.on('zoomend', function() {
-        updateMarkerScales(map);
-    });
-
     if (typeof misZonasGeoJSON !== 'undefined') {
         zonesGeoLayer = L.geoJSON(misZonasGeoJSON, {
-            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
-            interactive: false 
+            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 })
         }).addTo(map);
     }
 }
 
-
-
-function updateMarkerScales(mapInstance) {
-    if(!mapInstance) return;
-    const zoom = mapInstance.getZoom();
-    let scale = 1;
-    if (zoom <= 11) scale = 0.6;
-    else if (zoom === 12) scale = 0.75;
-    else if (zoom === 13) scale = 0.9;
-    
-    const containers = mapInstance.getContainer().querySelectorAll('.sede-marker-content');
-    containers.forEach(el => el.style.setProperty('--map-icon-scale', scale));
-}
-
-function updateCheckoutSede(id) { 
-    if(db?.sedes) {
-        checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
-        
-        const select = document.getElementById('checkout-sede-select');
-        if(select && select.value !== id) {
-            select.value = id;
-        }
-
-        if (checkoutType === 'delivery' && userMarker) {
-            if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
-            const pos = userMarker.getLatLng();
-            renderMapPosition(pos.lat, pos.lng); 
-        } else if (checkoutType === 'pickup') {
-            renderPickupMap();
-        }
-    }
-}
 async function renderMapPosition(lat, lng) {
     if(!checkoutSede) return;
     
-    setTimeout(() => { if(map) map.invalidateSize(); }, 100); 
-    map.setView([lat, lng], map.getZoom() > 13 ? map.getZoom() : 14); 
+    map.setView([lat, lng], 14); 
     
-    const activeIcon = isManualLocation ? redPinIcon : greenDotIcon;
+    // Verificamos si estamos en modo manual para dejar el pin rojo
+    const isManual = document.getElementById('manual-location-wrapper').style.display !== 'none';
+    const activeIcon = isManual ? redPinIcon : greenDotIcon;
     
     if (userMarker) {
         userMarker.setLatLng([lat, lng]);
         userMarker.setIcon(activeIcon);
-        userMarker.dragging.disable(); 
     } else {
-        userMarker = L.marker([lat, lng], { draggable: false, icon: activeIcon }).addTo(map);
+        userMarker = L.marker([lat, lng], { draggable: true, icon: activeIcon }).addTo(map);
+
+        userMarker.on('dragstart', function() {
+            userMarker.setIcon(redPinIcon);
+            document.getElementById('manual-location-wrapper').style.display = 'flex';
+            document.getElementById('btn-confirm-pin').style.display = 'flex';
+        });
+
+        userMarker.on('dragend', function(e) {
+            pendingLatLng = e.target.getLatLng();
+            // ¡NO recalculamos aquí! Esperamos a que presione el botón "Aceptar"
+        });
     }
 
+    // Pintar sedes (Icono de Tienda Roja + Nombre)
     marcadoresSedesMap.forEach(m => map.removeLayer(m));
     marcadoresSedesMap = [];
     
     db.sedes.forEach(s => {
         const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
         const isSelected = (s.ID_SEDE === checkoutSede.ID_SEDE);
-        const sched = getSchedule(s);
         
-        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
-        const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
-        
-        let iconWrapperClass = "";
-        let letreroClass = "";
-        
-        if (!isSelected) {
-            if (sched.isOpen) {
-                iconWrapperClass = "brightness-75"; 
-                letreroClass = "opacity-80";
-            } else {
-                iconWrapperClass = "grayscale opacity-60"; 
-                letreroClass = "opacity-60";
-            }
-        }
-
         const iconHtml = `
-            <div class="sede-marker-content flex flex-col items-center justify-center ${isSelected ? 'selected-sede' : 'z-[500] cursor-pointer'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
-                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
-                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
-                </div>
-                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
-                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
-                    </div>
-                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+            <div class="flex flex-col items-center justify-center translate-y-[-10px] ${isSelected ? '' : 'grayscale opacity-50'}">
+                <span class="material-symbols-outlined text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]" style="font-size: 36px; font-variation-settings: 'FILL' 1;">storefront</span>
+                <div class="bg-black/90 backdrop-blur-md border border-white/20 px-2 py-1.5 rounded-lg flex flex-col items-center mt-0 shadow-lg">
+                    <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
+                    <span class="text-[7px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
                 </div>
             </div>`;
             
-        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
+        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [80, 80], iconAnchor:[40, 40] });
         marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
     });
 
-    updateMarkerScales(map); 
-
-    // 🔥 FIX APLICADO: Borramos la ruta vieja inmediatamente y mostramos que estamos calculando
-    if (rutaLayer && map) {
-        map.removeLayer(rutaLayer);
-        rutaLayer = null;
-    }
-    document.getElementById('map-header-title').innerText = `CALCULANDO RUTA...`;
-
+    // OSRM Calculo de Ruta Real
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
 
@@ -2149,27 +2000,23 @@ async function renderMapPosition(lat, lng) {
 
             const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
             let rawPrice = distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
+
             let decimalPart = rawPrice % 1;
             let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.9 ? 1 : 0);
 
             tarifaFinalCalculada = Math.max(min, roundedPrice);
             let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
 
-            document.getElementById('map-header-title').innerText = `${displayPrice}$`;
+            document.getElementById('map-header-title').innerText = `DELIVERY COMBOX: ${displayPrice}$`;
             document.getElementById('route-km').innerText = `${distanceKm.toFixed(1)} km`;
             document.getElementById('route-time').innerText = `${durationMin} min`;
 
-            // 🔥 FIX APLICADO: Dibujamos la nueva línea verde de manera limpia
             if (rutaLayer) map.removeLayer(rutaLayer);
             rutaLayer = L.geoJSON(route.geometry, {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
             }).addTo(map);
 
-            map.fitBounds(rutaLayer.getBounds(), { padding: [40, 40] });
-            setTimeout(() => {
-                if(map) map.invalidateSize();
-                updateMarkerScales(map);
-            }, 300);
+            map.fitBounds(rutaLayer.getBounds(), { padding: [30, 30] });
         }
     } catch(e) {
         document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;
@@ -2177,107 +2024,71 @@ async function renderMapPosition(lat, lng) {
 }
 
 
-function showManualLocationInput() {
-    isEditingLocation = true; 
-    document.getElementById('manual-location-wrapper').style.display = 'flex';
-    document.getElementById('btn-confirm-pin').style.display = 'flex';
-    document.getElementById('btn-wrong-location').style.display = 'none'; 
-    
-    const locInput = document.getElementById('checkout-location');
-    locInput.placeholder = "Mueve el mapa para ubicar tu dirección";
-    
-    // 🔥 FIX: Eliminamos la ruta verde de inmediato para limpiar el mapa visualmente
-    if (rutaLayer && map) {
-        map.removeLayer(rutaLayer);
-        rutaLayer = null;
-    }
-    
-    // Dejamos los textos limpios mientras el usuario elige
-    document.getElementById('map-header-title').innerText = `UBICANDO PIN...`;
-    document.getElementById('route-km').innerText = `-- km`;
-    document.getElementById('route-time').innerText = `-- min`;
-
-    setTimeout(() => { if(map) map.invalidateSize(); }, 150);
-
-    if (userMarker) {
-        userMarker.setIcon(redPinIcon);
-        userMarker.setLatLng(map.getCenter());
-        pendingLatLng = map.getCenter();
-    }
-    
-    map.on('move', function() {
-        if(isEditingLocation && userMarker) {
-            userMarker.setLatLng(map.getCenter());
-        }
-    });
-    
-    map.on('moveend', function() {
-        if(isEditingLocation) {
-            pendingLatLng = map.getCenter();
-        }
-    });
-
-    document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function confirmManualPin() {
-    isEditingLocation = false;
-    isManualLocation = true; // Fuerza a mostrar el pin rojo
-    document.getElementById('btn-confirm-pin').style.display = 'none';
-    document.getElementById('btn-wrong-location').style.display = 'flex';
-    
-    let headerTitle = document.getElementById('map-header-title');
-    if(headerTitle) headerTitle.innerText = "Calculando ruta...";
-
-    if(pendingLatLng) {
-        renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
-    }
-
-    if (typeof map !== 'undefined' && map !== null) {
-        setTimeout(() => map.invalidateSize(), 400); 
-    }
-}
-
-
 
 
 function getLocation(userInitiated = false) {
-    isEditingLocation = false;
-    isManualLocation = false; // Vuelve a modo GPS (verde)
-    document.getElementById('btn-confirm-pin').style.display = 'none';
-    document.getElementById('manual-location-wrapper').style.display = 'none';
-    document.getElementById('btn-wrong-location').style.display = 'flex';
-    
-    const locInput = document.getElementById('checkout-location');
-    if(locInput) locInput.value = '';
-
+    // Usamos el ID correcto que tienes en tu HTML y evitamos errores si no existe
     const headerTitle = document.getElementById('map-header-title');
     if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
     
-    initLeafletMap(); 
+    initLeafletMap();
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                renderMapPosition(position.coords.latitude, position.coords.longitude);
-            },
-            function(error) {
-                if(headerTitle) headerTitle.innerText = "UBICA EL PIN MANUALMENTE";
-                renderMapPosition(10.2543, -68.0101); 
-            },
-            { enableHighAccuracy: true, timeout: 10000 }
-        );
-    } else {
-        renderMapPosition(10.2543, -68.0101);
-    }
+    let watchId;
+    let timeoutId;
+    let bestPos = null;
+
+    // Pedimos alta precisión
+    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
+    watchId = navigator.geolocation.watchPosition(pos => {
+        // Vamos guardando la mejor coordenada que el teléfono logre conseguir
+        if (!bestPos || pos.coords.accuracy < bestPos.coords.accuracy) {
+            bestPos = pos;
+        }
+
+        // Relajamos la exigencia de Safari. Si la precisión baja de 2500m, lo aceptamos de inmediato.
+        if (pos.coords.accuracy > 2500) return; 
+
+        navigator.geolocation.clearWatch(watchId);
+        clearTimeout(timeoutId);
+        renderMapPosition(pos.coords.latitude, pos.coords.longitude);
+
+    }, (err) => {
+        navigator.geolocation.clearWatch(watchId);
+        clearTimeout(timeoutId);
+
+        if (err.code === err.PERMISSION_DENIED) {
+            if (userInitiated) {
+                customAlert(
+                    "Safari bloqueó tu ubicación. Para activarla: \n\n1. Toca el ícono 'aA' en la barra de arriba.\n2. Ve a 'Configuración del sitio web'.\n3. En 'Ubicación' selecciona 'Permitir'.\n\nO ingresa tu dirección a mano.", 
+                    "GPS Bloqueado"
+                );
+            }
+        } else if (err.code === err.TIMEOUT && userInitiated && !bestPos) {
+            customAlert("El GPS tardó mucho en responder. Intenta de nuevo o ingresa tu dirección a mano.", "Tiempo agotado");
+        }
+        
+        // Si hay error pero el teléfono guardó una ubicación aproximada, la usamos para no trabarnos
+        if (bestPos) {
+             renderMapPosition(bestPos.coords.latitude, bestPos.coords.longitude);
+        } else {
+             showManualLocationInput();
+        }
+    }, options);
+
+    // Un cronómetro: Si pasan 12 segundos y Safari sigue buscando la "precisión perfecta", lo cortamos y usamos lo que tengamos
+    timeoutId = setTimeout(() => {
+        navigator.geolocation.clearWatch(watchId);
+        if (bestPos) {
+            renderMapPosition(bestPos.coords.latitude, bestPos.coords.longitude);
+        } else {
+            if (userInitiated) {
+                customAlert("Tu dispositivo no logró obtener una señal GPS precisa. Por favor, escribe tu dirección manualmente.", "Señal débil");
+            }
+            showManualLocationInput();
+        }
+    }, 12000); 
 }
-
-
-
-
-
-
-
     
             function submitOrder() {
         const name = document.getElementById('checkout-name').value.trim();
@@ -2420,7 +2231,7 @@ function getLocation(userInitiated = false) {
             const [main, sub] = s.NOMBRE_SEDE.split(',');
             
             const bgClass = active ? 'bg-zinc-800/90 border-zinc-500 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-white/5 border-white/10';
-            const iconClass = active ? 'bg-primary text-white shadow-[0_0_10px_rgba(227,6,19,0.5)]' : 'bg-white/5 text-white/30';
+            const iconClass = active ? 'bg-white/20 text-white' : 'bg-white/5 text-white/30';
             
             // LÓGICA NUEVA: Verificamos si esta sede es la calculada por el GPS
             const esLaMasCercana = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
@@ -2689,7 +2500,8 @@ function getLocation(userInitiated = false) {
         });
         
         if(promos.length) { 
-            section.classList.remove('hidden');
+            section.classList.remove('hidden'); 
+            document.querySelector('#promo-section button').setAttribute('onclick', "setCat('PROMOCIONES'); scrollToCatalog();");
             const containerClass = 'flex overflow-x-auto hide-scrollbar flex-nowrap overscroll-x-contain gap-4 px-1 pt-4 pb-4 scroll-smooth';
             document.getElementById('promo-carousel').className = containerClass;
             document.getElementById('promo-carousel').innerHTML = promos.map(p => createCard(p, true)).join(''); 
@@ -2832,63 +2644,6 @@ function getLocation(userInitiated = false) {
         grid.innerHTML = ''; 
         grid.appendChild(fragment); 
     }
-    function appendCatalogItems() {
-    const search = document.getElementById('global-search').value.trim();
-    let items = search !== '' ? getAllSourceData() : getSourceData();
-    
-    if (currentCat === 'PROMOCIONES') {
-        const today = new Date();
-        const dayNames = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
-        const currentDay = dayNames[today.getDay()];
-        items = items.filter(p => {
-            if(p.promocion?.activa && p.promocion) {
-                const dateOk = p.promocion.hasta ? new Date(p.promocion.hasta) >= today : true;
-                const dayOk = p.promocion.dias?.includes(currentDay) || p.promocion.dias?.includes("Todos Los Dias");
-                return dateOk && dayOk;
-            }
-            return p.precio_promo && parseFloat(p.precio_promo) > 0;
-        });
-    } else if(currentCat !== 'TODOS' && search === '') { 
-        items = items.filter(p => p.categoria === currentCat); 
-    }
-    
-    if(search) {
-        const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const searchClean = normalize(search);
-        items = items.map(p => {
-            let score = getSearchScore(search, p.nombre);
-            if (p.categoria && normalize(p.categoria) === searchClean) { score += 5000; }
-            return { ...p, _searchScore: score };
-        }).filter(p => p._searchScore > 0);
-        
-        items.sort((a, b) => {
-            if (currentSort === 'relevancia' || currentSort === 'default') {
-                if (b._searchScore !== a._searchScore) return b._searchScore - a._searchScore;
-            }
-            if(currentSort === 'precio_mayor') return getProductPrice(b) - getProductPrice(a);
-            if(currentSort === 'precio_menor') return getProductPrice(a) - getProductPrice(b);
-            if(currentSort === 'pres_mayor') return extractUnitValue(b.nombre) - extractUnitValue(a.nombre);
-            if(currentSort === 'pres_menor') return extractUnitValue(a.nombre) - extractUnitValue(b.nombre);
-            return b._index - a._index;
-        });
-    } else {
-        if(currentSort === 'precio_mayor') items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
-        else if(currentSort === 'precio_menor') items.sort((a, b) => getProductPrice(a) - getProductPrice(b));
-        else if(currentSort === 'pres_mayor') items.sort((a, b) => extractUnitValue(b.nombre) - extractUnitValue(a.nombre));
-        else if(currentSort === 'pres_menor') items.sort((a, b) => extractUnitValue(a.nombre) - extractUnitValue(b.nombre));
-        else items.sort((a, b) => b._index - a._index);
-    }
-    
-    // Obtenemos SOLO los nuevos elementos a inyectar
-    const newItems = items.slice(catalogLimit - 24, catalogLimit);
-    const htmlStr = newItems.map(p => createCard(p, false)).join('');
-    
-    // Inyectamos sin destruir el DOM existente
-    const gridContainer = document.querySelector('#catalog-grid .auto-grid');
-    if(gridContainer) {
-        gridContainer.insertAdjacentHTML('beforeend', htmlStr);
-    }
-}
     
     function triggerTap(el) {
         if (!el) return;
@@ -3192,71 +2947,6 @@ function getLocation(userInitiated = false) {
             toggleProductModal(true); 
         }, 15);
     }
-   function renderPickupMap() {
-    if(pickupMap) pickupMap.remove();
-    const customRenderer = L.svg({ padding: 1.5 });
-    pickupMap = L.map('checkout-pickup-map', { zoomControl: false, attributionControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 11);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(pickupMap);
-    
-    // Polígonos GeoJSON
-    if (typeof misZonasGeoJSON !== 'undefined') {
-        L.geoJSON(misZonasGeoJSON, {
-            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
-            interactive: false 
-        }).addTo(pickupMap);
-    }
-
-    let bounds = [];
-    db.sedes.forEach(s => {
-        const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
-        bounds.push([lat, lng]);
-        const isSelected = checkoutSede && checkoutSede.ID_SEDE === s.ID_SEDE;
-        const sched = getSchedule(s);
-        
-        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
-        const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
-        
-        let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
-        let letreroClass = sched.isOpen ? "" : "opacity-60";
-        let isClosest = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
-        let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
-
-        if (!isSelected) {
-            iconWrapperClass += " brightness-75 scale-90";
-            letreroClass += " opacity-80";
-        }
-        
-        const iconHtml = `
-            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative ${isSelected ? 'selected-sede z-[500]' : 'z-[400]'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
-                ${badgeCerca}
-                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
-                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
-                </div>
-                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
-                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
-                    </div>
-                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
-                </div>
-            </div>`;
-        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
-        L.marker([lat, lng], { icon }).addTo(pickupMap);
-    });
-    
-    // Ubicación actual del usuario (Punto Verde)
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            L.marker([pos.coords.latitude, pos.coords.longitude], { icon: greenDotIcon }).addTo(pickupMap);
-            bounds.push([pos.coords.latitude, pos.coords.longitude]);
-            pickupMap.fitBounds(bounds, { padding: [30, 30] });
-        });
-    } else if(bounds.length > 0) {
-        pickupMap.fitBounds(bounds, { padding: [30, 30] });
-    }
-    
-    setTimeout(() => updateMarkerScales(pickupMap), 200);
-}
     
     init();
 </script>

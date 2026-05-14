@@ -1345,7 +1345,7 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
 
             if (isAtBottom && catalogLimit < totalFilteredItemsCount) {
                 catalogLimit += 24;
-                appendCatalogItems(); // Usamos inyección en lugar de re-renderizado
+                appendCatalogItems(); 
             }
             
             lastScrollY = currentScrollY;

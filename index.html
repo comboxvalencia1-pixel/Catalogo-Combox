@@ -474,7 +474,7 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
                 </div>
             </div>
             
-            <div class="flex flex-col gap-3 mt-2">
+           <div class="flex flex-col gap-3 mt-8 mb-2">
                 <button class="w-full bg-[#39FF14] text-black font-[900] py-4 rounded-2xl text-[13px] uppercase shadow-lg shadow-[#39FF14]/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openMethodModal()">
     Confirmar Productos <span class="material-symbols-outlined text-[22px]">check_circle</span>
 </button>
@@ -531,12 +531,14 @@ body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
         <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
         <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
     </div>
-    <div id="pickup-map-container" class="relative w-full h-48 mb-2 rounded-2xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b]" style="display:none;">
-        <div class="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 backdrop-blur-md rounded-full px-4 py-1.5 border border-white/20 shadow-lg pointer-events-none">
-            <span class="text-white font-black text-[9px] uppercase tracking-widest text-center">Toca para seleccionar</span>
-        </div>
-        <div id="checkout-pickup-map" class="w-full h-full z-0"></div>
-    </div>
+   <!-- NUEVO CONTENEDOR DEL MAPA PICK-UP (AL FONDO) -->
+            <div id="pickup-map-container" class="relative w-full rounded-3xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b] mt-6 mb-2" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+                <!-- Marca de agua COMBOX -->
+                <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
+                    <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
+                </div>
+                <div id="checkout-pickup-map" class="w-full h-full z-0"></div>
+            </div>
 </div>
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
@@ -1338,12 +1340,9 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
                 } else if (currentScrollY > lastScrollY) {
                     searchContainer.classList.add('search-hidden');
                 } else {
-                    searchContainer.classList.remove('search-hidden');
-                }
-
-                if (isAtBottom && catalogLimit < totalFilteredItemsCount) {
+                    searchContainer.classList.remove('search-if (isAtBottom && catalogLimit < totalFilteredItemsCount) {
                     catalogLimit += 24;
-                    renderCatalog();
+                    appendCatalogItems(); // Usamos inyección en lugar de re-renderizado
                 }
                 lastScrollY = currentScrollY;
                 ticking = false;
@@ -1707,6 +1706,10 @@ function renderMapModal() {
     
     let html = `
     <div class="relative w-full h-56 mb-4 rounded-2xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b]">
+        <!-- Marca de agua COMBOX -->
+        <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
+            <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
+        </div>
         <div id="global-sedes-map" class="w-full h-full z-0"></div>
     </div>`;
     
@@ -2810,6 +2813,63 @@ function getLocation(userInitiated = false) {
         grid.innerHTML = ''; 
         grid.appendChild(fragment); 
     }
+    function appendCatalogItems() {
+    const search = document.getElementById('global-search').value.trim();
+    let items = search !== '' ? getAllSourceData() : getSourceData();
+    
+    if (currentCat === 'PROMOCIONES') {
+        const today = new Date();
+        const dayNames = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
+        const currentDay = dayNames[today.getDay()];
+        items = items.filter(p => {
+            if(p.promocion?.activa && p.promocion) {
+                const dateOk = p.promocion.hasta ? new Date(p.promocion.hasta) >= today : true;
+                const dayOk = p.promocion.dias?.includes(currentDay) || p.promocion.dias?.includes("Todos Los Dias");
+                return dateOk && dayOk;
+            }
+            return p.precio_promo && parseFloat(p.precio_promo) > 0;
+        });
+    } else if(currentCat !== 'TODOS' && search === '') { 
+        items = items.filter(p => p.categoria === currentCat); 
+    }
+    
+    if(search) {
+        const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const searchClean = normalize(search);
+        items = items.map(p => {
+            let score = getSearchScore(search, p.nombre);
+            if (p.categoria && normalize(p.categoria) === searchClean) { score += 5000; }
+            return { ...p, _searchScore: score };
+        }).filter(p => p._searchScore > 0);
+        
+        items.sort((a, b) => {
+            if (currentSort === 'relevancia' || currentSort === 'default') {
+                if (b._searchScore !== a._searchScore) return b._searchScore - a._searchScore;
+            }
+            if(currentSort === 'precio_mayor') return getProductPrice(b) - getProductPrice(a);
+            if(currentSort === 'precio_menor') return getProductPrice(a) - getProductPrice(b);
+            if(currentSort === 'pres_mayor') return extractUnitValue(b.nombre) - extractUnitValue(a.nombre);
+            if(currentSort === 'pres_menor') return extractUnitValue(a.nombre) - extractUnitValue(b.nombre);
+            return b._index - a._index;
+        });
+    } else {
+        if(currentSort === 'precio_mayor') items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
+        else if(currentSort === 'precio_menor') items.sort((a, b) => getProductPrice(a) - getProductPrice(b));
+        else if(currentSort === 'pres_mayor') items.sort((a, b) => extractUnitValue(b.nombre) - extractUnitValue(a.nombre));
+        else if(currentSort === 'pres_menor') items.sort((a, b) => extractUnitValue(a.nombre) - extractUnitValue(b.nombre));
+        else items.sort((a, b) => b._index - a._index);
+    }
+    
+    // Obtenemos SOLO los nuevos elementos a inyectar
+    const newItems = items.slice(catalogLimit - 24, catalogLimit);
+    const htmlStr = newItems.map(p => createCard(p, false)).join('');
+    
+    // Inyectamos sin destruir el DOM existente
+    const gridContainer = document.querySelector('#catalog-grid .auto-grid');
+    if(gridContainer) {
+        gridContainer.insertAdjacentHTML('beforeend', htmlStr);
+    }
+}
     
     function triggerTap(el) {
         if (!el) return;
@@ -3113,36 +3173,69 @@ function getLocation(userInitiated = false) {
             toggleProductModal(true); 
         }, 15);
     }
-    function renderPickupMap() {
+   function renderPickupMap() {
     if(pickupMap) pickupMap.remove();
     const customRenderer = L.svg({ padding: 1.5 });
     pickupMap = L.map('checkout-pickup-map', { zoomControl: false, attributionControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 11);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(pickupMap);
     
+    // Polígonos GeoJSON
+    if (typeof misZonasGeoJSON !== 'undefined') {
+        L.geoJSON(misZonasGeoJSON, {
+            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
+            interactive: false 
+        }).addTo(pickupMap);
+    }
+
     let bounds = [];
     db.sedes.forEach(s => {
         const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
         bounds.push([lat, lng]);
         const isSelected = checkoutSede && checkoutSede.ID_SEDE === s.ID_SEDE;
         const sched = getSchedule(s);
-        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
         
-        let iconWrapperClass = isSelected ? "" : "grayscale opacity-60";
+        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
+        const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
+        
+        let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
+        let letreroClass = sched.isOpen ? "" : "opacity-60";
+        let isClosest = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
+        let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
+
+        if (!isSelected) {
+            iconWrapperClass += " brightness-75 scale-90";
+            letreroClass += " opacity-80";
+        }
         
         const iconHtml = `
-            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer ${isSelected ? 'selected-sede z-[500]' : 'z-[400]'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
-                <div class="w-9 h-9 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
-                    <span class="material-symbols-outlined text-white" style="font-size: 20px;">storefront</span>
+            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative ${isSelected ? 'selected-sede z-[500]' : 'z-[400]'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+                ${badgeCerca}
+                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
                 </div>
-                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1 rounded-xl flex flex-col items-center shadow-lg">
-                    <span class="text-[7px] font-bold text-zinc-300 uppercase truncate max-w-[70px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
+                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
+                    </div>
+                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
                 </div>
             </div>`;
-        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [80, 80], iconAnchor:[40, 40] });
+        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
         L.marker([lat, lng], { icon }).addTo(pickupMap);
     });
     
-    if(bounds.length > 0) pickupMap.fitBounds(bounds, { padding: [20, 20] });
+    // Ubicación actual del usuario (Punto Verde)
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            L.marker([pos.coords.latitude, pos.coords.longitude], { icon: greenDotIcon }).addTo(pickupMap);
+            bounds.push([pos.coords.latitude, pos.coords.longitude]);
+            pickupMap.fitBounds(bounds, { padding: [30, 30] });
+        });
+    } else if(bounds.length > 0) {
+        pickupMap.fitBounds(bounds, { padding: [30, 30] });
+    }
+    
     setTimeout(() => updateMarkerScales(pickupMap), 200);
 }
     

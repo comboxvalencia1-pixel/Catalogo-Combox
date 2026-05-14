@@ -10,7 +10,10 @@
     <meta name="theme-color" content="#E30613" />
 
     
-   <!-- 1. PRIMERO LA CONFIGURACIÓN DE TAILWIND -->
+ <!-- 1. PRIMERO EL CDN DE TAILWIND -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+   <!-- 2. LUEGO LA CONFIGURACIÓN DE TAILWIND -->
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -30,9 +33,6 @@
             }
         };
     </script>
-
-    <!-- 2. LUEGO EL CDN DE TAILWIND COMPLETAMENTE LIMPIO -->
-    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- 3. LUEGO TU LOCALFORAGE -->
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
@@ -57,14 +57,13 @@
             touch-action: pan-y !important; 
             zoom: 1 !important;
         }
-        body { 
+       body { 
             background: #050505 !important; 
             color: #F4F4F5; 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             overflow-x: hidden; 
             overscroll-behavior-y: none; 
             min-height: 100dvh; 
-            background-attachment: fixed;
             -webkit-font-smoothing: antialiased; 
             -moz-osx-font-smoothing: grayscale; 
             touch-action: pan-y !important; 
@@ -97,7 +96,7 @@
 
         button, .nav-col, .type-tab, .cat-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .btn-bounce { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; will-change: transform; }
+        .btn-bounce { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s; }
         .btn-bounce-active, .btn-bounce:active { transform: scale(0.85) !important; transition: transform 0.1s; }
 
         .image-container { position: relative; width: 100%; overflow: hidden; background: rgba(255,255,255,0.03); }
@@ -131,7 +130,7 @@
             max-height: 0 !important; opacity: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: none !important; 
         }
 
-        header .absolute { transform: translateZ(0); will-change: opacity; }
+        /* header .absolute { transform: translateZ(0); will-change: opacity; } */
 
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         

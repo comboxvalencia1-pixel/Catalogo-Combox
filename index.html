@@ -15,7 +15,7 @@
     <!-- Librerías de Leaflet para el Mapa Gratuito -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://plugins.kraken.ws/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
@@ -187,8 +187,8 @@
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s ease;
         }
         
-        /* Ajuste de PWA Banner dinámico */
-body.island-active #pwa-install-banner:not(.translate-y-\[200\%\]) {
+      /* Ajuste de PWA Banner dinámico */
+body.island-active #pwa-install-banner:not([class*="translate-y"]) {
     bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
     transform: translateX(-50%) !important;
 }

@@ -12,7 +12,7 @@
     
  <!-- 1. PRIMERO EL CDN DE TAILWIND -->
     <!-- 1. PRIMERO EL CDN DE TAILWIND (Versión fija) -->
-<script src="tailwind-engine.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
    <!-- 2. LUEGO LA CONFIGURACIÓN DE TAILWIND -->
     <script>
@@ -116,12 +116,7 @@
             -webkit-transform: translateZ(0); transform: translateZ(0);
         }
         
-        .bg-blur-image { 
-            position: absolute; inset: 0; background-size: cover; background-position: left center; 
-            filter: blur(12px) brightness(0.6); opacity: 0.8; z-index: 0; 
-            transform: scale(2.2) translateX(-8%); transform-origin: left center; 
-            will-change: transform;
-        }
+        
         
         #type-tabs-container { 
             transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease; 
@@ -986,6 +981,58 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
     
     let catalogLimit = 24;
     let totalFilteredItemsCount = 0;
+   
+   // INICIO: Sistema de extracción de color optimizado
+    const colorCache = new Map();
+
+    function extractLeftColor(imgElement, cardId) {
+        const cardElement = document.getElementById(cardId);
+        if (!cardElement) return;
+
+        if (colorCache.has(cardId)) {
+            cardElement.style.background = colorCache.get(cardId);
+            return;
+        }
+
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.width = 5; 
+            canvas.height = 20;
+
+            ctx.drawImage(imgElement, 0, 0, imgElement.naturalWidth * 0.1, imgElement.naturalHeight, 0, 0, 5, 20);
+
+            const data = ctx.getImageData(0, 0, 5, 20).data;
+            let r = 0, g = 0, b = 0, count = 0;
+
+            for (let i = 0; i < data.length; i += 16) { 
+                r += data[i];
+                g += data[i+1];
+                b += data[i+2];
+                count++;
+            }
+
+            r = Math.floor(r / count);
+            g = Math.floor(g / count);
+            b = Math.floor(b / count);
+
+            // Oscurecer el color para la estética dark
+            r = Math.floor(r * 0.5);
+            g = Math.floor(g * 0.5);
+            b = Math.floor(b * 0.5);
+
+            const bgStyle = `linear-gradient(135deg, rgba(${r},${g},${b},0.8) 0%, rgba(15,15,18,0.9) 100%)`;
+            
+            colorCache.set(cardId, bgStyle);
+            cardElement.style.background = bgStyle;
+
+        } catch (e) {
+            const defaultBg = 'rgba(255, 255, 255, 0.05)';
+            colorCache.set(cardId, defaultBg);
+            cardElement.style.background = defaultBg;
+        }
+    }
+    // FIN: Sistema de extracción de color optimizado
     
     const searchContainer = document.getElementById('search-container');
     
@@ -2911,13 +2958,11 @@ function getLocation(userInitiated = false) {
         
         const img = p.imagen || DEFAULT_IMG;
         
-        return `<div class="product-card-glass glass-contour ${isOut ? 'out-of-stock' : ''} ${cardClass} ${contourClass}" data-id="${id}" onclick="openProductView('${id}')">
-            <div class="bg-blur-image" style="background-image: url('${img}')"></div>
-            
+        return `<div class="product-card-glass glass-contour ${isOut ? 'out-of-stock' : ''} ${cardClass} ${contourClass}" id="card-${id}" data-id="${id}" onclick="openProductView('${id}')" style="background: rgba(15,15,18,0.8); transition: background 0.4s ease;">
             <div class="glass-overlay">
                 <div class="w-full aspect-square rounded-2xl overflow-hidden mb-2 relative flex items-center justify-center image-container flex-shrink-0">
                     ${isPromo ? '<div class="absolute top-2 left-2 z-30 bg-black/60 backdrop-blur-md border border-white/10 text-white text-[9px] font-black px-2 py-1 rounded-full shadow-lg tracking-widest flex items-center gap-1">🔥 PROMO!</div>' : ''}
-                    <img class="main-image" src="${img}" decoding="async" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/>
+                    <img class="main-image" src="${img}" crossorigin="anonymous" decoding="async" onload="this.classList.add('loaded'); extractLeftColor(this, 'card-${id}');" onerror="this.classList.add('loaded')" loading="lazy" oncontextmenu="return false;" draggable="false"/>
                     <img class="placeholder-blur" src="${img}" aria-hidden="true" decoding="async"/>
                 </div>
                 
@@ -2933,7 +2978,6 @@ function getLocation(userInitiated = false) {
             </div>
         </div>`;
     }
-    
     function renderCart() {
         const list = document.getElementById('cart-items-list');
         const items = Object.keys(cart).map(id => { const p = getAllSourceData().find(x => getUnifiedId(x) === id); return p ? {...p, qty: cart[id]} : null; }).filter(p => p && p.qty > 0);

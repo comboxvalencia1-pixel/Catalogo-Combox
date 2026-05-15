@@ -286,14 +286,10 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
 
 /* --- Nuevos fondos sólidos optimizados --- */
         .btn-solido-rojo {
-            background: linear-gradient(145deg, #7a1010, #4a0707) !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 10px rgba(0,0,0,0.4) !important;
+            /* Sutil degradado más oscuro hacia la parte inferior */
+            background: linear-gradient(180deg, #8b0e0e 0%, #3a0404 100%) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 10px rgba(0,0,0,0.5) !important;
             border: 1px solid rgba(255, 100, 100, 0.15) !important;
-        }
-
-        .btn-solido-oscuro {
-            background: linear-gradient(145deg, #222225, #121214) !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 10px rgba(0,0,0,0.4) !important;
         }
 
     </style>
@@ -363,36 +359,33 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
     <div class="flex overflow-x-auto hide-scrollbar py-2 justify-center gap-2 md:gap-4 px-2 w-full mx-auto nav-container" style="max-width: fit-content;">
         
         <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleSedesModal(true)">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0" style="color: #39FF14;">storefront</span></div>
+            <div class="w-12 h-12 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0" style="color: #39FF14;">storefront</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">SEDES</span>
         </div>
         
         <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('mapa-modal', true, renderMapModal)">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">location_on</span></div>
+            <div class="w-12 h-12 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">location_on</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">Mapa</span>
         </div>
         
         <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openHorarioModal()">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">schedule</span></div>
+            <div class="w-12 h-12 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">schedule</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">HORARIO</span>
         </div>
         
         <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('chat-modal', true, renderChatModal)">
-            <div class="w-14 h-14 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-white m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            <div class="w-12 h-12 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white">
+                <svg class="w-5 h-5 fill-white m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             </div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">CHAT</span>
         </div>
 
         <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openInstagram()">
-           <div class="w-14 h-14 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white">
-                <svg class="w-6 h-6 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+           <div class="w-12 h-12 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white">
+                <svg class="w-5 h-5 fill-current m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.2 4.352 2.612 6.773 6.97 6.973 1.28.058 1.688.072 4.948.072 3.26 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.983.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.2-4.361-2.624-6.777-6.983-6.97C15.668.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">INSTAGRAM</span>
         </div>
-
-    </div>
-</div>
 
 <div class="sticky z-50 px-4 mt-8" id="search-container" style="top: calc(1rem + env(safe-area-inset-top));">
     <div class="flex flex-col items-center gap-3 max-w-2xl mx-auto island-width">
@@ -3211,10 +3204,11 @@ function getLocation(userInitiated = false) {
             const safeName = p.nombre.replace(/'/g, "\\'");
             const priceDisplay = price === 0 ? 'Por cotizar' : '$' + price.toFixed(2);
             
-            document.getElementById('product-content').innerHTML = `
-                <div class="absolute inset-0 bg-[#0A0A0B] z-0"></div>
-                <div class="absolute -inset-10 z-10 opacity-35 bg-cover bg-center pointer-events-none" style="background-image: url('${img}'); filter: blur(40px); transform: translateZ(0);"></div>
-                <div class="absolute bottom-0 inset-x-0 h-[65%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/85 to-transparent"></div>
+            const detectedColor = colorCache.get('card-' + id) || 'linear-gradient(135deg, rgba(20,20,20,0.8) 0%, rgba(10,10,12,0.9) 100%)';
+
+            document.getElementById('product-content').innerHTML = `
+                <div class="absolute inset-0 z-0" style="background: ${detectedColor}; transition: background 0.5s ease;"></div>
+                <div class="absolute bottom-0 inset-x-0 h-[75%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/95 to-transparent"></div>
                 
                 <div class="absolute top-4 right-4 z-50 flex items-center gap-2">
                     <button type="button" class="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" onclick="shareProduct('${id}', '${safeName}')">

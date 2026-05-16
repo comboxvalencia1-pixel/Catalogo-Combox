@@ -12,7 +12,7 @@
     
  <!-- 1. PRIMERO EL CDN DE TAILWIND -->
     <!-- 1. PRIMERO EL CDN DE TAILWIND (Versión fija) -->
-<script src="tailwind-engine.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
    <!-- 2. LUEGO LA CONFIGURACIÓN DE TAILWIND -->
     <script>
@@ -48,6 +48,83 @@
     
  
     <style>
+   /* Contenedor adaptado para mantener el efecto difuminado sin destruir la comida */
+.lava-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: transparent;
+    /* Mantenemos un difuminado suave para el efecto flotante */
+    filter: blur(6px); 
+    /* Cambiado a normal para que los colores de los ingredientes se vean perfectos */
+    mix-blend-mode: normal; 
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Base para los elementos de comida en movimiento */
+.lava-blob {
+    position: absolute;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.95;
+    animation: move-lava linear infinite alternate;
+}
+
+/* --- HAMBURGUESAS (Blobs redondeados) --- */
+.lava-blob:nth-child(1) {
+    width: 140px;
+    height: 140px;
+    top: -10%;
+    left: 10%;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='80'>🍔</text></svg>");
+    animation-duration: 8s;
+}
+
+.lava-blob:nth-child(3) {
+    width: 110px;
+    height: 110px;
+    top: 30%;
+    left: 50%;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='80'>🍔</text></svg>");
+    animation-duration: 6s;
+}
+
+/* --- HOT DOGS (Blobs alargados) --- */
+.lava-blob:nth-child(2) {
+    width: 160px;
+    height: 110px;
+    bottom: -15%;
+    right: 15%;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='80'>🌭</text></svg>");
+    animation-duration: 11s;
+}
+
+.lava-blob:nth-child(4) {
+    width: 150px;
+    height: 100px;
+    bottom: -5%;
+    left: -5%;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='80'>🌭</text></svg>");
+    animation-duration: 9s;
+}
+
+/* Animación de movimiento orgánico (suavizada para que la comida no gire de cabeza) */
+@keyframes move-lava {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+    }
+    50% {
+        transform: translate(40px, -30px) scale(1.1) rotate(15deg);
+    }
+    100% {
+        transform: translate(-20px, 20px) scale(0.95) rotate(-15deg);
+    }
+}
         /* Bloqueo de zoom estricto y selección global */
         html { 
             background-color: #050505 !important; 
@@ -347,11 +424,24 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
 </div>
 
 <header class="relative pb-16 px-6 overflow-hidden rounded-b-[60px]" style="padding-top: calc(4.5rem + env(safe-area-inset-top));">
+    <!-- Capas de Fondo Originales -->
     <div class="absolute inset-0 bg-primary opacity-90 rounded-b-[60px]"></div>
-    <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.4),transparent_70%)] rounded-b-[60px]"></div>
+    
+    <!-- EFECTO LAVA CINÉTICA NEGRA -->
+    <div class="lava-container">
+        <div class="lava-blob"></div>
+        <div class="lava-blob"></div>
+        <div class="lava-blob"></div>
+        <div class="lava-blob"></div>
+    </div>
+
+    <!-- Destello de luz superior (pasa por encima de la lava para darle reflejo) -->
+    <div class="absolute inset-0 opacity-50 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.4),transparent_70%)] rounded-b-[60px] z-6"></div>
+
+    <!-- CONTENIDO (Completamente intacto para tus Scripts) -->
     <div class="relative z-10 flex flex-col items-center text-center">
         <span class="text-white/60 text-[11px] font-bold tracking-[0.3em] uppercase mb-2" id="current-location-label">Cargando sede...</span>
-        <h1 class="text-white font-[900] text-6xl md:text-8xl tracking-tighter leading-none mb-3">COMBOX</h1>
+        <h1 class="text-white font-[900] text-6xl md:text-8xl tracking-tighter leading-none mb-3 drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)]">COMBOX</h1>
         <div class="flex items-center gap-2 px-4 py-1.5">
             <span id="header-status-dot" class="w-1.5 h-1.5 rounded-full bg-white/20"></span>
             <span id="header-status-text" class="text-white/90 text-[10px] font-bold uppercase tracking-wider drop-shadow-md">Consultando...</span>

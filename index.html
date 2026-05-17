@@ -2243,7 +2243,7 @@ async function renderMapPosition(lat, lng) {
         map.removeLayer(rutaLayer);
         rutaLayer = null;
     }
-    document.getElementById('map-header-title').innerText = `CALCULANDO RUTA...`;
+    document.getElementById('map-header-title').innerText = `CALCULANDO...`;
 
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
@@ -2407,7 +2407,7 @@ function confirmManualPin() {
     resetEditLocationButton(); // AQUI RESTAURAMOS EL BOTON
     
     let headerTitle = document.getElementById('map-header-title');
-    if(headerTitle) headerTitle.innerText = "Calculando ruta...";
+    if(headerTitle) headerTitle.innerText = "CALCULANDO...";
 
     if(pendingLatLng) {
         renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);

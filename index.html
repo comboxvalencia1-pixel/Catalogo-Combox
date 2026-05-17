@@ -526,121 +526,106 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
 </div>
 
 <div class="modal" id="checkout-modal">
-    <div class="modal-overlay" onclick="closeCheckout()"></div>
-    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-6 glass-contour" style="background: #0A0A0B;">
-        
-        <!-- CABECERA FIJA -->
-        <div class="flex items-center justify-between mb-6 flex-shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div>
-                <h2 class="text-2xl font-black text-white uppercase tracking-tighter" id="checkout-title">Datos</h2>
-            </div>
-            <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); closeCheckout()">
-                <span class="material-symbols-outlined text-lg">close</span>
-            </button>
-        </div>
-        
-        <!-- ÁREA QUE HACE SCROLL (Sube y baja) -->
-        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-6 flex-1 min-h-0" id="checkout-scroll-area">
-          <div>
-    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
-    <div class="relative mb-4">
-        <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
-        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
-    </div>
-</div>
-            <div>
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
-                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
-            </div>
-            <div>
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
-                <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
-            </div>
+    <div class="modal-overlay" onclick="closeCheckout()"></div>
+    <div class="modal-content flex flex-col max-h-[85vh] md:max-h-[85vh] p-6 pb-6 glass-contour" style="background: #0A0A0B;">
+        
+        <!-- CABECERA FIJA -->
+        <div class="flex items-center justify-between mb-6 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-6 bg-neon-accent rounded-full" id="checkout-accent"></div>
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter" id="checkout-title">Datos</h2>
+            </div>
+            <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); closeCheckout()">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        
+        <!-- ÁREA QUE HACE SCROLL (Sube y baja) -->
+        <div class="space-y-5 overflow-y-auto hide-scrollbar pb-6 flex-1 min-h-0" id="checkout-scroll-area">
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
+                <div class="relative mb-4">
+                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
+                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
+                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
+                <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
+            </div>
 
-            <!-- CONTENEDOR DEL MAPA PICK-UP MOVIDO AQUÍ -->
-            <div id="pickup-map-container" class="relative w-full rounded-3xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b] mt-4 mb-2" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
-                <!-- Marca de agua COMBOX -->
-                <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
-                    <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
-                </div>
-                <div id="checkout-pickup-map" class="w-full h-full z-0"></div>
-            </div>
-</div>
-            <div>
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
-                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
-            </div>
-            <div>
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
-                <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
-            </div>
-            
-            <div id="checkout-location-container" class="flex flex-col gap-3">
-    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Ubicación de Entrega</label>
+            <!-- CONTENEDOR DEL MAPA PICK-UP -->
+            <div id="pickup-map-container" class="relative w-full rounded-3xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b] mt-4 mb-2" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+                <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
+                    <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
+                </div>
+                <div id="checkout-pickup-map" class="w-full h-full z-0"></div>
+            </div>
+            
+            <div id="checkout-location-container" class="flex flex-col gap-3">
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Ubicación de Entrega</label>
 
-    <!-- 1. INPUT ÚNICO DE DIRECCIÓN (AHORA ARRIBA) -->
-    <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-2">
-        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
-        <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin, escribir las coordenadas o referencia.
-        </p>
-    </div>
+                <!-- INPUT ÚNICO DE DIRECCIÓN -->
+                <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-2">
+                    <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
+                    <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin, escribir las coordenadas o referencia.
+                    </p>
+                </div>
 
-    <!-- 2. MAPA (AHORA ABAJO) -->
-<div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
-    
-    <!-- Marca de agua COMBOX -->
-    <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
-        <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
-    </div>
+                <!-- MAPA -->
+                <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+                    <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
+                        <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
+                    </div>
+                    <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
+                    
+                    <!-- Botón Aceptar Nueva Ubicación -->
+                    <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-4 py-2 text-xs rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-1.5 border border-white/20" style="display:none; margin-top: 40px;">
+                        Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                    </button>
 
-    <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
-    
-    <!-- Botón Aceptar Nueva Ubicación -->
-    <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-4 py-2 text-xs rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-1.5 border border-white/20" style="display:none; margin-top: 40px;">
-        Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
-    </button>
+                    <!-- Tarifa en la parte superior derecha -->
+                    <div class="absolute top-3 right-3 z-[1000] pointer-events-none">
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
+                            <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
+                            <span id="map-header-title">--$</span>
+                        </div>
+                    </div>
 
-    <!-- Tarifa en la parte superior derecha -->
-    <div class="absolute top-3 right-3 z-[1000] pointer-events-none">
-        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
-            <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
-            <span id="map-header-title">--$</span>
-        </div>
-    </div>
+                    <!-- Indicadores de Ruta (km y min) -->
+                    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none items-end">
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                            <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
+                        </div>
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                            <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
+                        </div>
+                    </div>
 
-    <!-- Indicadores de Ruta (km y min) se quedan abajo a la derecha -->
-    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none items-end">
-        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
-            <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
-        </div>
-        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
-            <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
-        </div>
-    </div>
+                    <!-- Botones de Control -->
+                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
+                        <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
+                    </button>
 
-    <!-- Botones de Control -->
-    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
-        <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
-    </button>
+                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+                        <span class="material-symbols-outlined text-[18px]">my_location</span>
+                    </button>
+                </div>
+            </div>
+        </div> <!-- AHORA SÍ: Cierre correcto de checkout-scroll-area -->
 
-    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
-        <span class="material-symbols-outlined text-[18px]">my_location</span>
-    </button>
-</div>
-<!-- Cierre de map-wrapper -->
-</div>  <!-- Cierre de checkout-location-container -->
-
-        </div> <!-- Cierre de checkout-scroll-area -->
-
-        <!-- BOTÓN FIJO AL FINAL (Fuera del scroll para que siempre esté a la mano) -->
-        <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-20">
-            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all" onclick="submitOrder()">
-                Solicitar Pedido <span class="material-symbols-outlined">send</span>
-            </button>
-        </div>
-    </div> <!-- Cierre de modal-content -->
+        <!-- BOTÓN FIJO AL FINAL -->
+        <div class="pt-4 border-t border-white/10 mt-auto flex-shrink-0 bg-[#0A0A0B] relative z-20">
+            <button type="button" id="checkout-submit-btn" class="w-full bg-neon-accent text-black font-[900] py-4 rounded-2xl text-sm uppercase shadow-lg shadow-neon-accent/20 active:scale-[0.98] flex items-center justify-center gap-2 transition-all" onclick="submitOrder()">
+                Solicitar Pedido <span class="material-symbols-outlined">send</span>
+            </button>
+        </div>
+    </div>
 </div> <!-- Cierre de modal -->
 
 

@@ -3333,12 +3333,9 @@ function getLocation(userInitiated = false) {
     
     function shareSugerencias() {
         const url = window.location.origin + window.location.pathname + '?sugerencias=true';
-        if (navigator.share) {
-            navigator.share({ title: 'Combox - Buzón de Sugerencias', url: url }).catch(console.error);
-        } else {
-            navigator.clipboard.writeText(url);
-            customAlert('¡Enlace de sugerencias copiado!');
-        }
+        
+        // Abre el nuevo modal en lugar de compartir directo
+        openShareModal(url, 'Buzón de Sugerencias');
     }
     
     function openProductView(id) {

@@ -2299,22 +2299,28 @@ function showManualLocationInput() {
 
 // NUEVA FUNCIÓN PARA CANCELAR EDICIÓN
 function cancelManualLocationInput() {
-    isEditingLocation = false;
+    isEditingLocation = false; // Esto desactiva el movimiento del pin de forma segura
     document.getElementById('manual-location-wrapper').style.display = 'none';
     document.getElementById('btn-confirm-pin').style.display = 'none';
     
     resetEditLocationButton();
 
-    if (map) { map.off('move'); map.off('moveend'); }
+    // Reajustar el tamaño del mapa para evitar cuadros grises
+    if (map) { 
+        setTimeout(() => map.invalidateSize(), 300); 
+    }
 
-    // Regresa a la ubicación antes de intentar editar, o recalcula GPS
+    // Ponemos texto de carga para que no se quede en blanco
+    let headerTitle = document.getElementById('map-header-title');
+    if(headerTitle) headerTitle.innerText = "Restaurando ruta...";
+
+    // Regresamos a la ubicación anterior y volvemos a trazar la ruta verde
     if (savedLatLngBeforeEdit) {
         renderMapPosition(savedLatLngBeforeEdit.lat, savedLatLngBeforeEdit.lng);
     } else {
         getLocation();
     }
 }
-
 // NUEVA FUNCIÓN PARA RESTAURAR EL BOTÓN A SU ESTADO ORIGINAL
 function resetEditLocationButton() {
     const btnEdit = document.getElementById('btn-wrong-location');
@@ -2361,7 +2367,7 @@ function getLocation(userInitiated = false) {
     if(locInput) locInput.value = '';
 
     const headerTitle = document.getElementById('map-header-title');
-    if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
+    if (headerTitle) headerTitle.innerText = "BUSCANDO...";
     
     initLeafletMap(); 
 

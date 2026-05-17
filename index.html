@@ -12,7 +12,7 @@
     
  <!-- 1. PRIMERO EL CDN DE TAILWIND -->
     <!-- 1. PRIMERO EL CDN DE TAILWIND (Versión fija) -->
-<script src="tailand-engine.js"></script>
+<script src="tailwind-engine.js"></script>
 
    <!-- 2. LUEGO LA CONFIGURACIÓN DE TAILWIND -->
     <script>
@@ -2257,7 +2257,7 @@ function showManualLocationInput() {
     }
     
     // Dejamos los textos limpios mientras el usuario elige
-    document.getElementById('map-header-title').innerText = `UBICANDO PIN...`;
+    document.getElementById('map-header-title').innerText = `--`;
     document.getElementById('route-km').innerText = `-- km`;
     document.getElementById('route-time').innerText = `-- min`;
 
@@ -2316,7 +2316,7 @@ function getLocation(userInitiated = false) {
     if(locInput) locInput.value = '';
 
     const headerTitle = document.getElementById('map-header-title');
-    if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
+    if (headerTitle) headerTitle.innerText = "BUSCANDO GPS...";
     
     initLeafletMap(); 
 

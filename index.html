@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="es">
-<head>
+<<head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
     <title>Combox - Menú</title>
@@ -9,12 +9,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#E30613" />
 
-    
- <!-- 1. PRIMERO EL CDN DE TAILWIND -->
-    <!-- 1. PRIMERO EL CDN DE TAILWIND (Versión fija) -->
-<script src="tailwind-engine.js"></script>
+    <!-- 1. PRIMERO EL CDN DE TAILWIND -->
+    <script src="tailwind-engine.js"></script>
 
-   <!-- 2. LUEGO LA CONFIGURACIÓN DE TAILWIND -->
+    <!-- 2. CONFIGURACIÓN DE TAILWIND (Solo JavaScript limpio aquí adentro) -->
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -46,8 +44,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet"/>
     
- 
+    <!-- 4. TU BLOQUE DE ESTILOS CSS (Aquí metemos la animación de comida y tus estilos globales) -->
     <style>
+        /* Animación de lluvia de comida para el header */
+        /* Animation framework para la lluvia de comida de Combox */
+@keyframes foodFall {
+    0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 0;
+    }
+    10% { opacity: 0.5; }
+    90% { opacity: 0.5; }
+    100% {
+        transform: translateY(220px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.food-drop {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+    animation: foodFall linear infinite;
+    will-change: transform, opacity;
+    user-select: none;
+    -webkit-user-select: none;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
         /* Bloqueo de zoom estricto y selección global */
         html { 
             background-color: #050505 !important; 
@@ -58,7 +82,7 @@
             touch-action: pan-y !important; 
             zoom: 1 !important;
         }
-       body { 
+        body { 
             background: #050505 !important; 
             color: #F4F4F5; 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -116,8 +140,6 @@
             -webkit-transform: translateZ(0); transform: translateZ(0);
         }
         
-        
-        
         #type-tabs-container { 
             transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease; 
             max-height: 60px; overflow: hidden; opacity: 1;
@@ -125,8 +147,6 @@
         .tabs-hidden { 
             max-height: 0 !important; opacity: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: none !important; 
         }
-
-        /* header .absolute { transform: translateZ(0); will-change: opacity; } */
 
         .glass-overlay { position: relative; z-index: 10; background: rgba(0,0,0,0.15); height: 100%; display: flex; flex-direction: column; align-items: center; padding: 1rem 0.75rem 0.85rem; flex: 1; } 
         
@@ -189,11 +209,10 @@
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s ease;
         }
         
-      /* Ajuste de PWA Banner dinámico */
-body.island-active #pwa-install-banner:not([class*="translate-y"]) {
-    bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
-    transform: translateX(-50%) !important;
-}
+        body.island-active #pwa-install-banner:not([class*="translate-y"]) {
+            bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
+            transform: translateX(-50%) !important;
+        }
         .modal { position: fixed; inset: 0; pointer-events: none; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; height: 100%; visibility: hidden; }
         .modal.active { pointer-events: auto; visibility: visible; }
         
@@ -250,11 +269,8 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
         @media (max-width: 395px) {
             .nav-container { gap: 0.25rem !important; justify-content: space-between !important; width: 100%; padding: 0 0.5rem !important; }
             .nav-col { min-width: 58px !important; gap: 0.3rem !important; }
-            
-            /* Ajuste para reducir armónicamente los nuevos botones sólidos en móviles pequeños */
             .nav-col .w-14.h-14 { width: 44px !important; height: 44px !important; border-radius: 1rem !important; }
             .nav-col .material-symbols-outlined, .nav-col svg { font-size: 20px !important; width: 20px !important; height: 20px !important; }
-            
             .nav-btn-glass { width: 46px !important; height: 46px !important; }
             .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 24px !important; width: 24px !important; height: 24px !important; }
             .nav-text { font-size: 8px !important; }
@@ -269,12 +285,10 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
         .max-content-width { max-width: 1200px; margin-left: auto; margin-right: auto; }
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
 
-                        /* Estilos del Mapa Oscuro (Corregido para que no se vea blanco) */
         #map-preview { background: #0a0a0b; }
         .leaflet-tile { filter: brightness(1.0) contrast(1.0); }
         .leaflet-control-attribution { display: none !important; }
 
-        /* Escala dinámica para los iconos del mapa */
         .sede-marker-content {
             --map-icon-scale: 1;
             transform: scale(var(--map-icon-scale)) translateY(-10px);
@@ -289,7 +303,6 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
             transform: scale(calc(var(--map-icon-scale) * 0.9)) translateY(-10px);
         }
 
-/* --- Nuevos fondos sólidos optimizados --- */
         .btn-solido-rojo {
             background: linear-gradient(145deg, #842727ff, #490303ff) !important;
             box-shadow: inset 0 1px 0 rgba(95, 3, 3, 0.1) 0 4px 10px rgba(255, 255, 255, 0.4) !important;
@@ -300,7 +313,6 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
             background: linear-gradient(145deg, #951717ff, #981313ff) !important;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 10px rgba(145, 2, 2, 0.4) !important;
         }
-
     </style>
 </head>
 <body class="pb-32" oncontextmenu="return false;">
@@ -351,9 +363,13 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
     <div class="pulse-logo">COMBOX</div>
 </div>
 
-<header class="relative pb-16 px-6 overflow-hidden rounded-b-[60px]" style="padding-top: calc(4.5rem + env(safe-area-inset-top));">
-    <div class="absolute inset-0 bg-primary opacity-90 rounded-b-[60px]"></div>
-    <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.4),transparent_70%)] rounded-b-[60px]"></div>
+<header class="relative pb-16 px-6 overflow-hidden rounded-b-[60px]" style="padding-top: calc(4.5rem + env(safe-area-inset-top)); background-color: #E30613;">
+    <!-- Contenedor exclusivo para la lluvia física de emojis -->
+    <div id="header-rain-container" class="absolute inset-0 overflow-hidden pointer-events-none rounded-b-[60px]"></div>
+    
+    <!-- Gradiente estético superior nativo (Bypassea el error del compilador de Tailwind) -->
+    <div class="absolute inset-0 opacity-40 rounded-b-[60px]" style="background: radial-gradient(circle at 50% -20%, rgba(255, 255, 255, 0.6), transparent 75%);"></div>
+    
     <div class="relative z-10 flex flex-col items-center text-center">
         <span class="text-white/60 text-[11px] font-bold tracking-[0.3em] uppercase mb-2" id="current-location-label">Cargando sede...</span>
         <h1 class="text-white font-[900] text-6xl md:text-8xl tracking-tighter leading-none mb-3">COMBOX</h1>
@@ -1440,6 +1456,7 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
 }, { passive: true });
 
        document.addEventListener("DOMContentLoaded", () => {
+         initFoodRain();
         const inputs = document.querySelectorAll('#checkout-name, #checkout-phone, #checkout-location');
         inputs.forEach(input => {
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
@@ -2604,7 +2621,29 @@ function getLocation(userInitiated = false) {
         }
     }
 
+    function initFoodRain() {
+    const container = document.getElementById('header-rain-container');
+    if (!container) return;
     
+    // Pool de variedad de productos crudos y combos de Combox
+    const foodEmojis = ['🍔', '🌭', '🍟', '🍕', '🥤', '🥓', '🍗', '🥩'];
+    const totalDrops = 14; // Cantidad óptima balanceada para rendimiento en iOS/iPadOS
+
+    for (let i = 0; i < totalDrops; i++) {
+        const drop = document.createElement('span');
+        drop.className = 'food-drop';
+        drop.innerText = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+        
+        // Distribución e intervalos orgánicos aleatorios
+        drop.style.left = `${Math.random() * 100}%`;
+        drop.style.top = `${-20 - Math.random() * 30}px`;
+        drop.style.fontSize = `${16 + Math.random() * 14}px`;
+        drop.style.animationDuration = `${3.5 + Math.random() * 3.5}s`;
+        drop.style.animationDelay = `${Math.random() * 6}s`;
+        
+        container.appendChild(drop);
+    }
+}
     function updateHeader() {
         if(!currentSede) return;
         document.getElementById('current-location-label').innerText = currentSede.NOMBRE_SEDE;

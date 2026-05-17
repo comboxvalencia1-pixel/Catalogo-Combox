@@ -542,13 +542,29 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
         
         <!-- ÁREA QUE HACE SCROLL (Sube y baja) -->
         <div class="space-y-5 overflow-y-auto hide-scrollbar pb-6 flex-1 min-h-0" id="checkout-scroll-area">
-           <div>
-    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
-    <div class="relative mb-4">
-        <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
-        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
-    </div>
-   <!-- NUEVO CONTENEDOR DEL MAPA PICK-UP (AL FONDO) -->
+            
+            <!-- 1. SELECT DE SEDE -->
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
+                <div class="relative mb-4">
+                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
+                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+                </div>
+            </div>
+
+            <!-- 2. INPUT TU NOMBRE -->
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
+                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
+            </div>
+
+            <!-- 3. INPUT TU TELÉFONO -->
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
+                <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
+            </div>
+            
+            <!-- 4. CONTENEDOR DEL MAPA PICK-UP (MOVIDO AQUÍ ABAJO) -->
             <div id="pickup-map-container" class="relative w-full rounded-3xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b] mt-6 mb-2" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
                 <!-- Marca de agua COMBOX -->
                 <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
@@ -556,71 +572,61 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
                 </div>
                 <div id="checkout-pickup-map" class="w-full h-full z-0"></div>
             </div>
-</div>
-            <div>
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Nombre</label>
-                <input type="text" id="checkout-name" autocomplete="off" name="no-name-autofill" data-lpignore="true" spellcheck="false" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. Juan Pérez">
-            </div>
-            <div>
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Tu Teléfono</label>
-                <input type="tel" id="checkout-phone" autocomplete="tel" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] placeholder:text-white/30 text-base" placeholder="Ej. 0424...">
-            </div>
             
+            <!-- 5. CONTENEDOR DEL MAPA DELIVERY -->
             <div id="checkout-location-container" class="flex flex-col gap-3">
-    <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Ubicación de Entrega</label>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Ubicación de Entrega</label>
 
-    <!-- 1. INPUT ÚNICO DE DIRECCIÓN (AHORA ARRIBA) -->
-    <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-2">
-        <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
-        <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin en el mapa para mayor precisión.
-        </p>
-    </div>
+                <!-- INPUT ÚNICO DE DIRECCIÓN -->
+                <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-2">
+                    <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
+                    <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin en el mapa para mayor precisión.
+                    </p>
+                </div>
 
-    <!-- 2. MAPA (AHORA ABAJO) -->
-<div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
-    
-    <!-- Marca de agua COMBOX -->
-    <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
-        <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
-    </div>
+                <!-- MAPA DELIVERY -->
+                <div id="map-wrapper" class="relative w-full rounded-3xl overflow-hidden border border-white/10" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
+                    <!-- Marca de agua COMBOX -->
+                    <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
+                        <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
+                    </div>
 
-    <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
-    
-    <!-- Botón Aceptar Nueva Ubicación -->
-    <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-4 py-2 text-xs rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-1.5 border border-white/20" style="display:none; margin-top: 40px;">
-        Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
-    </button>
+                    <div id="map-preview" class="w-full h-full bg-[#0a0a0b] z-0"></div>
+                    
+                    <!-- Botón Aceptar Nueva Ubicación -->
+                    <button type="button" id="btn-confirm-pin" onclick="confirmManualPin()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[2000] bg-primary text-white font-black px-4 py-2 text-xs rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-1.5 border border-white/20" style="display:none; margin-top: 40px;">
+                        Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                    </button>
 
-    <!-- Tarifa en la parte superior derecha -->
-    <div class="absolute top-3 right-3 z-[1000] pointer-events-none">
-        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
-            <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
-            <span id="map-header-title">--$</span>
-        </div>
-    </div>
+                    <!-- Tarifa en la parte superior derecha -->
+                    <div class="absolute top-3 right-3 z-[1000] pointer-events-none">
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
+                            <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
+                            <span id="map-header-title">--$</span>
+                        </div>
+                    </div>
 
-    <!-- Indicadores de Ruta (km y min) se quedan abajo a la derecha -->
-    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none items-end">
-        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
-            <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
-        </div>
-        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
-            <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
-        </div>
-    </div>
+                    <!-- Indicadores de Ruta (km y min) -->
+                    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none items-end">
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                            <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
+                        </div>
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
+                            <span class="material-symbols-outlined text-[14px]">timer</span> <span id="route-time">-- min</span>
+                        </div>
+                    </div>
 
-    <!-- Botones de Control -->
-    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
-        <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
-    </button>
+                    <!-- Botones de Control -->
+                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
+                        <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
+                    </button>
 
-    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
-        <span class="material-symbols-outlined text-[18px]">my_location</span>
-    </button>
-</div>
-<!-- Cierre de map-wrapper -->
-</div>  <!-- Cierre de checkout-location-container -->
+                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+                        <span class="material-symbols-outlined text-[18px]">my_location</span>
+                    </button>
+                </div>
+            </div> 
 
         </div> <!-- Cierre de checkout-scroll-area -->
 
@@ -2243,7 +2249,7 @@ async function renderMapPosition(lat, lng) {
             const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
             let rawPrice = distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
             let decimalPart = rawPrice % 1;
-            let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.9 ? 1 : 0);
+            let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
 
             tarifaFinalCalculada = Math.max(min, roundedPrice);
             let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);

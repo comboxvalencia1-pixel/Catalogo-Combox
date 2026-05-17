@@ -1687,19 +1687,48 @@ async function setupAfterDBLoad(isCached) {
         try { await localforage.setItem('combox_cart', JSON.stringify({cart: cart, time: Date.now()})); } 
         catch(e) { console.error("Error guardando carrito:", e); }
     }
+let currentShareUrl = '';
+let currentShareTitle = '';
 
-    function shareCartUrl() {
-        if(Object.keys(cart).length === 0) { customAlert('Tu pedido está vacío. Agrega productos antes de compartir.'); return; }
-        const cartStr = Object.entries(cart).map(([id, qty]) => `${id}-${qty}`).join('_');
-        const url = new URL(window.location.href);
-        url.searchParams.set('pedido', cartStr);
-        if (navigator.share) {
-            navigator.share({ title: 'Mi Pedido en Combox', text: '¡Mira los productos que elegí en Combox!', url: url.href }).catch(console.error);
-        } else {
-            navigator.clipboard.writeText(url.href);
-            customAlert('¡Enlace del pedido copiado con éxito! Envíalo a quien quieras para que pueda abrir tu pedido listo.');
-        }
+function openShareModal(url, title) {
+    currentShareUrl = url;
+    currentShareTitle = title;
+    
+    document.getElementById('share-modal-title').innerText = title;
+    document.getElementById('share-link-text').innerText = url;
+    
+    // Generamos el QR dinámicamente usando la API
+    document.getElementById('share-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}&color=000000&bgcolor=ffffff&margin=0`;
+    
+    // Si el dispositivo no soporta compartir nativamente, ocultamos el botón
+    if (!navigator.share) {
+        document.getElementById('btn-native-share').style.display = 'none';
+    } else {
+        document.getElementById('btn-native-share').style.display = 'flex';
     }
+    
+    toggleModal('share-modal', true);
+}
+
+function copyShareLink() {
+    navigator.clipboard.writeText(currentShareUrl);
+    customAlert('¡Enlace copiado al portapapeles!', 'Éxito');
+}
+
+function nativeShare() {
+    if (navigator.share) {
+        navigator.share({ title: currentShareTitle, url: currentShareUrl }).catch(console.error);
+    }
+}
+    function shareCartUrl() {
+    if(Object.keys(cart).length === 0) { customAlert('Tu pedido está vacío. Agrega productos antes de compartir.'); return; }
+    const cartStr = Object.entries(cart).map(([id, qty]) => `${id}-${qty}`).join('_');
+    const url = new URL(window.location.href);
+    url.searchParams.set('pedido', cartStr);
+    
+    // Abre el nuevo modal en lugar de compartir directo
+    openShareModal(url.href, 'Mi Pedido');
+}
 
     function openInstagram() { if(currentSede?.LINK_INSTAGRAM) window.open(currentSede.LINK_INSTAGRAM, '_blank'); }
 
@@ -3296,14 +3325,11 @@ function getLocation(userInitiated = false) {
     }
 
     function shareProduct(id, name) {
-        const url = window.location.origin + window.location.pathname + '?id=' + id;
-        if (navigator.share) {
-            navigator.share({ title: 'Combox - ' + name, url: url }).catch(console.error);
-        } else {
-            navigator.clipboard.writeText(url);
-            customAlert('¡Enlace del producto copiado con éxito!');
-        }
-    }
+    const url = window.location.origin + window.location.pathname + '?id=' + id;
+    
+    // Abre el nuevo modal en lugar de compartir directo
+    openShareModal(url, 'Producto Combox');
+}
     
     function shareSugerencias() {
         const url = window.location.origin + window.location.pathname + '?sugerencias=true';
@@ -3430,6 +3456,37 @@ function getLocation(userInitiated = false) {
     
     init();
 </script>
+<div class="modal" id="share-modal">
+    <div class="modal-overlay" onclick="toggleModal('share-modal', false)"></div>
+    <div class="modal-content flex flex-col items-center p-6 text-center glass-contour mx-4" style="background: #0A0A0B; max-width: 320px; margin: auto;">
+        
+        <div class="flex items-center justify-between w-full mb-4">
+            <h3 class="text-xl font-black text-white uppercase tracking-tighter" id="share-modal-title">Compartir</h3>
+            <button type="button" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-90" onclick="toggleModal('share-modal', false)">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+
+        <!-- Contenedor del QR -->
+        <div class="bg-white p-3 rounded-3xl mb-5 w-[200px] h-[200px] flex items-center justify-center shadow-[0_0_25px_rgba(255,255,255,0.15)] relative">
+            <div class="absolute inset-0 border-4 border-white rounded-3xl"></div>
+            <img id="share-qr-img" src="" alt="QR Code" class="w-full h-full object-contain rounded-xl">
+        </div>
+
+        <!-- Contenedor del Link y Botón de Copiar -->
+        <div class="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 mb-4 flex items-center gap-2">
+            <div class="overflow-x-auto hide-scrollbar flex-1 text-[11px] font-bold text-zinc-300 whitespace-nowrap text-left px-2" id="share-link-text"></div>
+            <button onclick="copyShareLink()" class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white flex-shrink-0 active:scale-90 shadow-lg shadow-primary/30">
+                <span class="material-symbols-outlined text-[18px]">content_copy</span>
+            </button>
+        </div>
+
+        <!-- Botón de Compartir Nativo -->
+        <button onclick="nativeShare()" id="btn-native-share" class="w-full bg-white/10 text-white font-black py-3.5 rounded-xl text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-all border border-white/10">
+            Compartir Enlace <span class="material-symbols-outlined text-[18px]">share</span>
+        </button>
+    </div>
+</div>
 <div class="modal" id="welcome-modal">
     <div class="modal-overlay" onclick="toggleModal('welcome-modal', false)"></div>
     <div class="modal-content flex flex-col items-center p-6 text-center glass-contour" style="background: #0A0A0B;">

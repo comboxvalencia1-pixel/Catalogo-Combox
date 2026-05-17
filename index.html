@@ -2208,11 +2208,35 @@ async function renderMapPosition(lat, lng) {
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
 
+    // --- NUEVO SISTEMA DE CACHÉ (10 MINUTOS) ---
+    // Redondeamos a 4 decimales (~11 metros de precisión) para que pequeños saltos del GPS entren en el caché
+    const cacheKey = `osrm_${checkoutSede.ID_SEDE}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
+    const cachedDataStr = localStorage.getItem(cacheKey);
+    let routeData = null;
+
+    if (cachedDataStr) {
+        const cachedObj = JSON.parse(cachedDataStr);
+        // Validamos si la data tiene menos de 10 minutos (600000 milisegundos)
+        if (Date.now() - cachedObj.time < 600000) {
+            routeData = cachedObj.data;
+        }
+    }
+
     try {
-        const res = await fetch(osrmUrl);
-        const data = await res.json();
-        if (data.code === 'Ok') {
-            const route = data.routes[0];
+        // Si no hay caché válido, consultamos a OSRM
+        if (!routeData) {
+            const res = await fetch(osrmUrl);
+            const data = await res.json();
+            if (data.code === 'Ok') {
+                routeData = data;
+                // Guardamos la nueva respuesta en el localStorage con la fecha actual
+                localStorage.setItem(cacheKey, JSON.stringify({ time: Date.now(), data: routeData }));
+            }
+        }
+
+        // Si tenemos datos (ya sea de OSRM fresco o del caché), dibujamos
+        if (routeData && routeData.code === 'Ok') {
+            const route = routeData.routes[0];
             const distanceKm = route.distance / 1000;
             const durationMin = Math.ceil(route.duration / 60);
 
@@ -2228,7 +2252,7 @@ async function renderMapPosition(lat, lng) {
             document.getElementById('route-km').innerText = `${distanceKm.toFixed(1)} km`;
             document.getElementById('route-time').innerText = `${durationMin} min`;
 
-            // 🔥 FIX APLICADO: Dibujamos la nueva línea verde de manera limpia
+            // Dibujamos la nueva línea verde de manera limpia
             if (rutaLayer) map.removeLayer(rutaLayer);
             rutaLayer = L.geoJSON(route.geometry, {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
@@ -2239,6 +2263,8 @@ async function renderMapPosition(lat, lng) {
                 if(map) map.invalidateSize();
                 updateMarkerScales(map);
             }, 300);
+        } else {
+            document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;
         }
     } catch(e) {
         document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;

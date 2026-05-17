@@ -573,7 +573,7 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
     <div id="manual-location-wrapper" style="display:none;" class="flex flex-col gap-2 mb-2">
         <input type="text" id="checkout-location" autocomplete="off" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-white/20 text-sm" placeholder="Ej: Casa #12, frente al parque...">
         <p id="manual-location-hint" class="text-[9px] text-zinc-500 font-bold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin en el mapa para mayor precisión.
+            <span class="material-symbols-outlined text-[12px] text-primary">info</span> Puedes ajustar el pin, escribir las coordenadas o referencia.
         </p>
     </div>
 
@@ -592,12 +592,16 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
         Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
     </button>
 
-    <!-- Indicadores de Ruta y Tarifa inferior derecha -->
-    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none items-end">
-        <div class="bg-black/80 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
+    <!-- Tarifa en la parte superior derecha -->
+    <div class="absolute top-3 right-3 z-[1000] pointer-events-none">
+        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
             <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
             <span id="map-header-title">--$</span>
         </div>
+    </div>
+
+    <!-- Indicadores de Ruta (km y min) se quedan abajo a la derecha -->
+    <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none items-end">
         <div class="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center justify-between min-w-[80px]">
             <span class="material-symbols-outlined text-[14px]">route</span> <span id="route-km">-- km</span>
         </div>
@@ -1059,6 +1063,7 @@ let marcadoresSedesMap = [];
 let sedeMasCercanaCalculada = null;
 let tarifaFinalCalculada = 0;
 let pendingLatLng = null;
+let savedLatLngBeforeEdit = null;
 let isEditingLocation = false;
 let isManualLocation = false;
 let pickupMap = null;
@@ -2245,18 +2250,23 @@ function showManualLocationInput() {
     isEditingLocation = true; 
     document.getElementById('manual-location-wrapper').style.display = 'flex';
     document.getElementById('btn-confirm-pin').style.display = 'flex';
-    document.getElementById('btn-wrong-location').style.display = 'none'; 
     
+    // Transformar el botón de editar en botón rojo de cancelar
+    const btnEdit = document.getElementById('btn-wrong-location');
+    btnEdit.style.display = 'flex';
+    btnEdit.className = "absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-red-600 backdrop-blur-md border border-red-400 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform";
+    btnEdit.innerHTML = '<span class="material-symbols-outlined text-[18px]">close</span>';
+    btnEdit.onclick = cancelManualLocationInput; // Cambia la función al presionar
+
     const locInput = document.getElementById('checkout-location');
     locInput.placeholder = "Mueve el mapa para ubicar tu dirección";
     
-    // 🔥 FIX: Eliminamos la ruta verde de inmediato para limpiar el mapa visualmente
+    // Eliminamos la ruta verde de inmediato para limpiar el mapa visualmente
     if (rutaLayer && map) {
         map.removeLayer(rutaLayer);
         rutaLayer = null;
     }
     
-    // Dejamos los textos limpios mientras el usuario elige
     document.getElementById('map-header-title').innerText = `--`;
     document.getElementById('route-km').innerText = `-- km`;
     document.getElementById('route-time').innerText = `-- min`;
@@ -2264,9 +2274,12 @@ function showManualLocationInput() {
     setTimeout(() => { if(map) map.invalidateSize(); }, 150);
 
     if (userMarker) {
+        savedLatLngBeforeEdit = userMarker.getLatLng(); // Guardamos por si cancela
         userMarker.setIcon(redPinIcon);
         userMarker.setLatLng(map.getCenter());
         pendingLatLng = map.getCenter();
+    } else {
+        savedLatLngBeforeEdit = null;
     }
     
     map.on('move', function() {
@@ -2284,11 +2297,41 @@ function showManualLocationInput() {
     document.getElementById('map-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+// NUEVA FUNCIÓN PARA CANCELAR EDICIÓN
+function cancelManualLocationInput() {
+    isEditingLocation = false;
+    document.getElementById('manual-location-wrapper').style.display = 'none';
+    document.getElementById('btn-confirm-pin').style.display = 'none';
+    
+    resetEditLocationButton();
+
+    if (map) { map.off('move'); map.off('moveend'); }
+
+    // Regresa a la ubicación antes de intentar editar, o recalcula GPS
+    if (savedLatLngBeforeEdit) {
+        renderMapPosition(savedLatLngBeforeEdit.lat, savedLatLngBeforeEdit.lng);
+    } else {
+        getLocation();
+    }
+}
+
+// NUEVA FUNCIÓN PARA RESTAURAR EL BOTÓN A SU ESTADO ORIGINAL
+function resetEditLocationButton() {
+    const btnEdit = document.getElementById('btn-wrong-location');
+    if (btnEdit) {
+        btnEdit.style.display = 'flex';
+        btnEdit.className = "absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform";
+        btnEdit.innerHTML = '<span class="material-symbols-outlined text-[18px]">edit_location_alt</span>';
+        btnEdit.onclick = showManualLocationInput;
+    }
+}
+
 function confirmManualPin() {
     isEditingLocation = false;
     isManualLocation = true; // Fuerza a mostrar el pin rojo
     document.getElementById('btn-confirm-pin').style.display = 'none';
-    document.getElementById('btn-wrong-location').style.display = 'flex';
+    
+    resetEditLocationButton(); // AQUI RESTAURAMOS EL BOTON
     
     let headerTitle = document.getElementById('map-header-title');
     if(headerTitle) headerTitle.innerText = "Calculando ruta...";
@@ -2310,28 +2353,34 @@ function getLocation(userInitiated = false) {
     isManualLocation = false; // Vuelve a modo GPS (verde)
     document.getElementById('btn-confirm-pin').style.display = 'none';
     document.getElementById('manual-location-wrapper').style.display = 'none';
-    document.getElementById('btn-wrong-location').style.display = 'flex';
+    
+    // Restauramos el botón a su estado original de "Editar" (lápiz)
+    resetEditLocationButton(); 
     
     const locInput = document.getElementById('checkout-location');
     if(locInput) locInput.value = '';
 
     const headerTitle = document.getElementById('map-header-title');
-    if (headerTitle) headerTitle.innerText = "BUSCANDO GPS...";
+    if (headerTitle) headerTitle.innerText = "MAPA COMBOX: BUSCANDO GPS...";
     
     initLeafletMap(); 
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(position) {
+                // GPS exitoso: renderiza la posición del usuario
                 renderMapPosition(position.coords.latitude, position.coords.longitude);
             },
             function(error) {
+                // Si el GPS falla o el usuario lo rechaza
                 if(headerTitle) headerTitle.innerText = "ACTIVAR GPS";
+                
                 // Eliminar cualquier pin de usuario o ruta existente
                 if (userMarker && map) { map.removeLayer(userMarker); userMarker = null; }
                 if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
                 document.getElementById('route-km').innerText = `-- km`;
                 document.getElementById('route-time').innerText = `-- min`;
+                
                 // Centrar el mapa en la sede seleccionada para no dejarlo perdido
                 if (checkoutSede && map) {
                     const [lat, lng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
@@ -2341,6 +2390,7 @@ function getLocation(userInitiated = false) {
             { enableHighAccuracy: true, timeout: 10000 }
         );
     } else {
+        // Si el navegador no soporta geolocalización
         if(headerTitle) headerTitle.innerText = "ACTIVAR GPS";
         if (userMarker && map) { map.removeLayer(userMarker); userMarker = null; }
         if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }

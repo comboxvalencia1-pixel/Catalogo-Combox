@@ -2174,18 +2174,23 @@ async function renderMapPosition(lat, lng) {
         let iconWrapperClass = "";
         let letreroClass = "";
         
+        // LÓGICA DE ETIQUETA "MÁS CERCA"
+        let isClosest = (sedeMasCercanaCalculada && sedeMasCercanaCalculada.ID_SEDE === s.ID_SEDE);
+        let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
+
         if (!isSelected) {
             if (sched.isOpen) {
-                iconWrapperClass = "brightness-75"; 
+                iconWrapperClass = "brightness-75 scale-90"; 
                 letreroClass = "opacity-80";
             } else {
-                iconWrapperClass = "grayscale opacity-60"; 
+                iconWrapperClass = "grayscale opacity-60 scale-90"; 
                 letreroClass = "opacity-60";
             }
         }
 
         const iconHtml = `
-            <div class="sede-marker-content flex flex-col items-center justify-center ${isSelected ? 'selected-sede' : 'z-[500] cursor-pointer'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative ${isSelected ? 'selected-sede z-[500]' : 'z-[400]'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+                ${badgeCerca}
                 <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
                     <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
                 </div>

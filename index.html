@@ -250,6 +250,11 @@ body.island-active #pwa-install-banner:not([class*="translate-y"]) {
         @media (max-width: 395px) {
             .nav-container { gap: 0.25rem !important; justify-content: space-between !important; width: 100%; padding: 0 0.5rem !important; }
             .nav-col { min-width: 58px !important; gap: 0.3rem !important; }
+            
+            /* Ajuste para reducir armónicamente los nuevos botones sólidos en móviles pequeños */
+            .nav-col .w-14.h-14 { width: 44px !important; height: 44px !important; border-radius: 1rem !important; }
+            .nav-col .material-symbols-outlined, .nav-col svg { font-size: 20px !important; width: 20px !important; height: 20px !important; }
+            
             .nav-btn-glass { width: 46px !important; height: 46px !important; }
             .nav-btn-glass .material-symbols-outlined, .nav-btn-glass svg { font-size: 24px !important; width: 24px !important; height: 24px !important; }
             .nav-text { font-size: 8px !important; }
@@ -2321,13 +2326,28 @@ function getLocation(userInitiated = false) {
                 renderMapPosition(position.coords.latitude, position.coords.longitude);
             },
             function(error) {
-                if(headerTitle) headerTitle.innerText = "UBICA EL PIN MANUALMENTE";
-                renderMapPosition(10.2543, -68.0101); 
+                if(headerTitle) headerTitle.innerText = "ACTIVAR GPS";
+                // Eliminar cualquier pin de usuario o ruta existente
+                if (userMarker && map) { map.removeLayer(userMarker); userMarker = null; }
+                if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
+                document.getElementById('route-km').innerText = `-- km`;
+                document.getElementById('route-time').innerText = `-- min`;
+                // Centrar el mapa en la sede seleccionada para no dejarlo perdido
+                if (checkoutSede && map) {
+                    const [lat, lng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+                    map.setView([lat, lng], 14);
+                }
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
     } else {
-        renderMapPosition(10.2543, -68.0101);
+        if(headerTitle) headerTitle.innerText = "ACTIVAR GPS";
+        if (userMarker && map) { map.removeLayer(userMarker); userMarker = null; }
+        if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
+        if (checkoutSede && map) {
+            const [lat, lng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+            map.setView([lat, lng], 14);
+        }
     }
 }
 

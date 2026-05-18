@@ -47,17 +47,22 @@
     <!-- 4. TU BLOQUE DE ESTILOS CSS (Aquí metemos la animación de comida y tus estilos globales) -->
     <style>
       /* Animation framework para la lluvia de comida 3D OPTIMIZADO */
+      
 /* Animation framework para la lluvia de comida 3D OPTIMIZADO */
+
 @keyframes foodFallBg {
-    0% { transform: translate3d(0, -50px, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.10; } /* Opacidad muy reducida para el fondo */
-    100% { transform: translate3d(0, 350px, 0) rotate(360deg); opacity: 0.10; } /* Sin opacidad 0 al final para que se escondan tras el borde */
+    /* Empiezan mucho más arriba (-150px) con ligera rotación y sin opacidad */
+    0% { transform: translate3d(0, -150px, 0) rotate(-20deg); opacity: 0; }
+    15% { opacity: 0.10; } /* Fade-in más suave y progresivo */
+    100% { transform: translate3d(0, 400px, 0) rotate(180deg); opacity: 0; } /* Se desvanecen suavemente al caer */
 }
 
 @keyframes foodFallFg {
-    0% { transform: translate3d(0, -50px, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; } 
-    100% { transform: translate3d(0, 380px, 0) rotate(360deg); opacity: 1; } /* Caen hasta salir del header sin desaparecer en el aire */
+    /* Empiezan mucho más arriba (-150px) para no aparecer de golpe */
+    0% { transform: translate3d(0, -150px, 0) rotate(20deg); opacity: 0; }
+    15% { opacity: 1; } /* Aparecen con fluidez */
+    85% { opacity: 1; } /* Mantienen su opacidad casi hasta el final */
+    100% { transform: translate3d(0, 450px, 0) rotate(-180deg); opacity: 0; } /* Desaparecen con un fade-out para evitar cortes toscos */
 }
 
 .food-drop-bg {
@@ -2645,10 +2650,10 @@ function getLocation(userInitiated = false) {
     bgContainer.innerHTML = '';
     fgContainer.innerHTML = '';
     
-    // Solo Hotdogs, Hamburguesas, Pizzas, Papas Fritas y Confeti
-    const foodEmojis = ['🍔', '🌭', '🍟', '🍕', '🎉']; 
+    // 1. Emojis reducidos solo a Hotdogs, Hamburguesas y Pizzas
+    const foodEmojis = ['🍔', '🌭', '🍕']; 
     
-    // 1. CAPA DE FONDO: Detrás del texto (Pequeños, baja opacidad y más lentos)
+    // 2. CAPA DE FONDO: Detrás del texto (Pequeños, baja opacidad y más lentos)
     const totalBgDrops = 15; 
     for (let i = 0; i < totalBgDrops; i++) {
         const drop = document.createElement('span');
@@ -2656,29 +2661,31 @@ function getLocation(userInitiated = false) {
         drop.innerText = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
         drop.style.left = `${Math.random() * 100}%`;
         drop.style.fontSize = `${14 + Math.random() * 10}px`; 
-        drop.style.animationDuration = `${3 + Math.random() * 2}s`; 
+        // Aumentamos el tiempo base para una caída más relajada y flotante
+        drop.style.animationDuration = `${4 + Math.random() * 3}s`; 
         drop.style.animationDelay = `${Math.random() * 1.5}s`;
         bgContainer.appendChild(drop);
     }
 
-    // 2. CAPA FRONTAL: Sobre el texto (Grandes, opacidad 100% y más rápidos)
+    // 3. CAPA FRONTAL: Sobre el texto (Grandes, opacidad 100% y ligeramente más rápidos)
     const totalFgDrops = 6; 
     for (let i = 0; i < totalFgDrops; i++) {
         const drop = document.createElement('span');
         drop.className = 'food-drop-fg';
         drop.innerText = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
         drop.style.left = `${Math.random() * 100}%`;
-        drop.style.fontSize = `${35 + Math.random() * 20}px`; 
-        drop.style.animationDuration = `${2 + Math.random() * 1.5}s`; 
-        drop.style.animationDelay = `${Math.random() * 1}s`;
+        // Tamaños ligeramente más delicados para no saturar la pantalla
+        drop.style.fontSize = `${28 + Math.random() * 15}px`; 
+        drop.style.animationDuration = `${3 + Math.random() * 2}s`; // Más fluidos
+        drop.style.animationDelay = `${Math.random() * 1.2}s`;
         fgContainer.appendChild(drop);
     }
 
-    // Limpiamos el DOM después de que termine de caer todo para ahorrar memoria
+    // Limpiamos el DOM después de que termine de caer todo (ahora 7s por la nueva duración)
     setTimeout(() => {
         bgContainer.innerHTML = '';
         fgContainer.innerHTML = '';
-    }, 6000);
+    }, 7000);
 }
 
     function updateHeader() {

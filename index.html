@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="es">
-<head>
+<<head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
     <title>Combox - Menú</title>
@@ -47,40 +47,36 @@
     <!-- 4. TU BLOQUE DE ESTILOS CSS (Aquí metemos la animación de comida y tus estilos globales) -->
     <style>
       /* Animation framework para la lluvia de comida 3D OPTIMIZADO */
+/* Animation framework para la lluvia de comida 3D OPTIMIZADO */
 @keyframes foodFallBg {
-    /* Usamos translate3d para forzar la aceleración por hardware (GPU) */
-    0% { transform: translate3d(0, -20px, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.3; } 
-    90% { opacity: 0.3; }
-    100% { transform: translate3d(0, 220px, 0) rotate(360deg); opacity: 0; }
+    0% { transform: translate3d(0, -50px, 0) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.10; } /* Opacidad muy reducida para el fondo */
+    100% { transform: translate3d(0, 350px, 0) rotate(360deg); opacity: 0.10; } /* Sin opacidad 0 al final para que se escondan tras el borde */
 }
 
 @keyframes foodFallFg {
-    0% { transform: translate3d(0, -40px, 0) rotate(0deg); opacity: 0; }
+    0% { transform: translate3d(0, -50px, 0) rotate(0deg); opacity: 0; }
     10% { opacity: 1; } 
-    90% { opacity: 1; }
-    100% { transform: translate3d(0, 260px, 0) rotate(360deg); opacity: 0; }
+    100% { transform: translate3d(0, 380px, 0) rotate(360deg); opacity: 1; } /* Caen hasta salir del header sin desaparecer en el aire */
 }
 
 .food-drop-bg {
     position: absolute;
     pointer-events: none;
-    animation: foodFallBg linear infinite;
+    animation: foodFallBg linear forwards; /* Eliminamos infinite, agregamos forwards */
     will-change: transform, opacity;
     user-select: none;
     -webkit-user-select: none;
-    /* Reemplazamos el pesado filter: blur y drop-shadow por text-shadow */
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .food-drop-fg {
     position: absolute;
     pointer-events: none;
-    animation: foodFallFg linear infinite;
+    animation: foodFallFg linear forwards; /* Eliminamos infinite, agregamos forwards */
     will-change: transform, opacity;
     user-select: none;
     -webkit-user-select: none;
-    /* Reemplazamos el pesado filter: drop-shadow por text-shadow */
     text-shadow: 0 15px 15px rgba(0,0,0,0.6);
 }
         /* Bloqueo de zoom estricto y selección global */
@@ -385,7 +381,7 @@
     <!-- Contenedor del Texto (z-10) -->
     <div class="relative z-10 flex flex-col items-center text-center">
         <span class="text-white/60 text-[11px] font-bold tracking-[0.3em] uppercase mb-2" id="current-location-label">Cargando sede...</span>
-        <h1 class="text-white font-[900] text-6xl md:text-8xl tracking-tighter leading-none mb-3 drop-shadow-lg">COMBOX</h1>
+        <h1 class="text-white font-[900] text-6xl md:text-8xl tracking-tighter leading-none mb-3 drop-shadow-lg cursor-pointer active:scale-95 transition-transform" onclick="triggerFoodRain()">COMBOX</h1>
         <div class="flex items-center gap-2 px-4 py-1.5">
             <span id="header-status-dot" class="w-1.5 h-1.5 rounded-full bg-white/20"></span>
             <span id="header-status-text" class="text-white/90 text-[10px] font-bold uppercase tracking-wider drop-shadow-md">Consultando...</span>
@@ -1472,7 +1468,9 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
 }, { passive: true });
 
        document.addEventListener("DOMContentLoaded", () => {
-         initFoodRain();
+         
+         setTimeout(triggerFoodRain, 5000);
+         
         const inputs = document.querySelectorAll('#checkout-name, #checkout-phone, #checkout-location');
         inputs.forEach(input => {
             input.addEventListener('focus', function() { setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); });
@@ -2637,42 +2635,51 @@ function getLocation(userInitiated = false) {
         }
     }
 
-    function initFoodRain() {
+    function triggerFoodRain() {
     const bgContainer = document.getElementById('header-rain-bg');
     const fgContainer = document.getElementById('header-rain-fg');
     
-    const foodEmojis = ['🍔', '🌭', '🍟', '🍕', '🥤', '🥓', '🍗', '🥩'];
+    if(!bgContainer || !fgContainer) return;
+
+    // Limpiamos la animación anterior si el usuario toca muchas veces rápido
+    bgContainer.innerHTML = '';
+    fgContainer.innerHTML = '';
     
-    // 1. CAPA DE FONDO: Detrás del texto (Pequeños, borrosos y lentos)
-    if (bgContainer) {
-        const totalBgDrops = 14; // Misma cantidad que tenías
-        for (let i = 0; i < totalBgDrops; i++) {
-            const drop = document.createElement('span');
-            drop.className = 'food-drop-bg';
-            drop.innerText = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
-            drop.style.left = `${Math.random() * 100}%`;
-            drop.style.top = `${-20 - Math.random() * 30}px`;
-            drop.style.fontSize = `${14 + Math.random() * 10}px`; // Más pequeños
-            drop.style.animationDuration = `${4 + Math.random() * 4}s`; // Caen más lento (ilusión de distancia)
-            drop.style.animationDelay = `${Math.random() * 6}s`;
-            bgContainer.appendChild(drop);
-        }
+    // Solo Hotdogs, Hamburguesas, Pizzas, Papas Fritas y Confeti
+    const foodEmojis = ['🍔', '🌭', '🍟', '🍕', '🎉']; 
+    
+    // 1. CAPA DE FONDO: Detrás del texto (Pequeños, baja opacidad y más lentos)
+    const totalBgDrops = 15; 
+    for (let i = 0; i < totalBgDrops; i++) {
+        const drop = document.createElement('span');
+        drop.className = 'food-drop-bg';
+        drop.innerText = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+        drop.style.left = `${Math.random() * 100}%`;
+        drop.style.fontSize = `${14 + Math.random() * 10}px`; 
+        drop.style.animationDuration = `${3 + Math.random() * 2}s`; 
+        drop.style.animationDelay = `${Math.random() * 1.5}s`;
+        bgContainer.appendChild(drop);
     }
 
-    // 2. CAPA FRONTAL: Sobre el texto (Grandes, nítidos y rápidos)
-    if (fgContainer) {
-        const totalFgDrops = 4; // Solo unos pocos para no bloquear la lectura de "COMBOX"
-        for (let i = 0; i < totalFgDrops; i++) {
-            const drop = document.createElement('span');
-            drop.className = 'food-drop-fg';
-            drop.innerText = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
-            drop.style.left = `${Math.random() * 100}%`;
-            drop.style.top = `${-40 - Math.random() * 40}px`;
-            drop.style.fontSize = `${35 + Math.random() * 20}px`; // Mucho más grandes
-            drop.style.animationDuration = `${2 + Math.random() * 2}s`; // Caen rápido (ilusión de cercanía)
-            drop.style.animationDelay = `${Math.random() * 5}s`;
-            fgContainer.appendChild(drop);
-        }
+    // 2. CAPA FRONTAL: Sobre el texto (Grandes, opacidad 100% y más rápidos)
+    const totalFgDrops = 6; 
+    for (let i = 0; i < totalFgDrops; i++) {
+        const drop = document.createElement('span');
+        drop.className = 'food-drop-fg';
+        drop.innerText = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+        drop.style.left = `${Math.random() * 100}%`;
+        drop.style.fontSize = `${35 + Math.random() * 20}px`; 
+        drop.style.animationDuration = `${2 + Math.random() * 1.5}s`; 
+        drop.style.animationDelay = `${Math.random() * 1}s`;
+        fgContainer.appendChild(drop);
+    }
+
+    // Limpiamos el DOM después de que termine de caer todo para ahorrar memoria
+    setTimeout(() => {
+        bgContainer.innerHTML = '';
+        fgContainer.innerHTML = '';
+    }, 6000);
+}
     }
 }
     function updateHeader() {

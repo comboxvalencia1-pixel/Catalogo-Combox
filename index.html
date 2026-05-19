@@ -967,11 +967,14 @@
     });
 `;
 
+// --- COMIENZO DE LA CORRECCIÓN ---
 if('serviceWorker' in navigator) {
     const swBlob = new Blob([swCode], {type: 'application/javascript'});
-    navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob))
+        .then(() => console.log('Service Worker registrado correctamente'))
+        .catch(err => console.log('SW falló:', err));
 }
-        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
+// --- FIN DE LA CORRECCIÓN ---
     
     // Instalador PWA Lógica y Detección
     let deferredPrompt;

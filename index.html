@@ -910,21 +910,55 @@
 
 <script>
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
-    const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
-    
-    // Inyección de Service Worker local para fuentes e iconos rápidos
+    const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E"
+    // Inyección de Service Worker local optimizado para Modo Offline (Fuentes + Imágenes)
+    // Inyección de Service Worker local (Fuentes + Imágenes con actualización en 2do plano)
     const swCode = `
-        const CACHE_NAME = 'combox-assets-v1';
+        const CACHE_NAME = 'combox-assets-v2';
+        const IMG_CACHE = 'combox-images-v2';
+        
         const ASSETS = [
             'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block',
             'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap'
         ];
-        self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))); });
+        
+        self.addEventListener('install', e => { 
+            e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))); 
+            self.skipWaiting(); 
+        });
+        
         self.addEventListener('fetch', e => {
-            if (e.request.url.includes('fonts.googleapis.com') || e.request.url.includes('fonts.gstatic.com')) {
+            const url = e.request.url;
+            
+            // 1. Caché para las Fuentes de Google
+            if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
                 e.respondWith(caches.match(e.request).then(res => res || fetch(e.request).then(fRes => {
                     return caches.open(CACHE_NAME).then(c => { c.put(e.request, fRes.clone()); return fRes; });
                 })));
+            } 
+            // 2. ESTRATEGIA: "Stale-While-Revalidate" para las Imágenes
+            else if (e.request.destination === 'image' || url.match(/\\.(png|jpg|jpeg|gif|webp|svg)/i)) {
+                e.respondWith(
+                    caches.match(e.request).then(cachedRes => {
+                        // Creamos una promesa que va a internet a buscar la versión más nueva
+                        const fetchPromise = fetch(e.request).then(networkRes => {
+                            if (networkRes && networkRes.status === 200 && (networkRes.type === 'basic' || networkRes.type === 'cors')) {
+                                caches.open(IMG_CACHE).then(cache => { 
+                                    cache.put(e.request, networkRes.clone()); // Actualiza el caché en silencio
+                                });
+                            }
+                            return networkRes;
+                        }).catch(() => {
+                            // Si falla por falta de internet, no hace nada grave
+                            return new Response('', { status: 404, statusText: 'Offline' });
+                        });
+                        
+                        // Entregamos la imagen guardada al instante (si existe), 
+                        // mientras la promesa de actualización corre en segundo plano.
+                        // Si no existe guardada, esperamos a que se descargue.
+                        return cachedRes || fetchPromise;
+                    })
+                );
             }
         });
     `;
@@ -932,7 +966,6 @@
         const swBlob = new Blob([swCode], {type: 'application/javascript'});
         navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
     }
-
     // Instalador PWA Lógica y Detección
     let deferredPrompt;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;

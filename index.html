@@ -1679,7 +1679,7 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
 }
 
 async function setupAfterDBLoad(isCached) {
-    // 1. Aquí dejas el bloque de finanzas si aún usas esa pestaña para la tasa
+    // 1. Bloque de finanzas para la tasa
     if (db && db.finanzas) {
         if(db.finanzas.tasa_usd) {
             tasaBCV = parseFloat(db.finanzas.tasa_usd);
@@ -1687,6 +1687,7 @@ async function setupAfterDBLoad(isCached) {
             if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
         }
     }
+    
     // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion
     if (db && db.configuracion) {
         let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
@@ -1698,26 +1699,32 @@ async function setupAfterDBLoad(isCached) {
             console.warn("No se encontró HEADER_PROMOCIONES en configuracion:", parametros);
         }
         
-        if (!isCached) {
-            let msjBienvenida = parametros.mensaje_bienvenida;
-            if(msjBienvenida && msjBienvenida.trim() !== "") {
-                // CASO 1: HAY MENSAJE. Mostramos la ventana (la lluvia esperará a que el usuario la cierre)
-                document.getElementById('welcome-message-text').innerText = msjBienvenida;
-                setTimeout(() => toggleModal('welcome-modal', true), 1000);
-            } else {
-                // CASO 2: NO HAY MENSAJE. Lanzamos la lluvia automáticamente al entrar
-                setTimeout(triggerFoodRain, 2000); 
+        let msjBienvenida = parametros.mensaje_bienvenida;
+        let lastWelcome = localStorage.getItem('last_welcome_time');
+        let now = Date.now();
+        let showWelcome = false;
+
+        // Comprobamos si hay mensaje y si pasaron 24 horas (86,400,000 milisegundos)
+        if (msjBienvenida && msjBienvenida.trim() !== "") {
+            if (!lastWelcome || (now - parseInt(lastWelcome)) > 86400000) {
+                showWelcome = true;
             }
+        }
+
+        // Si es una carga rápida de caché (isCached), evitamos el modal para no interrumpir
+        if (showWelcome && !isCached) {
+            localStorage.setItem('last_welcome_time', now.toString());
+            document.getElementById('welcome-message-text').innerText = msjBienvenida;
+            setTimeout(() => toggleModal('welcome-modal', true), 1000);
         } else {
-            // CASO 3: CARGA RÁPIDA (Caché). No se muestra modal, así que lanzamos la lluvia
+            // Si no hay mensaje, ya lo vio, o es carga de caché, lanzamos la lluvia
             setTimeout(triggerFoodRain, 2000);
         }
     } else {
-        // CASO 4: Si por algún error no carga la configuración, la lluvia se activa igual
+        // CASO: Si por algún error no carga la configuración, la lluvia se activa igual
         setTimeout(triggerFoodRain, 2000);
     }
 
-    
     // 3. Bloque de Sedes (Ahora corre libremente)
     if(db && db.sedes && db.sedes.length) { 
         if ("geolocation" in navigator) {
@@ -1780,7 +1787,6 @@ async function setupAfterDBLoad(isCached) {
         initialRenderDone = true;
         updateOrder(); 
         
-        // ¡Ahora sí se va a ejecutar!
         setTimeout(() => { const s = document.getElementById('splash'); if(s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 600); } }, isCached ? 100 : 1200);
 
         const productId = urlParams.get('id');

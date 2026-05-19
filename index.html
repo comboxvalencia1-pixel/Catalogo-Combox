@@ -1124,7 +1124,35 @@ const redPinIcon = L.divIcon({
     html: `<span class="material-symbols-outlined text-[40px] text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,1)]" style="font-variation-settings: 'FILL' 1;">location_on</span>`,
     iconSize: [40, 40], iconAnchor: [20, 40]
 });
-
+function applyModalColor(imgElement, id) {
+    const modalBg = document.getElementById('modal-bg-color');
+    if (!modalBg) return;
+    
+    const cacheKey = 'card-' + id;
+    if (colorCache.has(cacheKey)) {
+        modalBg.style.background = colorCache.get(cacheKey);
+        return;
+    }
+    
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        canvas.width = 5; canvas.height = 20;
+        ctx.drawImage(imgElement, 0, 0, imgElement.naturalWidth * 0.1, imgElement.naturalHeight, 0, 0, 5, 20);
+        const data = ctx.getImageData(0, 0, 5, 20).data;
+        let r = 0, g = 0, b = 0, count = 0;
+        for (let i = 0; i < data.length; i += 16) { r += data[i]; g += data[i+1]; b += data[i+2]; count++; }
+        r = Math.floor((r / count) * 0.9);
+        g = Math.floor((g / count) * 0.9);
+        b = Math.floor((b / count) * 0.9);
+        const bgStyle = `linear-gradient(135deg, rgba(${r},${g},${b},0.9) 0%, rgba(35,35,40,0.9) 100%)`;
+        
+        colorCache.set(cacheKey, bgStyle);
+        modalBg.style.background = bgStyle;
+    } catch (e) {
+        modalBg.style.background = 'rgba(35,35,40,0.9)';
+    }
+}
 
 function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -3444,10 +3472,15 @@ function getLocation(userInitiated = false) {
             const safeName = p.nombre.replace(/'/g, "\\'");
             const priceDisplay = price === 0 ? 'Por cotizar' : '$' + price.toFixed(2);
             
+            // Revisa si ya calculamos el color en el catálogo para usarlo de inmediato
+            const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(35,35,40,0.9)';
+            
             document.getElementById('product-content').innerHTML = `
-                <div class="absolute inset-0 bg-[#0A0A0B] z-0"></div>
-                <div class="absolute -inset-10 z-10 opacity-35 bg-cover bg-center pointer-events-none" style="background-image: url('${img}'); filter: blur(40px); transform: translateZ(0);"></div>
-                <div class="absolute bottom-0 inset-x-0 h-[65%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/85 to-transparent"></div>
+                <!-- Aquí aplicamos el color degradado extraído de la imagen -->
+                <div id="modal-bg-color" class="absolute inset-0 z-0 transition-colors duration-500" style="background: ${bgCache};"></div>
+                
+                <!-- Un sutil degradado oscuro abajo para que el texto blanco siempre se pueda leer -->
+                <div class="absolute bottom-0 inset-x-0 h-[60%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] to-transparent"></div>
                 
                 <div class="absolute top-4 right-4 z-50 flex items-center gap-2">
                     <button type="button" class="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" onclick="shareProduct('${id}', '${safeName}')">
@@ -3460,7 +3493,8 @@ function getLocation(userInitiated = false) {
                 
                 <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
                     <div class="relative w-full max-w-[280px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 border border-white/20 glass-contour" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
-                        <img src="${img}" decoding="async" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
+                        <!-- Al cargar la imagen dispara la función applyModalColor por si falta el color -->
+                        <img src="${img}" onload="applyModalColor(this, '${id}')" decoding="async" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>
                 
@@ -3480,6 +3514,7 @@ function getLocation(userInitiated = false) {
             toggleProductModal(true); 
         }, 15);
     }
+    
    function renderPickupMap() {
     if(pickupMap) pickupMap.remove();
     const customRenderer = L.svg({ padding: 1.5 });

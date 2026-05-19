@@ -46,29 +46,29 @@
     
     <!-- 4. TU BLOQUE DE ESTILOS CSS (Aquí metemos la animación de comida y tus estilos globales) -->
     <style>
-      /* Animation framework para la lluvia de comida 3D OPTIMIZADO */
+      
       
 /* Animation framework para la lluvia de comida 3D OPTIMIZADO */
 
 @keyframes foodFallBg {
-    /* Empiezan mucho más arriba (-150px) con ligera rotación y sin opacidad */
     0% { transform: translate3d(0, -150px, 0) rotate(-20deg); opacity: 0; }
-    15% { opacity: 0.10; } /* Fade-in más suave y progresivo */
-    100% { transform: translate3d(0, 400px, 0) rotate(180deg); opacity: 0; } /* Se desvanecen suavemente al caer */
+    15% { opacity: 0.15; }
+    85% { opacity: 0.15; }
+    100% { transform: translate3d(0, 600px, 0) rotate(180deg); opacity: 0; }
 }
 
 @keyframes foodFallFg {
-    /* Empiezan mucho más arriba (-150px) para no aparecer de golpe */
     0% { transform: translate3d(0, -150px, 0) rotate(20deg); opacity: 0; }
-    15% { opacity: 1; } /* Aparecen con fluidez */
-    85% { opacity: 1; } /* Mantienen su opacidad casi hasta el final */
-    100% { transform: translate3d(0, 450px, 0) rotate(-180deg); opacity: 0; } /* Desaparecen con un fade-out para evitar cortes toscos */
+    15% { opacity: 0.9; }
+    85% { opacity: 0.9; }
+    100% { transform: translate3d(0, 600px, 0) rotate(-180deg); opacity: 0; }
 }
 
 .food-drop-bg {
     position: absolute;
     pointer-events: none;
-    animation: foodFallBg linear forwards; /* Eliminamos infinite, agregamos forwards */
+    /* Usamos BOTH para que se mantengan ocultos durante el delay */
+    animation: foodFallBg ease-in both; 
     will-change: transform, opacity;
     user-select: none;
     -webkit-user-select: none;
@@ -78,7 +78,8 @@
 .food-drop-fg {
     position: absolute;
     pointer-events: none;
-    animation: foodFallFg linear forwards; /* Eliminamos infinite, agregamos forwards */
+    /* Usamos ease-in para simular gravedad real y BOTH para evitar glitch estático */
+    animation: foodFallFg ease-in both; 
     will-change: transform, opacity;
     user-select: none;
     -webkit-user-select: none;
@@ -1476,7 +1477,7 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
 
        document.addEventListener("DOMContentLoaded", () => {
          
-         setTimeout(triggerFoodRain, 5000);
+         
          
         const inputs = document.querySelectorAll('#checkout-name, #checkout-phone, #checkout-location');
         inputs.forEach(input => {
@@ -1617,7 +1618,6 @@ async function setupAfterDBLoad(isCached) {
             if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
         }
     }
-    
     // 2. NUEVO BLOQUE: Buscamos en la pestaña configuracion
     if (db && db.configuracion) {
         let parametros = Array.isArray(db.configuracion) ? db.configuracion[0] : db.configuracion;
@@ -1632,11 +1632,21 @@ async function setupAfterDBLoad(isCached) {
         if (!isCached) {
             let msjBienvenida = parametros.mensaje_bienvenida;
             if(msjBienvenida && msjBienvenida.trim() !== "") {
+                // CASO 1: HAY MENSAJE. Mostramos la ventana (la lluvia esperará a que el usuario la cierre)
                 document.getElementById('welcome-message-text').innerText = msjBienvenida;
                 setTimeout(() => toggleModal('welcome-modal', true), 1000);
+            } else {
+                // CASO 2: NO HAY MENSAJE. Lanzamos la lluvia automáticamente al entrar
+                setTimeout(triggerFoodRain, 2000); 
             }
+        } else {
+            // CASO 3: CARGA RÁPIDA (Caché). No se muestra modal, así que lanzamos la lluvia
+            setTimeout(triggerFoodRain, 2000);
         }
-    } // 🔥 ¡ESTA ES LA LLAVE QUE FALTABA PARA CERRAR EL IF DE CONFIGURACIÓN! 🔥
+    } else {
+        // CASO 4: Si por algún error no carga la configuración, la lluvia se activa igual
+        setTimeout(triggerFoodRain, 2000);
+    }
 
     
     // 3. Bloque de Sedes (Ahora corre libremente)
@@ -3570,12 +3580,14 @@ function getLocation(userInitiated = false) {
     </div>
 </div>
 <div class="modal" id="welcome-modal">
-    <div class="modal-overlay" onclick="toggleModal('welcome-modal', false)"></div>
+    <!-- Se dispara la lluvia 600ms después de tocar el fondo oscuro -->
+    <div class="modal-overlay" onclick="toggleModal('welcome-modal', false); setTimeout(triggerFoodRain, 600);"></div>
     <div class="modal-content flex flex-col items-center p-6 text-center glass-contour" style="background: #0A0A0B;">
         <span class="text-5xl mb-4">📢</span>
         <h3 class="text-2xl font-black text-white uppercase tracking-tighter mb-2">¡Bienvenido!</h3>
         <p id="welcome-message-text" class="text-zinc-300 text-sm mb-6 font-medium leading-relaxed"></p>
-        <button onclick="toggleModal('welcome-modal', false)" class="w-full bg-primary text-white font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">Entendido</button>
+        <!-- Se dispara la lluvia 600ms después de tocar el botón Entendido -->
+        <button onclick="toggleModal('welcome-modal', false); setTimeout(triggerFoodRain, 600);" class="w-full bg-primary text-white font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">Entendido</button>
     </div>
 </div>
 </body>

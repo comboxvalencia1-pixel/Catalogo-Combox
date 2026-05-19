@@ -972,7 +972,7 @@ if('serviceWorker' in navigator) {
     navigator.serviceWorker.register(URL.createObjectURL(swBlob));
 }
         navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW falló:', err));
-    }
+    
     // Instalador PWA Lógica y Detección
     let deferredPrompt;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;

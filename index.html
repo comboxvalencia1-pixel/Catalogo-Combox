@@ -939,16 +939,19 @@
         const url = e.request.url;
         
         // 2. ESTRATEGIA PARA DATOS DE GOOGLE APPS SCRIPT (API)
-        if (url.includes('script.google.com')) {
-            e.respondWith(
-                fetch(e.request).then(res => {
-                    const clone = res.clone();
-                    caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-                    return res;
-                }).catch(() => caches.match(e.request))
-            );
-            return;
-        }
+        if (url.includes('script.google.com')) {
+            e.respondWith(
+                fetch(e.request).then(res => {
+                    // Validar estrictamente que la respuesta sea válida antes de cachear
+                    if (res && res.status === 200 && res.type !== 'opaque') {
+                        const clone = res.clone();
+                        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+                    }
+                    return res;
+                }).catch(() => caches.match(e.request))
+            );
+            return;
+        }
         
         // 3. ESTRATEGIA PARA IMÁGENES (Network First)
         if (e.request.destination === 'image' || url.match(/\\.(png|jpg|jpeg|gif|webp|svg)/i)) {
@@ -2128,9 +2131,9 @@ function renderMapModal() {
 
 
     // --- EL FIX EMPIEZA AQUÍ ---
-    // 1. Abrimos la vista del modal inmediatamente sin bloqueos
-    document.getElementById('cart-modal').classList.remove('active');
-    toggleModal('checkout-modal', true, null);
+    // 1. Abrimos la vista del modal asegurando el cierre formal de los anteriores
+    toggleModal('cart-modal', false);
+    toggleModal('checkout-modal', true, null);
     document.getElementById('checkout-scroll-area').scrollTop = 0;
     
     if (map && type === 'delivery') {

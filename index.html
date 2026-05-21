@@ -633,12 +633,15 @@
                         Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     </button>
 
-                    <!-- Tarifa en la parte superior derecha -->
-                    <div class="absolute top-3 right-3 z-[1000] pointer-events-none">
+                    <<!-- Tarifa en la parte superior derecha y Botón de Ayuda -->
+                    <div class="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-2 pointer-events-none">
                         <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
                             <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
                             <span id="map-header-title">--$</span>
                         </div>
+                        <button type="button" onclick="showLocationHelp()" class="pointer-events-auto bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-zinc-300 font-bold shadow-lg text-[9px] uppercase flex items-center gap-1 active:scale-95 transition-transform">
+                            <span class="material-symbols-outlined text-[12px] text-yellow-400">help</span> ¿No es aquí?
+                        </button>
                     </div>
 
                     <!-- Indicadores de Ruta (km y min) -->
@@ -2302,8 +2305,27 @@ async function renderMapPosition(lat, lng) {
     setTimeout(() => { if(map) map.invalidateSize(); }, 100); 
     map.setView([lat, lng], map.getZoom() > 13 ? map.getZoom() : 14); 
     
-    const activeIcon = isManualLocation ? redPinIcon : greenDotIcon;
+   const activeIcon = isManualLocation ? redPinIcon : greenDotIcon;
     
+    // --- NUEVO: AUTO-SELECCIONAR SEDE MÁS CERCANA AL PIN/GPS ---
+    let distMinima = Infinity;
+    let closestSedeCalculada = checkoutSede;
+    db.sedes.forEach(s => {
+        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+        const dist = calcularDistanciaHaversine(lat, lng, sLat, sLng);
+        if (dist < distMinima) {
+            distMinima = dist;
+            closestSedeCalculada = s;
+        }
+    });
+
+    if (closestSedeCalculada && closestSedeCalculada.ID_SEDE !== checkoutSede.ID_SEDE) {
+        checkoutSede = closestSedeCalculada;
+        const select = document.getElementById('checkout-sede-select');
+        if(select) select.value = checkoutSede.ID_SEDE;
+    }
+    // ------------------------------------------------------------
+
     if (userMarker) {
         userMarker.setLatLng([lat, lng]);
         userMarker.setIcon(activeIcon);
@@ -2577,7 +2599,32 @@ function getLocation(userInitiated = false) {
                 document.getElementById('route-km').innerText = `-- km`;
                 document.getElementById('route-time').innerText = `-- min`;
                 
-                // Centrar el mapa en la sede seleccionada para no dejarlo perdido
+                // Mostrar siempre los marcadores de las sedes aunque no haya ruta
+                if(map && db && db.sedes) {
+                    marcadoresSedesMap.forEach(m => map.removeLayer(m));
+                    marcadoresSedesMap = [];
+                    db.sedes.forEach(s => {
+                        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                        const sched = getSchedule(s);
+                        const isSelected = checkoutSede && checkoutSede.ID_SEDE === s.ID_SEDE;
+                        let letreroClass = sched.isOpen ? "" : "opacity-60";
+                        let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
+                        if (!isSelected) { iconWrapperClass += " brightness-75 scale-90"; letreroClass += " opacity-80"; }
+                        
+                        const iconHtml = `
+                            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative z-[400]" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+                                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+                                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
+                                </div>
+                                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
+                                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                                </div>
+                            </div>`;
+                        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
+                        marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
+                    });
+                }
+                
                 if (checkoutSede && map) {
                     const [lat, lng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
                     map.setView([lat, lng], 14);
@@ -3541,7 +3588,7 @@ function getLocation(userInitiated = false) {
                 <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
                     <div class="relative w-full max-w-[280px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 border border-white/20 glass-contour" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
                         <!-- Al cargar la imagen dispara la función applyModalColor por si falta el color -->
-                        <img src="${img}" onload="applyModalColor(this, '${id}')" decoding="async" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
+                        <img src="${img}" crossorigin="anonymous" onload="applyModalColor(this, '${id}')" decoding="async" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>
                 
@@ -3627,7 +3674,23 @@ function getLocation(userInitiated = false) {
     
     setTimeout(() => updateMarkerScales(pickupMap), 200);
 }
-    
+    function showLocationHelp() {
+        document.getElementById('dialog-title').innerText = 'Ayuda de Ubicación';
+        document.getElementById('dialog-msg').innerText = 'Si el GPS es inexacto, presiona el ícono del Lápiz (abajo a la izquierda) para ajustar el pin rojo manualmente.\n\nSi el mapa no carga porque denegaste el permiso de GPS, presiona "Solucionar Permisos".';
+        
+        document.getElementById('dialog-buttons').innerHTML = `
+            <button class="w-full bg-white/10 text-white font-black py-3 rounded-xl text-xs uppercase" onclick="closeCustomDialog()">Entendido</button>
+            <button class="w-full bg-red-600 text-white font-black py-3 rounded-xl text-xs uppercase shadow-lg shadow-red-600/30" onclick="resetAppAndGPS()">Solucionar Permisos</button>
+        `;
+        toggleModal('custom-dialog-modal', true);
+    }
+
+    function resetAppAndGPS() {
+        alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
+            window.location.reload(true);
+        });
+    }
     init();
 </script>
 <div class="modal" id="share-modal">

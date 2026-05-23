@@ -19,7 +19,8 @@ self.addEventListener('fetch', (event) => {
             const cachedResponse = await cache.match(event.request);
 
             const networkFetch = fetch(event.request).then(async (networkResponse) => {
-                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                // AQUÍ EL CAMBIO CLAVE: Aceptar 'basic' (archivos locales) y 'cors' (API externa)
+                if (networkResponse && networkResponse.status === 200 && (networkResponse.type === 'basic' || networkResponse.type === 'cors')) {
                     cache.put(event.request, networkResponse.clone());
 
                     // Comunicación hacia el index.html

@@ -2295,25 +2295,11 @@ async function renderMapPosition(lat, lng, preventAutoSelect = false) {
         }
     }
     // ------------------------------------------------------------
-        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
-        const dist = calcularDistanciaHaversine(lat, lng, sLat, sLng);
-        if (dist < distMinima) {
-            distMinima = dist;
-            closestSedeCalculada = s;
-        }
-    });
-
-    if (closestSedeCalculada && closestSedeCalculada.ID_SEDE !== checkoutSede.ID_SEDE) {
-        checkoutSede = closestSedeCalculada;
-        const select = document.getElementById('checkout-sede-select');
-        if(select) select.value = checkoutSede.ID_SEDE;
-    }
-    // ------------------------------------------------------------
 
     if (userMarker) {
         userMarker.setLatLng([lat, lng]);
         userMarker.setIcon(activeIcon);
-        userMarker.dragging.disable(); 
+        userMarker.dragging.disable();
     } else {
         userMarker = L.marker([lat, lng], { draggable: false, icon: activeIcon }).addTo(map);
     }

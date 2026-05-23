@@ -5,6 +5,8 @@
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
     <title>Combox - Menú</title>
     
+    <link rel="manifest" href="manifest.json">
+    
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#E30613" />
@@ -416,7 +418,7 @@
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">HORARIO</span>
         </div>
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('chat-modal', true, renderChatModal)">
+       <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="solicitarGPS(() => toggleModal('mapa-modal', true, renderMapModal))">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white">
                 <svg class="w-5 h-5 fill-white m-0 p-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             </div>
@@ -633,7 +635,7 @@
                         Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     </button>
 
-                    <<!-- Tarifa en la parte superior derecha y Botón de Ayuda -->
+                    <!-- Tarifa en la parte superior derecha y Botón de Ayuda -->
                     <div class="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-2 pointer-events-none">
                         <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
                             <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
@@ -915,72 +917,15 @@
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
     const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
  
-    // Inyección de Service Worker local (Fuentes + Imágenes con actualización en 2do plano)
-    const swCode = `
-    const CACHE_NAME = 'combox-assets-v3';
-    const IMG_CACHE = 'combox-images-v3';
-    
-    // 1. AÑADIMOS '/' y '/index.html' para que la app cargue offline
-    const ASSETS = [
-        '/',
-        '/index.html',
-        'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=block',
-        'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap'
-    ];
-    
-    self.addEventListener('install', e => { 
-        e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))); 
-        self.skipWaiting(); 
-    });
-
-    self.addEventListener('activate', e => {
-        // Limpiamos versiones viejas de caché
-        e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME && k !== IMG_CACHE).map(k => caches.delete(k)))));
-    });
-    
-    self.addEventListener('fetch', e => {
-        const url = e.request.url;
-        
-        // 2. ESTRATEGIA PARA DATOS DE GOOGLE APPS SCRIPT (API)
-        if (url.includes('script.google.com')) {
-            e.respondWith(
-                fetch(e.request).then(res => {
-                    // Validar estrictamente que la respuesta sea válida antes de cachear
-                    if (res && res.status === 200 && res.type !== 'opaque') {
-                        const clone = res.clone();
-                        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-                    }
-                    return res;
-                }).catch(() => caches.match(e.request))
-            );
-            return;
-        }
-        
-        // 3. ESTRATEGIA PARA IMÁGENES (Network First)
-        if (e.request.destination === 'image' || url.match(/\\.(png|jpg|jpeg|gif|webp|svg)/i)) {
-            e.respondWith(
-                fetch(e.request).then(res => {
-                    const clone = res.clone();
-                    caches.open(IMG_CACHE).then(c => c.put(e.request, clone));
-                    return res;
-                }).catch(() => caches.match(e.request))
-            );
-            return;
-        }
-
-        // 4. ESTRATEGIA PARA EL RESTO (Cache First)
-        e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
-    });
-`;
-
-// --- COMIENZO DE LA CORRECCIÓN ---
-if('serviceWorker' in navigator) {
-    const swBlob = new Blob([swCode], {type: 'application/javascript'});
-    navigator.serviceWorker.register(URL.createObjectURL(swBlob))
-        .then(() => console.log('Service Worker registrado correctamente'))
-        .catch(err => console.log('SW falló:', err));
-}
-// --- FIN DE LA CORRECCIÓN ---
+ // --- INICIO DE LA CORRECCIÓN DE ESTRUCTURA ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registrado:', reg.scope))
+                .catch(err => console.error('Error al registrar SW:', err));
+        });
+    }
+    // --- FIN DE LA CORRECCIÓN ---
     
     // Instalador PWA Lógica y Detección
     let deferredPrompt;
@@ -1590,6 +1535,7 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     });
 
    async function init() {
+    showSkeletons(); // <-- ESTO MUESTRA LOS SKELETONS INMEDIATAMENTE
     // 1. Temporizador de emergencia: Si en 6 segundos la app no arranca, quita el splash rojo
     const safetySplashTimer = setTimeout(() => {
         const s = document.getElementById('splash');
@@ -1680,7 +1626,22 @@ function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
         clearTimeout(safetySplashTimer);
     }
 }
-
+// Escuchar los mensajes que envía el Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.tipo === 'ACTUALIZACION_JSON') {
+            console.log('¡El Service Worker trajo datos nuevos en segundo plano!');
+            
+            // Aquí actualizas tu base de datos local (db) con lo nuevo
+            const nuevosDatos = event.data.datos;
+            
+            // Ejemplo:
+            // db = nuevosDatos;
+            // renderCatalogoPOS();
+            // customAlert('Los precios se han actualizado en segundo plano');
+        }
+    });
+}
 async function setupAfterDBLoad(isCached) {
     // 1. Bloque de finanzas para la tasa
     if (db && db.finanzas) {
@@ -1730,28 +1691,8 @@ async function setupAfterDBLoad(isCached) {
 
     // 3. Bloque de Sedes (Ahora corre libremente)
     if(db && db.sedes && db.sedes.length) { 
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                let distMinima = Infinity;
-                db.sedes.forEach(s => {
-                    const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
-                    const dist = calcularDistanciaHaversine(pos.coords.latitude, pos.coords.longitude, lat, lng);
-                    const isOpen = getSchedule(s).isOpen;
-                    if (isOpen && dist < distMinima) {
-                        distMinima = dist;
-                        sedeMasCercanaCalculada = s;
-                    }
-                });
-                
-                if (sedeMasCercanaCalculada) {
-                    currentSede = sedeMasCercanaCalculada;
-                    localforage.setItem('combox_sede_id', currentSede.ID_SEDE);
-                    updateHeader();
-                }
-            }, () => {}, {timeout: 5000});
-        }
-
-        const savedSedeId = await localforage.getItem('combox_sede_id');
+    
+    const savedSedeId = await localforage.getItem('combox_sede_id');
         if (savedSedeId && !sedeMasCercanaCalculada) {
             currentSede = db.sedes.find(s => s.ID_SEDE === savedSedeId) || db.sedes[0];
         } else if (!sedeMasCercanaCalculada) {
@@ -1891,7 +1832,26 @@ function nativeShare() {
         } 
     }
     
-    function toggleSedesModal(show) { toggleModal('sedes-modal', show, renderSedesModal); }
+    function solicitarGPS(callback) {
+        if (!sedeMasCercanaCalculada && "geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                let distMinima = Infinity;
+                db.sedes.forEach(s => {
+                    const [lat, lng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                    if (getSchedule(s).isOpen && calcularDistanciaHaversine(pos.coords.latitude, pos.coords.longitude, lat, lng) < distMinima) {
+                        distMinima = calcularDistanciaHaversine(pos.coords.latitude, pos.coords.longitude, lat, lng);
+                        sedeMasCercanaCalculada = s;
+                    }
+                });
+                if(callback) callback();
+            }, () => { if(callback) callback(); }, {timeout: 3000});
+        } else { if(callback) callback(); }
+    }
+
+    function toggleSedesModal(show) { 
+        if(show) solicitarGPS(() => toggleModal('sedes-modal', show, renderSedesModal));
+        else toggleModal('sedes-modal', show);
+    }
     function toggleCategoriesModal(show) { toggleModal('categories-modal', show, renderAllCategories); }
     function toggleCartModal(show) { toggleModal('cart-modal', show, renderCart); }
     function toggleProductModal(show) { toggleModal('product-modal', show, null); }
@@ -2082,7 +2042,15 @@ function renderMapModal() {
         setTimeout(() => { toggleModal('method-modal', true); }, 150);
     }
 
-    async function openCheckoutModal(type) {
+   async function openCheckoutModal(type) {
+        if(!sedeMasCercanaCalculada && type === 'delivery') {
+            solicitarGPS(() => openCheckoutModalLogica(type));
+        } else {
+            openCheckoutModalLogica(type);
+        }
+    }
+
+    async function openCheckoutModalLogica(type) {
     toggleModal('method-modal', false);
     checkoutType = type; 
     
@@ -2293,13 +2261,13 @@ function updateCheckoutSede(id) {
         if (checkoutType === 'delivery' && userMarker) {
             if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
             const pos = userMarker.getLatLng();
-            renderMapPosition(pos.lat, pos.lng); 
+            renderMapPosition(pos.lat, pos.lng, true); // Evita que auto-salte
         } else if (checkoutType === 'pickup') {
             renderPickupMap();
         }
     }
 }
-async function renderMapPosition(lat, lng) {
+async function renderMapPosition(lat, lng, preventAutoSelect = false) {
     if(!checkoutSede) return;
     
     setTimeout(() => { if(map) map.invalidateSize(); }, 100); 
@@ -2308,9 +2276,25 @@ async function renderMapPosition(lat, lng) {
    const activeIcon = isManualLocation ? redPinIcon : greenDotIcon;
     
     // --- NUEVO: AUTO-SELECCIONAR SEDE MÁS CERCANA AL PIN/GPS ---
-    let distMinima = Infinity;
-    let closestSedeCalculada = checkoutSede;
-    db.sedes.forEach(s => {
+    if (!preventAutoSelect) {
+        let distMinima = Infinity;
+        let closestSedeCalculada = checkoutSede;
+        db.sedes.forEach(s => {
+            const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+            const dist = calcularDistanciaHaversine(lat, lng, sLat, sLng);
+            if (dist < distMinima) {
+                distMinima = dist;
+                closestSedeCalculada = s;
+            }
+        });
+
+        if (closestSedeCalculada && closestSedeCalculada.ID_SEDE !== checkoutSede.ID_SEDE) {
+            checkoutSede = closestSedeCalculada;
+            const select = document.getElementById('checkout-sede-select');
+            if(select) select.value = checkoutSede.ID_SEDE;
+        }
+    }
+    // ------------------------------------------------------------
         const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
         const dist = calcularDistanciaHaversine(lat, lng, sLat, sLng);
         if (dist < distMinima) {
@@ -2354,11 +2338,11 @@ async function renderMapPosition(lat, lng) {
 
         if (!isSelected) {
             if (sched.isOpen) {
-                iconWrapperClass = "brightness-75 scale-90"; 
-                letreroClass = "opacity-80";
+                iconWrapperClass = "scale-[0.70] brightness-50 saturate-50 opacity-80"; 
+                letreroClass = "opacity-60 scale-[0.85]";
             } else {
-                iconWrapperClass = "grayscale opacity-60 scale-90"; 
-                letreroClass = "opacity-60";
+                iconWrapperClass = "scale-[0.70] grayscale opacity-40 brightness-50"; 
+                letreroClass = "opacity-40 scale-[0.85]";
             }
         }
 
@@ -3363,7 +3347,7 @@ function getLocation(userInitiated = false) {
             return `<div class="flex items-center justify-between bg-white/5 p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
-                        <img src="${img}" decoding="async" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">
+                       <img src="${img}" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">
                     </div>
                     <div class="flex flex-col min-w-0 flex-1 pr-1">
                         <span class="text-sm md:text-base font-[800] text-white uppercase leading-tight line-clamp-2 w-full">${p.nombre}</span>
@@ -3588,7 +3572,7 @@ function getLocation(userInitiated = false) {
                 <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
                     <div class="relative w-full max-w-[280px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 border border-white/20 glass-contour" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
                         <!-- Al cargar la imagen dispara la función applyModalColor por si falta el color -->
-                        <img src="${img}" crossorigin="anonymous" onload="applyModalColor(this, '${id}')" decoding="async" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
+                       <img src="${img}" onload="applyModalColor(this, '${id}')" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
                     </div>
                 </div>
                 
@@ -3639,8 +3623,13 @@ function getLocation(userInitiated = false) {
         let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
 
         if (!isSelected) {
-            iconWrapperClass += " brightness-75 scale-90";
-            letreroClass += " opacity-80";
+            if (sched.isOpen) {
+                iconWrapperClass = "scale-[0.70] brightness-50 saturate-50 opacity-80"; 
+                letreroClass = "opacity-60 scale-[0.85]";
+            } else {
+                iconWrapperClass = "scale-[0.70] grayscale opacity-40 brightness-50"; 
+                letreroClass = "opacity-40 scale-[0.85]";
+            }
         }
         
         const iconHtml = `

@@ -3404,8 +3404,10 @@ function triggerFoodRain() {
 const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITAR PRECIO</span>' : `$${price.toFixed(2)} <span class="text-[10px] text-primary font-bold ml-1">C/u</span>`;
 const img = p.imagen || DEFAULT_IMG;
 const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(255,255,255,0.05)';
+// Invertimos el ángulo del degradado para que vaya de derecha a izquierda
+const bgInverted = bgCache.replace('135deg', '270deg');
 
-return `<div class="relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgCache};">
+return `<div class="relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgInverted}; -webkit-mask-image: -webkit-radial-gradient(white, black); mask-image: radial-gradient(white, black); -webkit-transform: translateZ(0); transform: translateZ(0);">
     
     <div class="absolute inset-0 bg-black/50 pointer-events-none"></div>
     

@@ -3402,12 +3402,24 @@ function triggerFoodRain() {
         if(!items.length) { list.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-zinc-600"><span class="material-symbols-outlined text-6xl mb-4">shopping_basket</span><p class="font-black uppercase tracking-widest text-[10px]">Carrito vacío</p></div>`; return; }
         
         list.innerHTML = items.map(p => { 
-            const id = getUnifiedId(p); const price = getProductPrice(p); 
+           const id = getUnifiedId(p); const price = getProductPrice(p); 
 const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITAR PRECIO</span>' : `$${price.toFixed(2)} <span class="text-[10px] text-primary font-bold ml-1">C/u</span>`;
 const img = p.imagen || DEFAULT_IMG;
-const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(255,255,255,0.05)';
 
-return `<div class="flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgCache};">
+// --- NUEVO CÁLCULO DE FONDO SUTIL PARA EL CARRITO ---
+let bgStyle = 'rgba(255,255,255,0.05)'; // Color por defecto
+if (colorCache.has('card-' + id)) {
+    const cachedBg = colorCache.get('card-' + id);
+    // Extraemos solo los valores RGB (ej: 255,0,0) del caché original mediante una expresión regular
+    const rgbMatch = cachedBg.match(/rgba\((\d+,\d+,\d+)/);
+    if (rgbMatch) {
+        // Armamos un degradado horizontal suave (0.12 de opacidad) que termina en un tono muy oscuro a la derecha
+        bgStyle = `linear-gradient(90deg, rgba(${rgbMatch[1]}, 0.12) 0%, rgba(10,10,11,0.6) 80%, rgba(10,10,11,1) 100%)`;
+    }
+}
+// ----------------------------------------------------
+
+return `<div class="flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgStyle};">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
                        <img src="${img}" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">

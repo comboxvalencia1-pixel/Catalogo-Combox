@@ -1953,7 +1953,7 @@ function renderMapModal() {
                 <span class="text-[9px] text-zinc-500 uppercase font-bold truncate">${sanitizeHTML(s.NOMBRE_SEDE.split(',')[1] || 'Sucursal')}</span>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0">
-               ${esLaMasCercana ? '<span class="text-blue-400 text-[8px] font-black uppercase tracking-widest text-right leading-tight">Más<br>Cerca</span>' : ''}
+               ${esLaMasCercana ? '<span class="bg-blue-500 text-white text-[8px] font-black px-2 py-1 rounded border border-blue-400 uppercase tracking-widest whitespace-nowrap">MÁS CERCA</span>' : ''}
                <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-600 text-white px-5 py-1.5 rounded-full active:scale-95 flex items-center gap-1.5 shadow-[0_0_12px_rgba(37,99,235,0.5)] border border-blue-400 transition-all">
                    <span class="material-symbols-outlined text-[14px]">near_me</span> <span class="text-[9px] font-black uppercase tracking-widest">Ir</span>
                </button>
@@ -2282,7 +2282,9 @@ async function renderMapPosition(lat, lng, preventAutoSelect = false) {
     if(!checkoutSede) return;
     
     setTimeout(() => { if(map) map.invalidateSize(); }, 100); 
-    map.setView([lat, lng], map.getZoom() > 13 ? map.getZoom() : 14); 
+const [sedeLatFocus, sedeLngFocus] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], maxZoom: 13 }); 
+     
     
    const activeIcon = isManualLocation ? redPinIcon : greenDotIcon;
     
@@ -2589,18 +2591,25 @@ function getLocation(userInitiated = false) {
                         const sched = getSchedule(s);
                         const isSelected = checkoutSede && checkoutSede.ID_SEDE === s.ID_SEDE;
                         let letreroClass = sched.isOpen ? "" : "opacity-60";
-                        let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
-                        if (!isSelected) { iconWrapperClass += " brightness-75 scale-90"; letreroClass += " opacity-80"; }
-                        
-                        const iconHtml = `
-                            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative z-[400]" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
-                                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
-                                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
-                                </div>
-                                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
-                                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
-                                </div>
-                            </div>`;
+let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
+if (!isSelected) { iconWrapperClass += " brightness-75 scale-90"; letreroClass += " opacity-80"; }
+
+const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
+const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
+
+const iconHtml = `
+    <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative z-[400]" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+        <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+            <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
+        </div>
+        <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
+            <div class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
+                <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
+            </div>
+            <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+        </div>
+    </div>`;
                         const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
                         marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
                     });
@@ -2833,7 +2842,10 @@ function triggerFoodRain() {
                     <div class="w-10 h-10 flex-shrink-0 md:w-12 md:h-12 rounded-2xl ${iconClass} flex items-center justify-center">
                         <span class="material-symbols-outlined text-[20px] md:text-[24px]">storefront</span>
                     </div>
-                    <span class="block text-white font-bold text-base md:text-lg truncate leading-tight">${sanitizeHTML(main)}</span>
+                    <div class="flex flex-col items-start min-w-0 flex-1">
+    <span class="block text-white font-bold text-base md:text-lg truncate leading-tight">${sanitizeHTML(main)}</span>
+    <span class="block text-[9px] md:text-[10px] text-zinc-400 uppercase font-black truncate">${sanitizeHTML(sub?.trim() || 'Sucursal')}</span>
+</div>
                         <span class="block text-[9px] md:text-[10px] text-zinc-400 uppercase font-black truncate">${sanitizeHTML(sub?.trim() || 'Sucursal')}</span>
                     </div>
                 </div>

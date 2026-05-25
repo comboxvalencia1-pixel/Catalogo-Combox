@@ -301,6 +301,7 @@
         .island-width { max-width: 600px; margin-left: auto; margin-right: auto; }
 
         #map-preview { background: #0a0a0b; }
+        .leaflet-container { background: #0a0a0b !important; outline: none; }
         .leaflet-tile { filter: brightness(1.0) contrast(1.0); }
         .leaflet-control-attribution { display: none !important; }
 
@@ -580,13 +581,7 @@
         <div class="space-y-5 overflow-y-auto hide-scrollbar pb-6 flex-1 min-h-0" id="checkout-scroll-area">
             
             <!-- 1. SELECT DE SEDE -->
-            <div>
-                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2" id="checkout-sede-label">Enviar pedido a sede</label>
-                <div class="relative mb-4">
-                    <select id="checkout-sede-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000] text-base font-semibold appearance-none" onchange="updateCheckoutSede(this.value)"></select>
-                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
-                </div>
-            </div>
+            
 
             <!-- 2. INPUT TU NOMBRE -->
             <div>
@@ -601,10 +596,15 @@
             </div>
             
             <!-- 4. CONTENEDOR DEL MAPA PICK-UP (MOVIDO AQUÍ ABAJO) -->
-            <div id="pickup-map-container" class="relative w-full rounded-3xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b] mt-6 mb-2" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
-                <!-- Marca de agua COMBOX -->
+           <div id="pickup-map-container" class="relative w-full rounded-3xl border border-white/10 overflow-hidden shadow-inner z-10 bg-[#0a0a0b] mt-6 mb-2" style="display:none; height: 350px; box-shadow: inset 0 -22px 0 0 #0a0a0b, 0 0 20px rgba(0,0,0,0.5);">
                 <div class="absolute top-3 left-4 z-[1000] pointer-events-none opacity-40">
                     <span class="font-[900] text-white text-sm tracking-widest drop-shadow-md">COMBOX</span>
+                </div>
+                <div class="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
+                    <div class="relative group">
+                        <select class="checkout-sede-select bg-black/60 backdrop-blur-md border border-white/20 px-8 py-2.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase appearance-none outline-none focus:border-primary active:scale-95 transition-transform" onchange="updateCheckoutSede(this.value)"></select>
+                        <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-white pointer-events-none text-[14px]">expand_more</span>
+                    </div>
                 </div>
                 <div id="checkout-pickup-map" class="w-full h-full z-0"></div>
             </div>
@@ -635,11 +635,14 @@
                         Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     </button>
 
-                    <!-- Tarifa en la parte superior derecha y Botón de Ayuda -->
-                    <div class="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-2 pointer-events-none">
-                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2">
+                    <div class="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2 pointer-events-none">
                             <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
                             <span id="map-header-title">--$</span>
+                        </div>
+                        <div class="relative group mt-1">
+                            <select class="checkout-sede-select bg-black/60 backdrop-blur-md border border-white/20 px-8 py-2 rounded-xl text-white font-black shadow-lg text-[9px] uppercase appearance-none outline-none focus:border-primary active:scale-95 transition-transform" onchange="updateCheckoutSede(this.value)"></select>
+                            <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-white pointer-events-none text-[14px]">expand_more</span>
                         </div>
                     </div>
 
@@ -2100,21 +2103,19 @@ function renderMapModal() {
         setTimeout(() => renderPickupMap(), 350);
     }
     
-        const select = document.getElementById('checkout-sede-select');
-    if(db?.sedes) {
-        // Renderizamos las opciones
-        select.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE}</option>`).join('');
-        
-        // Auto-seleccionar sede más cercana si es delivery, o la actual si es pickup
-        if(type === 'delivery' && sedeMasCercanaCalculada) {
-            checkoutSede = sedeMasCercanaCalculada;
-        } else {
-            checkoutSede = currentSede;
+        const selects = document.querySelectorAll('.checkout-sede-select');
+        if(db?.sedes) {
+            if(type === 'delivery' && sedeMasCercanaCalculada) {
+                checkoutSede = sedeMasCercanaCalculada;
+            } else {
+                checkoutSede = currentSede;
+            }
+            
+            selects.forEach(sel => {
+                sel.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE.split(',')[0]}</option>`).join('');
+                if(checkoutSede) sel.value = checkoutSede.ID_SEDE;
+            });
         }
-        
-        // Aplicamos la selección visual al menú desplegable
-        if(checkoutSede) select.value = checkoutSede.ID_SEDE;
-    }
 
 
     // --- EL FIX EMPIEZA AQUÍ ---
@@ -2263,10 +2264,8 @@ function updateCheckoutSede(id) {
     if(db?.sedes) {
         checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || currentSede; 
         
-        const select = document.getElementById('checkout-sede-select');
-        if(select && select.value !== id) {
-            select.value = id;
-        }
+        const selects = document.querySelectorAll('.checkout-sede-select');
+        selects.forEach(sel => { if(sel.value !== id) sel.value = id; });
 
         if (checkoutType === 'delivery' && userMarker) {
             if (rutaLayer && map) { map.removeLayer(rutaLayer); rutaLayer = null; }
@@ -3632,9 +3631,8 @@ function triggerFoodRain() {
                 </div>
                 
                 <div class="relative z-30 w-full flex-shrink-0 flex items-center justify-center mt-20 mb-4 px-8" style="height: 35vh;">
-                    <div class="relative w-full max-w-[280px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 border border-white/20 glass-contour" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6);">
-                        <!-- Al cargar la imagen dispara la función applyModalColor por si falta el color -->
-                       <img src="${img}" onload="applyModalColor(this, '${id}')" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl" draggable="false" oncontextmenu="return false;"/>
+                    <div class="relative w-full max-w-[280px] aspect-square rounded-3xl overflow-hidden shadow-2xl bg-black/20 border border-white/20 glass-contour" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.6); background: url('${img}') center/cover no-repeat;">
+                       <img src="${img}" onload="applyModalColor(this, '${id}'); this.style.opacity='1';" class="w-full h-full object-cover pointer-events-none select-none rounded-3xl opacity-0 transition-opacity duration-100" draggable="false" oncontextmenu="return false;" decoding="sync"/>
                     </div>
                 </div>
                 

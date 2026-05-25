@@ -1953,7 +1953,7 @@ function renderMapModal() {
                 <span class="text-[9px] text-zinc-500 uppercase font-bold truncate">${sanitizeHTML(s.NOMBRE_SEDE.split(',')[1] || 'Sucursal')}</span>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0">
-               ${esLaMasCercana ? '<span class="bg-blue-500 text-white text-[8px] font-black px-2 py-1 rounded border border-blue-400 uppercase tracking-widest whitespace-nowrap">MÁS CERCA</span>' : ''}
+               ${esLaMasCercana ? '<span class="material-symbols-outlined text-[24px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" style="font-variation-settings: \'FILL\' 1;">bolt</span>' : ''}
                <button onclick="window.open('${s.LINK_UBICACION}', '_blank')" class="bg-blue-600 text-white px-5 py-1.5 rounded-full active:scale-95 flex items-center gap-1.5 shadow-[0_0_12px_rgba(37,99,235,0.5)] border border-blue-400 transition-all">
                    <span class="material-symbols-outlined text-[14px]">near_me</span> <span class="text-[9px] font-black uppercase tracking-widest">Ir</span>
                </button>
@@ -2843,9 +2843,7 @@ function triggerFoodRain() {
                         <span class="material-symbols-outlined text-[20px] md:text-[24px]">storefront</span>
                     </div>
                     <div class="flex flex-col items-start min-w-0 flex-1">
-    <span class="block text-white font-bold text-base md:text-lg truncate leading-tight">${sanitizeHTML(main)}</span>
-    <span class="block text-[9px] md:text-[10px] text-zinc-400 uppercase font-black truncate">${sanitizeHTML(sub?.trim() || 'Sucursal')}</span>
-</div>
+                        <span class="block text-white font-bold text-base md:text-lg truncate leading-tight">${sanitizeHTML(main)}</span>
                         <span class="block text-[9px] md:text-[10px] text-zinc-400 uppercase font-black truncate">${sanitizeHTML(sub?.trim() || 'Sucursal')}</span>
                     </div>
                 </div>
@@ -3604,19 +3602,28 @@ function triggerFoodRain() {
         }, 15);
     }
     
-   function renderPickupMap() {
-    if(pickupMap) pickupMap.remove();
-    const customRenderer = L.svg({ padding: 1.5 });
-    pickupMap = L.map('checkout-pickup-map', { zoomControl: false, attributionControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 11);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(pickupMap);
-    
-    // Polígonos GeoJSON
-    if (typeof misZonasGeoJSON !== 'undefined') {
-        L.geoJSON(misZonasGeoJSON, {
-            style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
-            interactive: false 
-        }).addTo(pickupMap);
+   let marcadoresPickupMap = []; // Añadimos esto para controlar los pines y no sobrecargar el mapa
+
+function renderPickupMap() {
+    if(!pickupMap) {
+        const customRenderer = L.svg({ padding: 1.5 });
+        pickupMap = L.map('checkout-pickup-map', { zoomControl: false, attributionControl: false, renderer: customRenderer }).setView([10.2543, -68.0101], 11);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(pickupMap);
+        
+        // Polígonos GeoJSON
+        if (typeof misZonasGeoJSON !== 'undefined') {
+            L.geoJSON(misZonasGeoJSON, {
+                style: (f) => ({ color: f.properties.fill || "#E30613", weight: 2, fillColor: f.properties.fill || "#E30613", fillOpacity: 0.15 }),
+                interactive: false 
+            }).addTo(pickupMap);
+        }
     }
+
+    // Limpiamos los pines viejos con la nueva variable antes de poner los nuevos
+    if (marcadoresPickupMap && marcadoresPickupMap.length > 0) {
+        marcadoresPickupMap.forEach(m => pickupMap.removeLayer(m));
+    }
+    marcadoresPickupMap = [];
 
     let bounds = [];
     db.sedes.forEach(s => {
@@ -3658,21 +3665,27 @@ function triggerFoodRain() {
                 </div>
             </div>`;
         const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
-        L.marker([lat, lng], { icon }).addTo(pickupMap);
+        
+        let marker = L.marker([lat, lng], { icon }).addTo(pickupMap);
+        marcadoresPickupMap.push(marker); // Guardamos el pin
     });
     
     // Ubicación actual del usuario (Punto Verde)
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
-            L.marker([pos.coords.latitude, pos.coords.longitude], { icon: greenDotIcon }).addTo(pickupMap);
+            let userMarker = L.marker([pos.coords.latitude, pos.coords.longitude], { icon: greenDotIcon }).addTo(pickupMap);
+            marcadoresPickupMap.push(userMarker);
             bounds.push([pos.coords.latitude, pos.coords.longitude]);
-            pickupMap.fitBounds(bounds, { padding: [30, 30] });
+            pickupMap.flyToBounds(bounds, { padding: [30, 30], duration: 0.6 }); // flyToBounds asegura el movimiento fluido
         });
     } else if(bounds.length > 0) {
-        pickupMap.fitBounds(bounds, { padding: [30, 30] });
+        pickupMap.flyToBounds(bounds, { padding: [30, 30], duration: 0.6 });
     }
     
-    setTimeout(() => updateMarkerScales(pickupMap), 200);
+    setTimeout(() => {
+        pickupMap.invalidateSize();
+        updateMarkerScales(pickupMap);
+    }, 100);
 }
     function showLocationHelp() {
         document.getElementById('dialog-title').innerText = 'Ayuda de Ubicación';

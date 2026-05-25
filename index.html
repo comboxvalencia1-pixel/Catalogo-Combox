@@ -408,7 +408,7 @@
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">SEDES</span>
         </div>
         
-        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="toggleModal('mapa-modal', true, renderMapModal)">
+        <div class="flex flex-col items-center gap-2 min-w-[65px] nav-col" onclick="openMapaModal()">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl btn-solido-rojo flex items-center justify-center text-white"><span class="material-symbols-outlined text-2xl leading-none m-0 p-0">location_on</span></div>
             <span class="text-[9px] nav-text font-bold uppercase tracking-widest text-zinc-400">Mapa</span>
         </div>
@@ -641,9 +641,6 @@
                             <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
                             <span id="map-header-title">--$</span>
                         </div>
-                        <button type="button" onclick="showLocationHelp()" class="pointer-events-auto bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-zinc-300 font-bold shadow-lg text-[9px] uppercase flex items-center gap-1 active:scale-95 transition-transform">
-                            <span class="material-symbols-outlined text-[12px] text-yellow-400">help</span> ¿No es aquí?
-                        </button>
                     </div>
 
                     <!-- Indicadores de Ruta (km y min) -->
@@ -1927,7 +1924,9 @@ function nativeShare() {
     }
 
     let globalSedesMap = null; // Variable para mantener el mapa de sedes
-
+function openMapaModal() {
+    solicitarGPS(() => toggleModal('mapa-modal', true, renderMapModal));
+}
 
 function renderMapModal() {
     const sorted = getSortedSedes();
@@ -2337,11 +2336,11 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
 
         if (!isSelected) {
             if (sched.isOpen) {
-                iconWrapperClass = "scale-[0.70] brightness-50 saturate-50 opacity-80"; 
-                letreroClass = "opacity-60 scale-[0.85]";
+                iconWrapperClass = "scale-[0.85] brightness-75 opacity-95"; 
+                letreroClass = "opacity-80 scale-[0.95]";
             } else {
-                iconWrapperClass = "scale-[0.70] grayscale opacity-40 brightness-50"; 
-                letreroClass = "opacity-40 scale-[0.85]";
+                iconWrapperClass = "scale-[0.85] grayscale opacity-60 brightness-75"; 
+                letreroClass = "opacity-60 scale-[0.95]";
             }
         }
 
@@ -2517,13 +2516,67 @@ function cancelManualLocationInput() {
 }
 
 // NUEVA FUNCIÓN PARA RESTAURAR EL BOTÓN A SU ESTADO ORIGINAL
+function showLocationHelp() {
+    // Reemplazamos el título para añadir el botón X nativo en la cabecera
+    document.getElementById('dialog-title').innerHTML = `
+        <div class="flex justify-between items-center w-full">
+            <span>Ajustar Ubicación</span>
+            <button onclick="closeCustomDialog()" class="text-white bg-white/10 w-8 h-8 rounded-full flex items-center justify-center active:scale-90">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>`;
+    document.getElementById('dialog-title').className = "text-white font-black text-lg uppercase tracking-widest mb-4 w-full text-left";
+
+    // Inyectamos el diseño completamente nuevo
+    document.getElementById('dialog-msg').innerHTML = `
+        <div class="flex flex-col gap-4 text-left w-full">
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Mover pin en el mapa</label>
+                <button onclick="closeCustomDialog(); showManualLocationInput();" class="w-full bg-white/10 border border-white/20 text-white font-black py-3 rounded-xl text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                    Editar en el mapa <span class="material-symbols-outlined text-[16px]">edit_location_alt</span>
+                </button>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Pegar coordenadas (Lat, Lng)</label>
+                <input type="text" id="manual-coord-input" class="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000]" placeholder="Ej: 10.254, -68.010" oninput="checkManualCoords(this.value)">
+            </div>
+            <div class="bg-red-500/10 border border-red-500/20 p-3 rounded-xl mt-2">
+                <p class="text-[10px] text-red-200 font-bold leading-tight">
+                    <span class="material-symbols-outlined text-[12px] align-middle text-red-500">warning</span>
+                    ¿Mapa en blanco? Has denegado el GPS. Toca el candado (🔒) en la barra de direcciones de tu navegador (URL), ve a "Permisos" y activa la Ubicación.
+                </p>
+            </div>
+        </div>
+    `;
+    document.getElementById('dialog-msg').className = "w-full";
+    document.getElementById('dialog-buttons').innerHTML = ''; // Ocultamos los botones viejos de abajo
+    toggleModal('custom-dialog-modal', true);
+}
+
+function checkManualCoords(val) {
+    const coincidencia = val.match(/[(]?\s*(-?\d+\.\d+)\s*[,;\s]+\s*(-?\d+\.\d+)\s*[)]?/);
+    if(coincidencia) {
+        const lat = parseFloat(coincidencia[1]);
+        const lng = parseFloat(coincidencia[2]);
+        closeCustomDialog();
+        document.getElementById('checkout-location').value = val;
+        isEditingLocation = false;
+        isManualLocation = true;
+        if(map) {
+            document.getElementById('map-wrapper').style.display = 'block';
+            renderMapPosition(lat, lng);
+        }
+    }
+}
+
 function resetEditLocationButton() {
     const btnEdit = document.getElementById('btn-wrong-location');
     if (btnEdit) {
         btnEdit.style.display = 'flex';
-        btnEdit.className = "absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform";
-        btnEdit.innerHTML = '<span class="material-symbols-outlined text-[18px]">edit_location_alt</span>';
-        btnEdit.onclick = showManualLocationInput;
+        // Este cambio transforma el botón circular del lápiz en el óvalo de "¿No es aquí?" encima del GPS
+        btnEdit.className = "absolute bottom-14 left-3 z-[1000] bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-zinc-300 font-bold shadow-lg text-[9px] uppercase flex items-center gap-1 active:scale-95 transition-transform";
+        btnEdit.innerHTML = '<span class="material-symbols-outlined text-[12px] text-yellow-400">help</span> ¿No es aquí?';
+        btnEdit.onclick = showLocationHelp;
     }
 }
 
@@ -2783,7 +2836,7 @@ function triggerFoodRain() {
     
     const foodEmojis = ['🍔', '🌭', '🍕']; 
     
-    const totalBgDrops = 15; 
+    const totalBgDrops = 0; 
     for (let i = 0; i < totalBgDrops; i++) {
         const drop = document.createElement('span');
         drop.className = 'food-drop-bg';
@@ -3642,11 +3695,11 @@ function renderPickupMap() {
 
         if (!isSelected) {
             if (sched.isOpen) {
-                iconWrapperClass = "scale-[0.70] brightness-50 saturate-50 opacity-80"; 
-                letreroClass = "opacity-60 scale-[0.85]";
+                iconWrapperClass = "scale-[0.85] brightness-75 opacity-95"; 
+                letreroClass = "opacity-80 scale-[0.95]";
             } else {
-                iconWrapperClass = "scale-[0.70] grayscale opacity-40 brightness-50"; 
-                letreroClass = "opacity-40 scale-[0.85]";
+                iconWrapperClass = "scale-[0.85] grayscale opacity-60 brightness-75"; 
+                letreroClass = "opacity-60 scale-[0.95]";
             }
         }
         
@@ -3687,16 +3740,7 @@ function renderPickupMap() {
         updateMarkerScales(pickupMap);
     }, 100);
 }
-    function showLocationHelp() {
-        document.getElementById('dialog-title').innerText = 'Ayuda de Ubicación';
-        document.getElementById('dialog-msg').innerText = 'Si el GPS es inexacto, presiona el ícono del Lápiz (abajo a la izquierda) para ajustar el pin rojo manualmente.\n\nSi el mapa no carga porque denegaste el permiso de GPS, presiona "Solucionar Permisos".';
-        
-        document.getElementById('dialog-buttons').innerHTML = `
-            <button class="w-full bg-white/10 text-white font-black py-3 rounded-xl text-xs uppercase" onclick="closeCustomDialog()">Entendido</button>
-            <button class="w-full bg-red-600 text-white font-black py-3 rounded-xl text-xs uppercase shadow-lg shadow-red-600/30" onclick="resetAppAndGPS()">Solucionar Permisos</button>
-        `;
-        toggleModal('custom-dialog-modal', true);
-    }
+
 
     function resetAppAndGPS() {
         alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");

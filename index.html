@@ -3399,42 +3399,42 @@ function triggerFoodRain() {
         
         if(!items.length) { list.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-zinc-600"><span class="material-symbols-outlined text-6xl mb-4">shopping_basket</span><p class="font-black uppercase tracking-widest text-[10px]">Carrito vacío</p></div>`; return; }
         
-        list.innerHTML = items.map(p => { 
-            const id = getUnifiedId(p); const price = getProductPrice(p); 
-const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITAR PRECIO</span>' : `$${price.toFixed(2)} <span class="text-[10px] text-primary font-bold ml-1">C/u</span>`;
-const img = p.imagen || DEFAULT_IMG;
-const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(255,255,255,0.05)';
+       list.innerHTML = items.map(p => { 
+    const id = getUnifiedId(p); 
+    const price = getProductPrice(p); 
+    const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITAR PRECIO</span>' : `$${price.toFixed(2)} <span class="text-[10px] text-primary font-bold ml-1">C/u</span>`;
+    const img = p.imagen || DEFAULT_IMG;
+    const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(255,255,255,0.05)';
+    
+    // Corregido: .replace ahora busca el valor real que tienes en tu CSS
+    const bgSutil = bgCache.replace('0.8)', '0.15)').replace('135deg', '270deg');
 
-// 1. Suavizamos la opacidad (de 0.8 a 0.15) para que el color sea muy sutil y no compita con el contenido.
-// 2. Opcional: Si mantienes lo del paso anterior, cambiamos '135deg' a '270deg' para invertirlo.
-const bgSutil = bgCache.replace('0.8)', '0.15)').replace('135deg', '270deg');
-
-return `<div class="relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgSutil}; background-clip: padding-box; -webkit-mask-image: -webkit-radial-gradient(white, black); mask-image: radial-gradient(white, black); -webkit-transform: translateZ(0); transform: translateZ(0);">`
-    
-    <div class="absolute inset-0 bg-black/50 pointer-events-none"></div>
-    
-    <div class="relative z-10 flex items-center gap-3 flex-1 min-w-0">
-        <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-black/20 flex-shrink-0 shadow-lg">
-           <img src="${img}" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">
+    // CORRECCIÓN: El acento grave abre al principio y cierra al final, envolviendo todo el HTML
+    return `
+    <div class="relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgSutil}; background-clip: padding-box; -webkit-mask-image: -webkit-radial-gradient(white, black); mask-image: radial-gradient(white, black); -webkit-transform: translateZ(0); transform: translateZ(0);">
+        <div class="absolute inset-0 bg-black/50 pointer-events-none"></div>
+        
+        <div class="relative z-10 flex items-center gap-3 flex-1 min-w-0">
+            <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-black/20 flex-shrink-0 shadow-lg">
+               <img src="${img}" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">
+            </div>
+            <div class="flex flex-col min-w-0 flex-1 pr-1">
+                <span class="text-sm md:text-base font-[800] text-white uppercase leading-tight line-clamp-2 w-full">${sanitizeHTML(p.nombre)}</span>
+                <span class="text-sm md:text-base text-primary font-black tracking-wider mt-1">${priceDisplay}</span>
+            </div>
         </div>
-        <div class="flex flex-col min-w-0 flex-1 pr-1">
-            <span class="text-sm md:text-base font-[800] text-white uppercase leading-tight line-clamp-2 w-full">${sanitizeHTML(p.nombre)}</span>
-            <span class="text-sm md:text-base text-primary font-black tracking-wider mt-1">${priceDisplay}</span>
+        
+        <div class="relative z-10 flex items-center justify-between bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10 flex-shrink-0 shadow-lg" onclick="event.stopPropagation();">
+            <button onclick="changeQty('${id}', -1)" class="w-7 h-7 rounded-full flex items-center justify-center text-white active:scale-90">
+                <span class="material-symbols-outlined text-[16px]">remove</span>
+            </button>
+            <span class="w-5 text-center text-[11px] font-black text-white">${p.qty}</span>
+            <button onclick="changeQty('${id}', 1)" class="w-7 h-7 rounded-full flex items-center justify-center text-white active:scale-90">
+                <span class="material-symbols-outlined text-[16px]">add</span>
+            </button>
         </div>
-    </div>
-    
-    <div class="relative z-10 flex items-center justify-between bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10 flex-shrink-0 shadow-lg" onclick="event.stopPropagation();">
-        <button onclick="changeQty('${id}', -1)" class="w-7 h-7 rounded-full flex items-center justify-center text-white active:scale-90">
-            <span class="material-symbols-outlined text-[16px]">remove</span>
-        </button>
-        <span class="w-5 text-center text-[11px] font-black text-white">${p.qty}</span>
-        <button onclick="changeQty('${id}', 1)" class="w-7 h-7 rounded-full flex items-center justify-center text-white active:scale-90">
-            <span class="material-symbols-outlined text-[16px]">add</span>
-        </button>
-    </div>
-</div>`;
-        }).join('');
-    }
+    </div>`;
+}).join('');
 
     // ACCIÓN ASÍNCRONA DE CARRITO (Máxima fluidez)
     function changeQty(id, delta) {

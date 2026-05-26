@@ -6,9 +6,19 @@ self.addEventListener('install', (event) => {
     event.waitUntil(caches.open(CACHE_NAME));
 });
 
-// Activación inmediata
+// Activación inmediata y limpieza profunda
 self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim());
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        return caches.delete(cacheName); // Elimina combox-pos-v1, v2, etc.
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
+    );
 });
 
 self.addEventListener('fetch', (event) => {

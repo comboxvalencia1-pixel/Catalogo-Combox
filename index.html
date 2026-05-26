@@ -3614,19 +3614,20 @@ return `<div class="relative overflow-hidden flex items-center justify-between p
         const img = p.imagen || DEFAULT_IMG;
         const safeName = p.nombre.replace(/'/g, "\\'");
         const priceDisplay = price === 0 ? 'Por cotizar' : '$' + price.toFixed(2);
-
-        // Color degradado extraído
         const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(35,35,40,0.9)';
 
-        // Actualizamos el contenedor del modal
         const modalContent = document.getElementById('product-content');
-        
-        // CORRECCIÓN: Aplicamos el radio de borde y overflow al contenedor principal aquí
+
+        // --- CORRECCIÓN DE BORDES Y RECORTES ---
         modalContent.style.borderRadius = '32px';
         modalContent.style.overflow = 'hidden';
+        modalContent.style.backgroundClip = 'padding-box';
+        modalContent.style.border = '1px solid rgba(255,255,255,0.05)';
 
         modalContent.innerHTML = `
-            <div id="modal-bg-color" class="absolute inset-0 z-0 transition-colors duration-500 rounded-[32px]" style="background: ${bgCache};"></div>
+            <div id="modal-bg-color" class="absolute inset-0 z-0 transition-colors duration-500 rounded-[32px]" style="background: ${bgCache}; background-clip: padding-box;"></div>
+            
+            <div class="absolute inset-0 z-10 border border-white/5 rounded-[32px] pointer-events-none"></div>
             
             <div class="absolute bottom-0 inset-x-0 h-[60%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] to-transparent"></div>
             

@@ -1056,7 +1056,7 @@ const sharedCtx = sharedCanvas.getContext('2d', { willReadFrequently: true });
     const colorCache = new Map();
 
    function extractLeftColor(imgElement, cardId) {
-    const cardElement = imgElement.closest('.product-card-glass');
+    const cardElement = imgElement.closest('.product-card-glass') || imgElement.closest('.cart-item-container');
     if (!cardElement) return;
 
     if (colorCache.has(cardId)) {
@@ -3408,7 +3408,7 @@ const img = p.imagen || DEFAULT_IMG;
 const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(255,255,255,0.05)';
 
 // ... dentro del map de renderCart
-return `<div class="product-card-glass relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98] isolation-isolate" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgCache};">
+return `<div class="cart-item-container relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98] isolation-isolate" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgCache};">
     
     <div class="absolute inset-0 z-0 bg-black/50 pointer-events-none rounded-3xl"></div>
     

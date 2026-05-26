@@ -3405,9 +3405,12 @@ const priceDisplay = price === 0 ? '<span class="text-xs text-zinc-400">SOLICITA
 const img = p.imagen || DEFAULT_IMG;
 const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(255,255,255,0.05)';
 
-return `<div class="relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98]" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgCache};">
+// ... dentro del map de renderCart
+return `<div class="relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98] isolation-isolate" id="cart-item-${id}" onclick="openProductView('${id}')">
     
-    <div class="absolute inset-0 bg-black/50 pointer-events-none"></div>
+    <div class="absolute inset-0 z-0 rounded-3xl" style="background: ${bgCache};"></div>
+    
+    <div class="absolute inset-0 z-0 bg-black/50 pointer-events-none rounded-3xl"></div>
     
     <div class="relative z-10 flex items-center gap-3 flex-1 min-w-0">
         <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-black/20 flex-shrink-0 shadow-lg">
@@ -3605,7 +3608,7 @@ return `<div class="relative overflow-hidden flex items-center justify-between p
     }
     
    function openProductView(id) {
-    setTimeout(() => {
+    requestAnimationFrame(() => {
         const p = getAllSourceData().find(x => getUnifiedId(x) === id);
         if (!p) return;
 

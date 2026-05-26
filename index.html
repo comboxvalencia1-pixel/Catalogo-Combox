@@ -3618,14 +3618,14 @@ return `<div class="relative overflow-hidden flex items-center justify-between p
 
         const modalContent = document.getElementById('product-content');
 
-        // --- SOLUCIÓN DE RENDERIZADO ---
+        // --- CORRECCIÓN DEFINITIVA DE BORDES ---
         modalContent.style.borderRadius = '32px';
         modalContent.style.overflow = 'hidden';
-        modalContent.style.isolation = 'isolate'; // Aísla el renderizado para evitar fugas de color
-        modalContent.style.position = 'relative';
-
+        modalContent.style.border = '2px solid #52525b'; // Borde gris sólido
+        modalContent.style.backgroundColor = '#0A0A0B'; // Fondo base oscuro
+        
         modalContent.innerHTML = `
-            <div id="modal-bg-color" class="absolute z-0 transition-colors duration-500 rounded-[32px]" style="background: ${bgCache}; background-clip: padding-box; inset: -1px;"></div>
+            <div id="modal-bg-color" class="absolute z-0 transition-colors duration-500 rounded-[28px]" style="background: ${bgCache}; inset: 2px;"></div>
             
             <div class="absolute bottom-0 inset-x-0 h-[60%] z-20 pointer-events-none bg-gradient-to-t from-[#0A0A0B] to-transparent"></div>
             

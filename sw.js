@@ -1,4 +1,4 @@
-const CACHE_NAME = 'combox-pos-v1';
+const CACHE_NAME = 'combox-pos-v2';
 
 // Instalación inmediata
 self.addEventListener('install', (event) => {

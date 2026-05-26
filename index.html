@@ -501,7 +501,7 @@
             
             <div class="flex items-center gap-3">
                 <div class="w-1.5 h-6 bg-primary rounded-full"></div>
-                <h2 class="text-xl font-black text-white uppercase tracking-tighter">Tu Pedido</h2>
+                <h2 class="text-xl font-black text-white uppercase tracking-tighter">COMBOX</h2>
             </div>
             <div class="flex items-center gap-2 z-50">
                 <button type="button" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 relative" onclick="shareCartUrl()">
@@ -514,13 +514,12 @@
         </div>
         <div class="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-5" id="cart-items-list"></div>
         <div class="pt-5 border-t border-white/10 space-y-4">
-            <div class="w-full text-center -mt-2 mb-2">
-                <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
-            </div>
-            <div class="flex justify-between items-end mb-1">
-                <div class="flex flex-col">
-                    <span class="text-[10px] text-zinc-300 font-bold tracking-widest uppercase mb-1">Tasa: <span id="tasa-bcv-display">Bs 0.00</span></span>
-                    <span class="text-[10px] text-primary/80 font-bold tracking-widest uppercase">* No incluye Delivery ni IVA</span>
+           <div class="flex justify-between items-end mb-1 mt-2">
+                <div class="flex flex-col gap-2">
+                    <span class="flex items-center gap-1.5 text-[11px] text-zinc-300 font-bold tracking-widest uppercase">
+                        <span class="material-symbols-outlined text-[14px]">account_balance</span> : <span id="tasa-bcv-display">0.00</span>
+                    </span>
+                    <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest">Subtotal a pagar</span>
                 </div>
                 <div class="flex flex-col items-end">
                     <span class="text-3xl font-black text-white tracking-tighter leading-none" id="cart-subtotal">$0.00</span>
@@ -530,8 +529,8 @@
             
            <div class="flex flex-col gap-3 mt-8 mb-2">
                 <button class="w-full bg-[#39FF14] text-black font-[900] py-4 rounded-2xl text-[13px] uppercase shadow-lg shadow-[#39FF14]/20 active:scale-[0.98] flex items-center justify-center gap-2" onclick="openMethodModal()">
-    Confirmar Productos <span class="material-symbols-outlined text-[22px]">check_circle</span>
-</button>
+                    Confirmar Pedido
+                </button>
             </div>
 
             <button class="w-full py-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest active:text-primary transition-colors" onclick="clearCart()">Vaciar Pedido</button>
@@ -740,7 +739,7 @@
     <div class="modal-overlay" onclick="toggleModal('chat-modal', false)"></div>
     <div class="modal-content p-6 pb-8 glass-contour" style="background: #0A0A0B;">
         <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-[#25D366] rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Contactar Sede</h2></div>
+            <div class="flex items-center gap-3"><div class="w-1.5 h-6 bg-[#25D366] rounded-full"></div><h2 class="text-2xl font-black text-white uppercase tracking-tighter">Contáctatanos</h2></div>
             <button type="button" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 flex-shrink-0 relative z-50" onclick="event.preventDefault(); event.stopPropagation(); toggleModal('chat-modal', false)"><span class="material-symbols-outlined text-lg">close</span></button>
         </div>
         <div class="space-y-3" id="chat-list-container"></div>
@@ -1660,7 +1659,7 @@ async function setupAfterDBLoad(isCached) {
         if(db.finanzas.tasa_usd) {
             tasaBCV = parseFloat(db.finanzas.tasa_usd);
             const displayEl = document.getElementById('tasa-bcv-display');
-            if(displayEl) displayEl.innerText = `Bs ${tasaBCV.toFixed(2)}`;
+            if(displayEl) displayEl.innerText = `${tasaBCV.toFixed(2)}`;
         }
     }
     
@@ -1845,6 +1844,7 @@ function nativeShare() {
     }
     
     function solicitarGPS(callback) {
+        if(callback) callback(); // Abre el modal de inmediato
         if (!sedeMasCercanaCalculada && "geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition((pos) => {
                 let distMinima = Infinity;
@@ -1855,9 +1855,11 @@ function nativeShare() {
                         sedeMasCercanaCalculada = s;
                     }
                 });
-                if(callback) callback();
-            }, () => { if(callback) callback(); }, {timeout: 3000});
-        } else { if(callback) callback(); }
+                // Actualiza visualmente si los modales ya están abiertos
+                if(document.getElementById('sedes-modal').classList.contains('active')) renderSedesModal();
+                if(document.getElementById('mapa-modal').classList.contains('active')) renderMapModal();
+            }, () => { }, {timeout: 5000});
+        }
     }
 
     function toggleSedesModal(show) { 
@@ -3406,15 +3408,13 @@ const img = p.imagen || DEFAULT_IMG;
 const bgCache = colorCache.has('card-' + id) ? colorCache.get('card-' + id) : 'rgba(255,255,255,0.05)';
 
 // ... dentro del map de renderCart
-return `<div class="relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98] isolation-isolate" id="cart-item-${id}" onclick="openProductView('${id}')">
-    
-    <div class="absolute inset-0 z-0 rounded-3xl" style="background: ${bgCache};"></div>
+return `<div class="product-card-glass relative overflow-hidden flex items-center justify-between p-3 rounded-3xl border border-white/10 gap-2 cursor-pointer active:scale-[0.98] isolation-isolate" id="cart-item-${id}" onclick="openProductView('${id}')" style="background: ${bgCache};">
     
     <div class="absolute inset-0 z-0 bg-black/50 pointer-events-none rounded-3xl"></div>
     
     <div class="relative z-10 flex items-center gap-3 flex-1 min-w-0">
         <div class="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-black/20 flex-shrink-0 shadow-lg">
-           <img src="${img}" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">
+           <img src="${img}" crossorigin="anonymous" onload="extractLeftColor(this, 'card-${id}')" class="w-full h-full object-cover" oncontextmenu="return false;" draggable="false">
         </div>
         <div class="flex flex-col min-w-0 flex-1 pr-1">
             <span class="text-sm md:text-base font-[800] text-white uppercase leading-tight line-clamp-2 w-full">${sanitizeHTML(p.nombre)}</span>
@@ -3446,7 +3446,14 @@ return `<div class="relative overflow-hidden flex items-center justify-between p
             else cart[id] = newQty;
             
             const cartModalActive = document.getElementById('cart-modal').classList.contains('active');
-            if(cartModalActive) renderCart();
+                    if(cartModalActive) {
+                        if(newQty === 0) {
+                            renderCart();
+                        } else {
+                            const qtyEl = document.querySelector(`#cart-item-${id} .w-5`);
+                            if(qtyEl) qtyEl.innerText = newQty;
+                        }
+                    }
             
             updateOrder();
             syncCardBadge(id); 

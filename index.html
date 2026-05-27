@@ -2446,39 +2446,41 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
     document.getElementById('map-header-title').innerText = `CALCULANDO...`;
 
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
+    // --- NUEVA API DE OPENROUTESERVICE ---
+    const orsApiKey = 'TU_API_KEY_AQUI'; // IMPORTANTE: Coloca tu API key gratuita de ORS aquí
+    const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${orsApiKey}&start=${sedeLng},${sedeLat}&end=${lng},${lat}`;
 
     // --- NUEVO SISTEMA DE CACHÉ (10 MINUTOS) ---
-    // Redondeamos a 4 decimales (~11 metros de precisión) para que pequeños saltos del GPS entren en el caché
-    const cacheKey = `osrm_${checkoutSede.ID_SEDE}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
+    const cacheKey = `ors_${checkoutSede.ID_SEDE}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
     const cachedDataStr = localStorage.getItem(cacheKey);
     let routeData = null;
 
     if (cachedDataStr) {
         const cachedObj = JSON.parse(cachedDataStr);
-        // Validamos si la data tiene menos de 10 minutos (600000 milisegundos)
         if (Date.now() - cachedObj.time < 600000) {
             routeData = cachedObj.data;
         }
     }
 
     try {
-        // Si no hay caché válido, consultamos a OSRM
+        // Si no hay caché válido, consultamos a ORS
         if (!routeData) {
-            const res = await fetch(osrmUrl);
+            const res = await fetch(orsUrl);
             const data = await res.json();
-            if (data.code === 'Ok') {
+            // ORS devuelve un objeto con "features" si es exitoso
+            if (data.features && data.features.length > 0) {
                 routeData = data;
-                // Guardamos la nueva respuesta en el localStorage con la fecha actual
                 localStorage.setItem(cacheKey, JSON.stringify({ time: Date.now(), data: routeData }));
             }
         }
 
-        // Si tenemos datos (ya sea de OSRM fresco o del caché), dibujamos
-        if (routeData && routeData.code === 'Ok') {
-            const route = routeData.routes[0];
-            const distanceKm = route.distance / 1000;
-            const durationMin = Math.ceil(route.duration / 60);
+        // Si tenemos datos (ya sea de ORS fresco o del caché), dibujamos
+        if (routeData && routeData.features && routeData.features.length > 0) {
+            const route = routeData.features[0];
+            
+            // ORS guarda la distancia y tiempo dentro de properties.summary
+            const distanceKm = route.properties.summary.distance / 1000;
+            const durationMin = Math.ceil(route.properties.summary.duration / 60);
 
             const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
             let rawPrice = distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
@@ -2492,7 +2494,7 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
             document.getElementById('route-km').innerText = `${distanceKm.toFixed(1)} km`;
             document.getElementById('route-time').innerText = `${durationMin} min`;
 
-            // Dibujamos la nueva línea verde de manera limpia
+            // Dibujamos la nueva línea verde de manera limpia usando la geometría de ORS
             if (rutaLayer) map.removeLayer(rutaLayer);
             rutaLayer = L.geoJSON(route.geometry, {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
@@ -2509,7 +2511,6 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
     } catch(e) {
         document.getElementById('map-header-title').innerText = `ERROR DE RUTA`;
     }
-}
 
 
 function showManualLocationInput() {

@@ -1885,9 +1885,7 @@ function nativeShare() {
     function toggleCategoriesModal(show) { toggleModal('categories-modal', show, renderAllCategories); }
     function toggleCartModal(show) { toggleModal('cart-modal', show, renderCart); }
     function toggleProductModal(show) { toggleModal('product-modal', show, null); }
-function toggleCategoriesModal(show) { toggleModal('categories-modal', show, renderAllCategories); }
-    function toggleCartModal(show) { toggleModal('cart-modal', show, renderCart); }
-    function toggleProductModal(show) { toggleModal('product-modal', show, null); }
+
 
    // --- CÓDIGO NUEVO DEL ESCÁNER AQUÍ ---
     let html5QrCode = null;
@@ -3283,13 +3281,21 @@ function triggerFoodRain() {
             const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             const searchClean = normalize(search);
 
-            items = items.map(p => {
+          items = items.map(p => {
                 let score = getSearchScore(search, p.nombre);
-                
+
                 if (p.categoria && normalize(p.categoria) === searchClean) {
                     score += 5000;
                 }
-                
+
+                // NUEVO: Códigos de barra añadidos a renderCatalog
+                if (p.codigo_barras && p.codigo_barras.toString().trim() === search) {
+                    score += 10000; 
+                }
+                if (p.id_producto && p.id_producto.toString().trim() === search) {
+                    score += 10000;
+                }
+
                 return {
                     ...p,
                     _searchScore: score
@@ -3862,8 +3868,7 @@ function renderPickupMap() {
     }
     init();
 </script>
-<div class="modal" id="share-modal">
-    <div class="modal" id="scanner-modal">
+<div class="modal" id="scanner-modal">
     <div class="modal-overlay" onclick="closeScannerModal()"></div>
     <div class="modal-content flex flex-col items-center p-6 text-center glass-contour mx-4" style="background: #0A0A0B; max-width: 350px; margin: auto;">
         
@@ -3879,6 +3884,8 @@ function renderPickupMap() {
         <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-4">Apunta al código de barras</p>
     </div>
 </div>
+
+<div class="modal" id="share-modal">
     <div class="modal-overlay" onclick="toggleModal('share-modal', false)"></div>
     <div class="modal-content flex flex-col items-center p-6 text-center glass-contour mx-4" style="background: #0A0A0B; max-width: 320px; margin: auto;">
         
@@ -3889,13 +3896,11 @@ function renderPickupMap() {
             </button>
         </div>
 
-        <!-- Contenedor del QR -->
         <div class="bg-white p-3 rounded-3xl mb-5 w-[200px] h-[200px] flex items-center justify-center shadow-[0_0_25px_rgba(255,255,255,0.15)] relative">
             <div class="absolute inset-0 border-4 border-white rounded-3xl"></div>
             <img id="share-qr-img" src="" alt="QR Code" class="w-full h-full object-contain rounded-xl">
         </div>
 
-        <!-- Contenedor del Link y Botón de Copiar -->
         <div class="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 mb-4 flex items-center gap-2">
             <div class="overflow-x-auto hide-scrollbar flex-1 text-[11px] font-bold text-zinc-300 whitespace-nowrap text-left px-2" id="share-link-text"></div>
             <button onclick="copyShareLink()" class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white flex-shrink-0 active:scale-90 shadow-lg shadow-primary/30">
@@ -3903,20 +3908,18 @@ function renderPickupMap() {
             </button>
         </div>
 
-        <!-- Botón de Compartir Nativo -->
         <button onclick="nativeShare()" id="btn-native-share" class="w-full bg-white/10 text-white font-black py-3.5 rounded-xl text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-all border border-white/10">
             Compartir Enlace <span class="material-symbols-outlined text-[18px]">share</span>
         </button>
     </div>
 </div>
+
 <div class="modal" id="welcome-modal">
-    <!-- Se dispara la lluvia 600ms después de tocar el fondo oscuro -->
     <div class="modal-overlay" onclick="toggleModal('welcome-modal', false); setTimeout(triggerFoodRain, 600);"></div>
     <div class="modal-content flex flex-col items-center p-6 text-center glass-contour" style="background: #0A0A0B;">
         <span class="text-5xl mb-4">📢</span>
         <h3 class="text-2xl font-black text-white uppercase tracking-tighter mb-2">¡Bienvenido!</h3>
         <p id="welcome-message-text" class="text-zinc-300 text-sm mb-6 font-medium leading-relaxed"></p>
-        <!-- Se dispara la lluvia 600ms después de tocar el botón Entendido -->
         <button onclick="toggleModal('welcome-modal', false); setTimeout(triggerFoodRain, 600);" class="w-full bg-primary text-white font-[900] py-3.5 rounded-2xl text-sm uppercase shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">Entendido</button>
     </div>
 </div>

@@ -1894,15 +1894,25 @@ function nativeShare() {
         toggleModal('scanner-modal', true);
         
         // Usamos la clase base Html5Qrcode para eliminar la interfaz fea por defecto
-        html5QrCode = new Html5Qrcode("reader");
-        
-        // El método start() pide permisos automáticamente y enciende la cámara
+        // 1. Instanciamos limitando los formatos (priorizando EAN-13) y activando la aceleración de hardware
+        html5QrCode = new Html5Qrcode("reader", {
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.QR_CODE
+            ],
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+        });
+
+        // 2. Iniciamos la cámara con la configuración optimizada
         html5QrCode.start(
             { facingMode: "environment" }, // Exige la cámara trasera
             {
-                fps: 10,
-                qrbox: { width: 250, height: 150 },
-                aspectRatio: 1.0
+                fps: 15, // Subimos un poco los frames para enfocar más rápido
+                qrbox: { width: 260, height: 120 }, // Lo hacemos más alargado para abarcar el EAN-13
+                disableFlip: true // CRÍTICO: Apaga el escaneo en espejo. Duplica el rendimiento.
+                // ELIMINADO: aspectRatio: 1.0 (Para evitar que deforme las líneas del código)
             },
             onScanSuccess,
             onScanFailure

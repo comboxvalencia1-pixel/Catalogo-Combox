@@ -1887,14 +1887,19 @@ function nativeShare() {
     function toggleProductModal(show) { toggleModal('product-modal', show, null); }
 
 
-   // --- CÓDIGO NUEVO DEL ESCÁNER AQUÍ ---
+// --- CÓDIGO NUEVO DEL ESCÁNER AQUÍ ---
     let html5QrCode = null;
+    let currentFacingMode = "environment"; // "environment" = trasera, "user" = frontal
+    let isFlashOn = false;
 
-    function openScannerModal() {
+   function openScannerModal() {
         toggleModal('scanner-modal', true);
         
-        // Usamos la clase base Html5Qrcode para eliminar la interfaz fea por defecto
-        // 1. Instanciamos limitando los formatos (priorizando EAN-13) y activando la aceleración de hardware
+        // Resetear la UI del flash
+        isFlashOn = false;
+        document.getElementById('flash-icon').innerText = 'flash_off';
+        document.getElementById('btn-toggle-flash').className = 'w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-all';
+
         html5QrCode = new Html5Qrcode("reader", {
             formatsToSupport: [
                 Html5QrcodeSupportedFormats.EAN_13,
@@ -1904,28 +1909,24 @@ function nativeShare() {
             ],
             experimentalFeatures: { useBarCodeDetectorIfSupported: true }
         });
-
-        // 2. Iniciamos la cámara con la configuración optimizada
+        
         html5QrCode.start(
-            { facingMode: "environment" }, // Exige la cámara trasera
+            { facingMode: currentFacingMode }, // Usa la cámara seleccionada
             {
-                fps: 15, // Subimos un poco los frames para enfocar más rápido
-                qrbox: { width: 260, height: 120 }, // Lo hacemos más alargado para abarcar el EAN-13
-                disableFlip: true // CRÍTICO: Apaga el escaneo en espejo. Duplica el rendimiento.
-                // ELIMINADO: aspectRatio: 1.0 (Para evitar que deforme las líneas del código)
+                fps: 15,
+                qrbox: { width: 260, height: 120 },
+                disableFlip: true 
             },
             onScanSuccess,
             onScanFailure
         ).catch(err => {
             console.error("Error al iniciar la cámara:", err);
-            // Si el usuario deniega el permiso, cerramos el modal
             toggleModal('scanner-modal', false);
         });
     }
 
     function closeScannerModal() {
         if (html5QrCode) {
-            // El stop() apaga el hardware de la cámara de forma segura
             html5QrCode.stop().then(() => {
                 html5QrCode.clear();
                 html5QrCode = null;
@@ -1934,6 +1935,52 @@ function nativeShare() {
             });
         }
         toggleModal('scanner-modal', false);
+    }
+
+    // --- NUEVAS FUNCIONES PARA LOS BOTONES ---
+
+    function switchScannerCamera() {
+        if (!html5QrCode) return;
+        
+        // Intercambiar lente
+        currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+        
+        // Apagar el flash automáticamente al cambiar
+        isFlashOn = false;
+        document.getElementById('flash-icon').innerText = 'flash_off';
+        document.getElementById('btn-toggle-flash').className = 'w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-all';
+
+        // Detener la cámara actual y reiniciar con la nueva
+        html5QrCode.stop().then(() => {
+            openScannerModal(); // Llama a la función de apertura que ya tiene la nueva configuración
+        }).catch(err => console.error("Error al cambiar de cámara", err));
+    }
+
+    function toggleScannerFlash() {
+        // html5QrCode.getState() debe ser 2 (SCANNING) para poder manipular la luz
+        if (!html5QrCode || html5QrCode.getState() !== 2) return;
+
+        isFlashOn = !isFlashOn;
+        const flashIcon = document.getElementById('flash-icon');
+        const flashBtn = document.getElementById('btn-toggle-flash');
+
+        html5QrCode.applyVideoConstraints({
+            advanced: [{ torch: isFlashOn }]
+        }).then(() => {
+            if (isFlashOn) {
+                // UI encendido (Amarillo Neón)
+                flashIcon.innerText = 'flash_on';
+                flashBtn.className = 'w-12 h-12 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center text-yellow-400 active:scale-90 shadow-[0_0_15px_rgba(234,179,8,0.4)] transition-all';
+            } else {
+                // UI apagado (Normal)
+                flashIcon.innerText = 'flash_off';
+                flashBtn.className = 'w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-all';
+            }
+        }).catch(err => {
+            console.warn("Flash no soportado:", err);
+            isFlashOn = !isFlashOn; // Revertir estado si falla
+            customAlert("El flash no está disponible en esta cámara o tu navegador bloquea esta función.");
+        });
     }
 
     function onScanSuccess(decodedText, decodedResult) {
@@ -3926,6 +3973,16 @@ function renderPickupMap() {
 
         <div id="reader" class="w-full rounded-2xl overflow-hidden bg-black/20 border border-white/10 shadow-inner"></div>
         
+        <div class="flex items-center justify-center gap-6 mt-4">
+            <button type="button" id="btn-toggle-camera" onclick="switchScannerCamera()" class="w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-all">
+                <span class="material-symbols-outlined text-[24px]">cameraswitch</span>
+            </button>
+            
+            <button type="button" id="btn-toggle-flash" onclick="toggleScannerFlash()" class="w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center text-white active:scale-90 shadow-lg transition-all">
+                <span id="flash-icon" class="material-symbols-outlined text-[24px]">flash_off</span>
+            </button>
+        </div>
+
         <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-4">Apunta al código de barras</p>
     </div>
 </div>

@@ -182,10 +182,10 @@
         }
 
         .glass-contour-top { position: relative; border-color: transparent !important; border: none; }
-        .glass-contour-top::after {
+       .glass-contour-top::after {
             content: ""; position: absolute; inset: 0; border-radius: inherit; 
-            padding: 1.5px 1.5px 0px 1.5px; 
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.05) 100%);
+            padding: 1.5px 0px 0px 0px; 
+            background: linear-gradient(90deg, transparent 15%, rgba(255, 255, 255, 0.15) 50%, transparent 85%);
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 10;
         }

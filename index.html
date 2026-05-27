@@ -1889,27 +1889,41 @@ function toggleCategoriesModal(show) { toggleModal('categories-modal', show, ren
     function toggleCartModal(show) { toggleModal('cart-modal', show, renderCart); }
     function toggleProductModal(show) { toggleModal('product-modal', show, null); }
 
-    // --- CÓDIGO NUEVO DEL ESCÁNER AQUÍ ---
-    let html5QrcodeScanner = null;
+   // --- CÓDIGO NUEVO DEL ESCÁNER AQUÍ ---
+    let html5QrCode = null;
 
     function openScannerModal() {
         toggleModal('scanner-modal', true);
         
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 },
-            /* verbose= */ false
-        );
+        // Usamos la clase base Html5Qrcode para eliminar la interfaz fea por defecto
+        html5QrCode = new Html5Qrcode("reader");
         
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        // El método start() pide permisos automáticamente y enciende la cámara
+        html5QrCode.start(
+            { facingMode: "environment" }, // Exige la cámara trasera
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 150 },
+                aspectRatio: 1.0
+            },
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            console.error("Error al iniciar la cámara:", err);
+            // Si el usuario deniega el permiso, cerramos el modal
+            toggleModal('scanner-modal', false);
+        });
     }
 
     function closeScannerModal() {
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear().catch(error => {
+        if (html5QrCode) {
+            // El stop() apaga el hardware de la cámara de forma segura
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+                html5QrCode = null;
+            }).catch(error => {
                 console.error("Fallo al apagar la cámara", error);
             });
-            html5QrcodeScanner = null;
         }
         toggleModal('scanner-modal', false);
     }
@@ -3382,11 +3396,26 @@ function triggerFoodRain() {
     if(search) {
         const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const searchClean = normalize(search);
-        items = items.map(p => {
-            let score = getSearchScore(search, p.nombre);
-            if (p.categoria && normalize(p.categoria) === searchClean) { score += 5000; }
-            return { ...p, _searchScore: score };
-        }).filter(p => p._searchScore > 0);
+       items = items.map(p => {
+                let score = getSearchScore(search, p.nombre);
+                
+                if (p.categoria && normalize(p.categoria) === searchClean) {
+                    score += 5000;
+                }
+                
+                // NUEVO: Verificamos si la búsqueda coincide exactamente con la columna de código de barras o con el ID
+                if (p.codigo_barras && p.codigo_barras.toString().trim() === search) {
+                    score += 10000; // Puntaje altísimo para que aparezca de primero e inmediato
+                }
+                if (p.id_producto && p.id_producto.toString().trim() === search) {
+                    score += 10000;
+                }
+                
+                return {
+                    ...p,
+                    _searchScore: score
+                };
+            }).filter(p => p._searchScore > 0);
         
         items.sort((a, b) => {
             if (currentSort === 'relevancia' || currentSort === 'default') {

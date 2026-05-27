@@ -486,7 +486,7 @@
 
 <div class="modal" id="custom-dialog-modal">
     <div class="modal-overlay" onclick="closeCustomDialog()"></div>
-    <div class="modal-content glass-contour p-6 flex flex-col items-center text-center mx-4" style="max-width: 320px; margin: auto; background: rgba(15,15,18,0.85); backdrop-filter: blur(16px);">
+    <div class="modal-content glass-contour p-6 flex flex-col items-center text-center mx-4" style="max-width: 320px; margin: auto; background: #000000; backdrop-filter: blur(16px);">
         <h3 class="text-white font-black text-xl uppercase tracking-widest mb-3" id="dialog-title">Aviso</h3>
         <p class="text-zinc-300 text-sm mb-6 leading-relaxed font-medium" id="dialog-msg"></p>
         <div class="flex gap-3 w-full" id="dialog-buttons"></div>
@@ -634,14 +634,14 @@
                         Aceptar <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     </button>
 
-                    <div class="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
-                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2 pointer-events-none">
-                            <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
-                            <span id="map-header-title">--$</span>
-                        </div>
-                        <div class="relative group mt-1">
+                   <div class="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
+                        <div class="relative group">
                             <select class="checkout-sede-select bg-black/60 backdrop-blur-md border border-white/20 px-8 py-2 rounded-xl text-white font-black shadow-lg text-[9px] uppercase appearance-none outline-none focus:border-primary active:scale-95 transition-transform" onchange="updateCheckoutSede(this.value)"></select>
                             <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-white pointer-events-none text-[14px]">expand_more</span>
+                        </div>
+                        <div class="bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl text-white font-black shadow-lg text-[11px] uppercase flex items-center gap-2 pointer-events-none mt-1">
+                            <span class="material-symbols-outlined text-white text-[16px]">two_wheeler</span>
+                            <span id="map-header-title">--$</span>
                         </div>
                     </div>
 
@@ -656,11 +656,11 @@
                     </div>
 
                     <!-- Botones de Control -->
-                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
+                    <button type="button" id="btn-wrong-location" onclick="showManualLocationInput()" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform" style="display:none;">
                         <span class="material-symbols-outlined text-[18px]">edit_location_alt</span>
                     </button>
 
-                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
+                    <button type="button" onclick="event.preventDefault(); getLocation(true);" class="absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform">
                         <span class="material-symbols-outlined text-[18px]">my_location</span>
                     </button>
                 </div>
@@ -2307,11 +2307,10 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
             }
         });
 
-        if (closestSedeCalculada && closestSedeCalculada.ID_SEDE !== checkoutSede.ID_SEDE) {
-            checkoutSede = closestSedeCalculada;
-            const select = document.getElementById('checkout-sede-select');
-            if(select) select.value = checkoutSede.ID_SEDE;
-        }
+       if (closestSedeCalculada && closestSedeCalculada.ID_SEDE !== checkoutSede.ID_SEDE) {
+                checkoutSede = closestSedeCalculada;
+                document.querySelectorAll('.checkout-sede-select').forEach(sel => sel.value = checkoutSede.ID_SEDE);
+            }
     }
     // ------------------------------------------------------------
 
@@ -2448,13 +2447,14 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
 
 function showManualLocationInput() {
     isEditingLocation = true; 
-    document.getElementById('manual-location-wrapper').style.display = 'flex';
+    
     document.getElementById('btn-confirm-pin').style.display = 'flex';
     
     // Transformar el botón de editar en botón rojo de cancelar
     const btnEdit = document.getElementById('btn-wrong-location');
     btnEdit.style.display = 'flex';
-    btnEdit.className = "absolute bottom-14 left-3 z-[1000] w-10 h-10 bg-red-600 backdrop-blur-md border border-red-400 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform";
+    
+btnEdit.className = "absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-red-600 backdrop-blur-md border border-red-400 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform";
     btnEdit.innerHTML = '<span class="material-symbols-outlined text-[18px]">close</span>';
     btnEdit.onclick = cancelManualLocationInput; // Cambia la función al presionar
 
@@ -2535,22 +2535,22 @@ function showLocationHelp() {
     document.getElementById('dialog-title').className = "text-white font-black text-lg uppercase tracking-widest mb-4 w-full text-left";
 
     // Inyectamos el diseño completamente nuevo
-    document.getElementById('dialog-msg').innerHTML = `
+   document.getElementById('dialog-msg').innerHTML = `
         <div class="flex flex-col gap-4 text-left w-full">
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Mover pin en el mapa</label>
-                <button onclick="closeCustomDialog(); showManualLocationInput();" class="w-full bg-white/10 border border-white/20 text-white font-black py-3 rounded-xl text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                <button onclick="closeCustomDialog(); showManualLocationInput();" class="w-full bg-[#1A1A1A] border border-white/10 text-white font-black py-3 rounded-xl text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-transform">
                     Editar en el mapa <span class="material-symbols-outlined text-[16px]">edit_location_alt</span>
                 </button>
             </div>
             <div>
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Pegar coordenadas (Lat, Lng)</label>
-                <input type="text" id="manual-coord-input" class="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000]" placeholder="Ej: 10.254, -68.010" oninput="checkManualCoords(this.value)">
+                <input type="text" id="manual-coord-input" class="w-full bg-[#1A1A1A] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-[#ff0000] focus:ring-1 focus:ring-[#ff0000]" placeholder="Ej: 10.254, -68.010" oninput="checkManualCoords(this.value)">
             </div>
             <div class="bg-red-500/10 border border-red-500/20 p-3 rounded-xl mt-2">
                 <p class="text-[10px] text-red-200 font-bold leading-tight">
                     <span class="material-symbols-outlined text-[12px] align-middle text-red-500">warning</span>
-                    ¿Mapa en blanco? Has denegado el GPS. Toca el candado (🔒) en la barra de direcciones de tu navegador (URL), ve a "Permisos" y activa la Ubicación.
+                    Si tienes problema con tu ubicación actual asegúrate de haber permitido el acceso a la ubicación, si denegaste presiona los ajustes de la página al lado del URL y acepta los permisos de ubicación.
                 </p>
             </div>
         </div>
@@ -2580,8 +2580,8 @@ function resetEditLocationButton() {
     const btnEdit = document.getElementById('btn-wrong-location');
     if (btnEdit) {
         btnEdit.style.display = 'flex';
-        // Este cambio transforma el botón circular del lápiz en el óvalo de "¿No es aquí?" encima del GPS
-        btnEdit.className = "absolute bottom-14 left-3 z-[1000] bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-zinc-300 font-bold shadow-lg text-[9px] uppercase flex items-center gap-1 active:scale-95 transition-transform";
+        
+btnEdit.className = "absolute bottom-3 left-3 z-[1000] bg-black/60 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-xl text-zinc-300 font-bold shadow-lg text-[9px] uppercase flex items-center gap-1 active:scale-95 transition-transform";
         btnEdit.innerHTML = '<span class="material-symbols-outlined text-[12px] text-yellow-400">help</span> ¿No es aquí?';
         btnEdit.onclick = showLocationHelp;
     }

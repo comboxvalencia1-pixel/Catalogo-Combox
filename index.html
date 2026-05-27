@@ -2447,7 +2447,7 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
 
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     // --- NUEVA API DE OPENROUTESERVICE ---
-    const orsApiKey = 'TU_API_KEY_AQUI'; // IMPORTANTE: Coloca tu API key gratuita de ORS aquí
+    const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0=0 in'; // IMPORTANTE: Coloca tu API key gratuita de ORS aquí
     const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${orsApiKey}&start=${sedeLng},${sedeLat}&end=${lng},${lat}`;
 
     // --- NUEVO SISTEMA DE CACHÉ (10 MINUTOS) ---

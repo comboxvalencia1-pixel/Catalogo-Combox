@@ -4127,11 +4127,6 @@ window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
     await obtenerZonaORS(lat, lng);
 };
 
-    // Como esperamos la promesa arriba, aquí los elementos del DOM ya tienen los datos exactos.
-    document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
-    document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
-    document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
-};
 
 // --- 3. GEOCODIFICACIÓN (ZONA) ---
 window.obtenerZonaORS = async function(lat, lng) {

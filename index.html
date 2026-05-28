@@ -4019,6 +4019,50 @@ window.cambiarSedeAdmin = async function(id) {
     }
 };
 
+window.renderAdminRoute = async function(lat, lng) {
+    const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+    
+    // Limpiamos cualquier ruta anterior
+    if (typeof rutaLayer !== 'undefined' && rutaLayer) {
+        map.removeLayer(rutaLayer);
+    }
+
+    // Usamos el servicio de OSRM/ORS
+    const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0=';
+    const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${orsApiKey}&start=${sedeLng},${sedeLat}&end=${lng},${lat}`;
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.features && data.features.length > 0) {
+            const route = data.features[0];
+            const dist = route.properties.summary.distance / 1000;
+            const time = Math.ceil(route.properties.summary.duration / 60);
+
+            // Dibujar la ruta
+            window.rutaLayer = L.geoJSON(route.geometry, {
+                style: { color: '#ff073a', weight: 4, opacity: 0.8, dashArray: '8, 8' }
+            }).addTo(map);
+
+            // Calcular Tarifa (misma lógica que usas)
+            const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5;
+            let rawPrice = dist * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
+            let tarifa = Math.max(min, Math.floor(rawPrice) + (rawPrice % 1 >= 0.6 ? 1 : 0));
+
+            // Actualizar DOM
+            document.getElementById('cajera-km').innerText = `${dist.toFixed(1)} km`;
+            document.getElementById('cajera-tiempo').innerText = `${time} min`;
+            document.getElementById('cajera-tarifa').innerText = `${tarifa}$`;
+            
+            return true;
+        }
+    } catch(e) {
+        console.error("Error en ruta admin:", e);
+        return false;
+    }
+};
+
 // --- 1. CONFIGURACIÓN DEL PIN ROJO (SVG NATIVO 100% SEGURO) ---
 const adminRedIcon = L.divIcon({
     className: 'custom-pin-admin',
@@ -4065,7 +4109,7 @@ window.activarPinAdmin = function() {
 };
 
 window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
-    isEditingLocation = false;
+    window.isEditingLocation = false;
     document.getElementById('admin-pin-controls').style.display = 'none';
     map.off('move');
     map.off('moveend');
@@ -4077,13 +4121,11 @@ window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
     
     document.getElementById('cajera-coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
     document.getElementById('cajera-tarifa').innerText = "Calculando...";
-    document.getElementById('cajera-km').innerText = "--";
-    document.getElementById('cajera-tiempo').innerText = "--";
-    document.getElementById('cajera-zona').value = "Buscando zona...";
 
-    // FIX 3: El 'await' detiene la ejecución aquí hasta que OpenRouteService entregue la distancia y tarifa.
-    await renderMapPosition(lat, lng, false); 
-    obtenerZonaORS(lat, lng);
+    // Llamada limpia y específica para la vista de cajera
+    await renderAdminRoute(lat, lng);
+    await obtenerZonaORS(lat, lng);
+};
 
     // Como esperamos la promesa arriba, aquí los elementos del DOM ya tienen los datos exactos.
     document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;

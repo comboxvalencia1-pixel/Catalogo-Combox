@@ -3988,49 +3988,57 @@ function renderPickupMap() {
 }
 
 // =========================================================
-// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN) ---
+// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN & RESPONSIVE) ---
 // =========================================================
 let isAdminDelivery = false;
 
 function initAdminDelivery() {
     isAdminDelivery = true;
 
-    // 1. Bloquear scroll y ocultar elementos innecesarios
+    // 1. Limpiar pantalla, bloquear scroll y asegurar que el body permita pantalla completa
     document.body.style.overflow = 'hidden';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
     
-    // CORRECCIÓN 1: El ID correcto es 'splash'
     const splash = document.getElementById('splash');
     if (splash) splash.style.display = 'none';
     
-    // Ocultar botón GPS nativo y remover punto verde si existe
     const gpsBtn = document.querySelector('button[onclick*="getLocation(true)"]');
     if (gpsBtn) gpsBtn.style.display = 'none';
     if (typeof userMarker !== 'undefined' && userMarker && typeof map !== 'undefined') {
         map.removeLayer(userMarker);
     }
 
-    // 2. Extraer el mapa y ponerlo a PANTALLA COMPLETA
+    // 2. Extraer el mapa y forzar PANTALLA COMPLETA absoluta
     const mapWrapper = document.getElementById('map-wrapper');
     if (mapWrapper) {
-        // CORRECCIÓN 2 y 3: Sacamos el mapa del modal, lo pegamos al body y forzamos su visibilidad
         document.body.appendChild(mapWrapper);
-        mapWrapper.style.display = 'block';
-
-        // Le damos clases fijas para que cubra toda la pantalla por encima de todo
-        mapWrapper.className = "fixed inset-0 z-[9999] w-full h-[100dvh] bg-[#e5e3df]";
         
-        // 3. Crear la Interfaz Flotante de la Cajera
+        // Forzar el contenedor principal a ocupar toda la pantalla sin restricciones
+        mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important; background: #e5e3df !important; margin: 0 !important; padding: 0 !important;";
+        
+        // EL TRUCO PARA QUE NO SE CORTE: Forzar el div interno del mapa a expandirse
+        // (Nota: Asegúrate de que el div donde se carga Leaflet tenga id="map")
+        const mapElement = document.getElementById('map'); 
+        if (mapElement) {
+            mapElement.style.cssText = "width: 100% !important; height: 100% !important; position: absolute !important; top: 0 !important; left: 0 !important; z-index: 1 !important;";
+        }
+
+        // 3. Crear la Interfaz Flotante Responsiva (Adaptable a PC y Móvil)
         const adminUI = document.createElement('div');
         adminUI.id = "admin-ui-overlay";
-        adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between px-4 py-6 z-[10000]";
+        // En contenedor general usamos flex-col para separar arriba y abajo
+        adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-[10000]";
         
         adminUI.innerHTML = `
-            <div class="pointer-events-auto bg-black/85 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl flex flex-col gap-3">
-                <h2 class="text-white text-xs font-black text-center uppercase tracking-[0.2em] text-[#25D366]">Cotizador Delivery</h2>
-                <div class="flex gap-2">
-                    <input type="text" id="cajera-name" placeholder="Nombre Cliente" class="w-1/2 bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-[#25D366] transition-colors">
-                    <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-1/2 bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-[#25D366] transition-colors">
+            <div class="w-full max-w-md mx-auto pointer-events-auto bg-black/85 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl flex flex-col gap-3 mt-2 transition-all">
+                <h2 class="text-white text-xs font-black text-center uppercase tracking-[0.2em] text-[#25D366]">Cotizador COMBOX</h2>
+                
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" id="cajera-name" placeholder="Nombre Cliente" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-[#25D366] transition-colors">
+                    <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-[#25D366] transition-colors">
                 </div>
+                
                 <input type="text" id="cajera-coords" placeholder="Coordenadas" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-gray-400 text-xs text-center font-mono focus:outline-none">
                 
                 <div class="text-center mt-1 border-t border-white/10 pt-2">
@@ -4040,15 +4048,15 @@ function initAdminDelivery() {
                 </div>
             </div>
 
-            <div class="pointer-events-auto flex flex-col gap-3 pb-2">
+            <div class="w-full max-w-md mx-auto pointer-events-none flex flex-col gap-3 mb-2 transition-all">
                 
-                <div class="flex">
-                    <button onclick="showManualLocationInput()" class="bg-black/85 backdrop-blur-md border border-white/20 w-12 h-12 rounded-full flex justify-center items-center text-white active:scale-90 transition-transform shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+                <div class="flex pointer-events-auto justify-end mb-2">
+                    <button onclick="showManualLocationInput()" class="bg-black/85 backdrop-blur-md border border-white/20 w-12 h-12 rounded-full flex justify-center items-center text-white active:scale-90 transition-transform shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:bg-gray-800">
                         <span class="material-symbols-outlined text-[20px]">edit_location_alt</span>
                     </button>
                 </div>
 
-                <div class="flex gap-2 justify-between">
+                <div class="flex gap-2 justify-between pointer-events-auto">
                     <div class="flex-1 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg">
                         <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Tiempo</span>
                         <span id="cajera-tiempo" class="text-white font-bold text-sm">-- min</span>
@@ -4063,12 +4071,12 @@ function initAdminDelivery() {
                     </div>
                 </div>
 
-                <div class="flex gap-2 mt-1">
-                    <button onclick="enviarTraspasoAdmin()" class="w-[35%] bg-[#1f2328] border border-white/10 rounded-2xl py-3.5 text-white font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform shadow-xl">
+                <div class="flex gap-2 mt-1 pointer-events-auto">
+                    <button onclick="enviarTraspasoAdmin()" class="w-[35%] bg-[#1f2328] border border-white/10 rounded-2xl py-3.5 text-white font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform shadow-xl hover:bg-gray-800">
                         <span class="material-symbols-outlined text-[18px] text-gray-400">share</span>
                         <span>Traspasar</span>
                     </button>
-                    <button onclick="confirmarDeliveryAdminSheet()" id="btn-cajera-enviar" class="w-[65%] bg-white text-black rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-xl">
+                    <button onclick="confirmarDeliveryAdminSheet()" id="btn-cajera-enviar" class="w-[65%] bg-white text-black rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-xl hover:bg-gray-200">
                         ENVIAR <span class="material-symbols-outlined text-[20px]">send</span>
                     </button>
                 </div>
@@ -4078,27 +4086,27 @@ function initAdminDelivery() {
         mapWrapper.appendChild(adminUI);
     }
 
-    // 4. Activar modo manual (el pin de edición) al cargar
+    // 4. Inicializar mapa y forzar actualización de tamaño de Leaflet
     setTimeout(() => {
-        // CORRECCIÓN 4: Inicializamos el mapa si no existe para evitar el cuadro gris
         if (typeof map === 'undefined' || map === null) {
             initLeafletMap();
         }
-
         if(typeof showManualLocationInput === 'function') showManualLocationInput();
-        if(typeof map !== 'undefined' && map !== null) map.invalidateSize(); 
+        
+        // Refresco crucial: Le dice a Leaflet "hey, tu contenedor acaba de cambiar de tamaño, recalcula"
+        if(typeof map !== 'undefined' && map !== null) {
+            map.invalidateSize(true); 
+        }
     }, 800);
 
-    // 5. Bucle Inteligente: Actualiza textos de la UI leyendo tus variables globales
+    // 5. Bucle de actualización de datos
     setInterval(() => {
         if(!isAdminDelivery) return;
         
-        // Coordenadas
         if(typeof pendingLatLng !== 'undefined' && pendingLatLng) {
             document.getElementById('cajera-coords').value = `${pendingLatLng.lat.toFixed(5)}, ${pendingLatLng.lng.toFixed(5)}`;
         }
         
-        // Indicadores (Asume que usas OSRM y estas variables existen en tu código)
         const tarifaDiv = document.getElementById('cajera-tarifa');
         if(tarifaDiv && typeof tarifaFinalCalculada !== 'undefined') tarifaDiv.innerText = `$${tarifaFinalCalculada.toFixed(2)}`;
 
@@ -4109,7 +4117,7 @@ function initAdminDelivery() {
         if(kmDiv && typeof window.distanciaOSRM !== 'undefined') kmDiv.innerText = window.distanciaOSRM;
     }, 1000);
 
-    // 6. Obtener nombre de la calle usando OpenStreetMap (Se ejecuta al soltar el mapa)
+    // 6. Geocodificación inversa (Buscar nombre de calle)
     if(typeof map !== 'undefined' && map !== null) {
         map.on('dragend', async function() {
             const center = map.getCenter();
@@ -4118,7 +4126,6 @@ function initAdminDelivery() {
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${center.lat}&lon=${center.lng}`);
                 const data = await res.json();
-                // Toma solo las 2 primeras partes de la dirección para no hacerlo tan largo
                 let shortAddress = data.display_name.split(',').slice(0,2).join(', ');
                 addressTag.innerHTML = `<span class="material-symbols-outlined text-[14px] text-[#25D366]">location_on</span> ${shortAddress}`;
             } catch(e) {
@@ -4128,7 +4135,7 @@ function initAdminDelivery() {
     }
 }
 // =========================================================
-// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN) ---
+// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN & RESPONSIVE) ---
 // =========================================================
 
     function resetAppAndGPS() {

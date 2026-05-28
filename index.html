@@ -4081,26 +4081,14 @@ window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
     document.getElementById('cajera-tiempo').innerText = "--";
     document.getElementById('cajera-zona').value = "Buscando zona...";
 
+    // FIX 3: El 'await' detiene la ejecución aquí hasta que OpenRouteService entregue la distancia y tarifa.
     await renderMapPosition(lat, lng, false); 
     obtenerZonaORS(lat, lng);
 
-    // SOLUCIÓN MÉTRICAS: "Observador" que revisa cada 0.2s si la API ya respondió
-    let intentos = 0;
-    const revisarDatosORS = setInterval(() => {
-        const elmKm = document.getElementById('route-km');
-        const elmTime = document.getElementById('route-time');
-        const elmTarifa = document.getElementById('map-header-title');
-
-        if (elmKm && elmKm.innerText !== "" && elmKm.innerText !== "--" && elmTarifa && !elmTarifa.innerText.includes("Calculando")) {
-            document.getElementById('cajera-km').innerText = elmKm.innerText;
-            document.getElementById('cajera-tiempo').innerText = elmTime.innerText;
-            document.getElementById('cajera-tarifa').innerText = elmTarifa.innerText;
-            clearInterval(revisarDatosORS);
-        }
-        
-        intentos++;
-        if (intentos > 40) clearInterval(revisarDatosORS); // Nos rendimos a los 8 segundos
-    }, 200); 
+    // Como esperamos la promesa arriba, aquí los elementos del DOM ya tienen los datos exactos.
+    document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
+    document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
+    document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
 };
 
 // --- 3. GEOCODIFICACIÓN (ZONA) ---
@@ -4236,34 +4224,41 @@ function initAdminDelivery() {
         initLeafletMap();
     }
 
-    const loadDataInterval = setInterval(() => {
-        if (db && db.sedes && db.sedes.length > 0) {
-            
-            const selectSedeAdmin = document.getElementById('cajera-sede');
-            if(selectSedeAdmin) {
-                selectSedeAdmin.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE.split(',')[0]}</option>`).join('');
-                if(checkoutSede) selectSedeAdmin.value = checkoutSede.ID_SEDE;
-            }
-
-            if(typeof map !== 'undefined' && map !== null) {
-                // SOLUCIÓN SEDES: Breve pausa de 100ms para asegurar que Leaflet ajuste el mapa
-                setTimeout(() => {
-                    map.invalidateSize();
-                    
-                    if (checkoutSede && checkoutSede.COORDENADAS_SEDE) {
-                        const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
-                        map.setView([sLat, sLng], 13);
-                    }
-                    
-                    if (typeof renderizarSedesAdmin === "function") {
-                        renderizarSedesAdmin();
-                    }
-                }, 100);
-            }
-
-            clearInterval(loadDataInterval); 
+   const loadDataInterval = setInterval(() => {
+    if (db && db.sedes && db.sedes.length > 0) {
+        
+        // FIX 1: Asignamos checkoutSede forzosamente si está nulo para que el mapa no aborte
+        if (!checkoutSede) checkoutSede = currentSede || db.sedes[0];
+        
+        const selectSedeAdmin = document.getElementById('cajera-sede');
+        if(selectSedeAdmin) {
+            selectSedeAdmin.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE.split(',')[0]}</option>`).join('');
+            // Ahora esto sí funcionará porque checkoutSede ya tiene datos
+            selectSedeAdmin.value = checkoutSede.ID_SEDE;
         }
-    }, 300); 
+
+        if(typeof map !== 'undefined' && map !== null) {
+            setTimeout(() => {
+                map.invalidateSize();
+                
+                if (checkoutSede && checkoutSede.COORDENADAS_SEDE) {
+                    const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+                    map.setView([sLat, sLng], 13);
+                    
+                    // FIX 2: Forzamos el dibujado de los pines usando las coordenadas de la sede principal
+                    renderMapPosition(sLat, sLng, true);
+                }
+                
+                // (Nota: renderizarSedesAdmin no existe en tu código, pero renderMapPosition ya hace su trabajo)
+                if (typeof renderizarSedesAdmin === "function") {
+                    renderizarSedesAdmin();
+                }
+            }, 100);
+        }
+
+        clearInterval(loadDataInterval); 
+    }
+}, 300);
     
     setTimeout(() => clearInterval(loadDataInterval), 10000);
 }

@@ -3992,16 +3992,47 @@ function renderPickupMap() {
 // =========================================================
 let isAdminDelivery = false;
 
+window.moverPinDesdeCoordenadas = function() {
+    const inputCoords = document.getElementById('cajera-coords');
+    if (!inputCoords) return;
+    
+    const val = inputCoords.value.trim();
+    const parts = val.split(',');
+    
+    if(parts.length === 2 && typeof map !== 'undefined' && typeof userMarker !== 'undefined') {
+        const lat = parseFloat(parts[0]);
+        const lng = parseFloat(parts[1]);
+        
+        if(!isNaN(lat) && !isNaN(lng)) {
+            const newLatLng = new L.LatLng(lat, lng);
+            userMarker.setLatLng(newLatLng);
+            map.setView(newLatLng, 16); // Hace zoom a la nueva ubicación
+            
+            // Actualiza la variable global y fuerza el cálculo de la ruta/tarifa
+            if(typeof pendingLatLng !== 'undefined') {
+                pendingLatLng = {lat: lat, lng: lng};
+            }
+            if (typeof calcularTarifa === 'function') {
+                calcularTarifa(lat, lng); 
+            }
+        }
+    }
+};
+
 function initAdminDelivery() {
     isAdminDelivery = true;
 
-    // 1. Limpiar pantalla, bloquear scroll y asegurar que el body permita pantalla completa
+    // 1. Rendimiento: Ocultar TODO el contenido de la app excepto el mapa para liberar memoria
+    Array.from(document.body.children).forEach(child => {
+        if (child.id !== 'map-wrapper' && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE' && child.id !== 'admin-ui-overlay') {
+            child.style.display = 'none';
+        }
+    });
+
     document.body.style.overflow = 'hidden';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
-    
-    const splash = document.getElementById('splash');
-    if (splash) splash.style.display = 'none';
+    document.body.style.backgroundColor = '#e5e3df'; // Fondo del mapa
     
     const gpsBtn = document.querySelector('button[onclick*="getLocation(true)"]');
     if (gpsBtn) gpsBtn.style.display = 'none';
@@ -4009,7 +4040,7 @@ function initAdminDelivery() {
         map.removeLayer(userMarker);
     }
 
-    // 2. Extraer el mapa y forzar PANTALLA COMPLETA absoluta
+    // 2. Extraer el mapa y forzar PANTALLA COMPLETA
     const mapWrapper = document.getElementById('map-wrapper');
     if (mapWrapper) {
         document.body.appendChild(mapWrapper);
@@ -4021,7 +4052,7 @@ function initAdminDelivery() {
             mapElement.style.cssText = "width: 100% !important; height: 100% !important; position: absolute !important; top: 0 !important; left: 0 !important; z-index: 1 !important;";
         }
 
-        // OCULTAR ELEMENTOS DUPLICADOS DEL MAPA NATIVO (Tarifa, sedes, km, tiempo y botón "No es aquí")
+        // OCULTAR ELEMENTOS DUPLICADOS DEL MAPA NATIVO
         const hideNativeElementsStyle = document.createElement('style');
         hideNativeElementsStyle.innerHTML = `
             #map-wrapper > .absolute.top-3.right-3,
@@ -4032,10 +4063,9 @@ function initAdminDelivery() {
         `;
         mapWrapper.appendChild(hideNativeElementsStyle);
 
-        // 3. Crear la Interfaz Flotante Responsiva (Header Punta a Punta y Footer)
+        // 3. Crear la Interfaz Flotante Responsiva
         const adminUI = document.createElement('div');
         adminUI.id = "admin-ui-overlay";
-        // Quitamos el p-4 global para que el header pegue arriba
         adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between z-[10000]";
         
         adminUI.innerHTML = `
@@ -4045,24 +4075,24 @@ function initAdminDelivery() {
                         <span class="material-symbols-outlined text-primary text-[20px]">admin_panel_settings</span>
                         <h2 class="text-white text-sm font-black uppercase tracking-[0.15em]">Admin Delivery</h2>
                     </div>
-                    <button onclick="window.location.reload()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-90 transition-transform">
-                        <span class="material-symbols-outlined text-[18px]">close</span>
-                    </button>
-                </div>
+                    </div>
                 
                 <div class="flex flex-col sm:flex-row gap-2">
                     <input type="text" id="cajera-name" placeholder="Nombre del Cliente" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-zinc-500">
                     <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-zinc-500">
                 </div>
                 
-                <div class="flex items-center gap-2 bg-black/50 border border-white/10 rounded-xl px-3 py-2.5">
-                     <span class="material-symbols-outlined text-[18px] text-zinc-400">my_location</span>
-                     <input type="text" id="cajera-coords" placeholder="Coordenadas (Arrastra el pin)" readonly class="w-full bg-transparent text-gray-300 text-[11px] font-mono focus:outline-none">
+                <div class="relative flex items-center bg-black/50 border border-white/10 rounded-xl mt-1">
+                     <span class="material-symbols-outlined text-[18px] text-zinc-400 absolute left-3">my_location</span>
+                     <input type="text" id="cajera-coords" placeholder="Ej: 10.2334, -68.0123" class="w-full bg-transparent text-gray-300 text-[12px] font-mono focus:outline-none py-3 pl-10 pr-10 rounded-xl">
+                     <button onclick="moverPinDesdeCoordenadas()" class="absolute right-2 flex items-center justify-center w-7 h-7 bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer active:scale-90">
+                         <span class="material-symbols-outlined text-[16px] text-white">edit</span>
+                     </button>
                 </div>
                 
                 <p id="cajera-address" class="text-gray-300 text-[11px] font-medium flex items-start gap-1.5 leading-tight mt-1 px-1">
                     <span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0">location_on</span> 
-                    <span class="truncate mt-0.5">Mueve el mapa para ubicar al cliente</span>
+                    <span class="truncate mt-0.5">Mueve el mapa o edita las coordenadas</span>
                 </p>
             </div>
 
@@ -4076,18 +4106,18 @@ function initAdminDelivery() {
                         <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Distancia</span>
                         <span id="cajera-km" class="text-white font-bold text-sm">-- km</span>
                     </div>
-                    <div class="flex-1 bg-primary/20 border border-primary/50 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg shadow-primary/20">
-                        <span class="text-primary text-[9px] font-extrabold uppercase tracking-wider">Tarifa</span>
+                    <div class="flex-1 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg">
+                        <span class="text-gray-400 text-[9px] font-extrabold uppercase tracking-wider">Tarifa</span>
                         <span id="cajera-tarifa" class="text-white font-black text-base drop-shadow-md">$0.00</span>
                     </div>
                 </div>
 
                 <div class="flex gap-2 mt-1 pointer-events-auto">
-                    <button onclick="enviarTraspasoAdmin()" class="w-[35%] bg-[#1f2328] border border-white/10 rounded-2xl py-3.5 text-white font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform shadow-xl hover:bg-gray-800">
-                        <span class="material-symbols-outlined text-[18px] text-gray-400">share</span>
+                    <button onclick="enviarTraspasoAdmin()" class="w-[35%] bg-[#ff073a] text-white rounded-2xl py-3.5 font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform shadow-[0_0_15px_rgba(255,7,58,0.5)] hover:shadow-[0_0_20px_rgba(255,7,58,0.7)]">
+                        <span class="material-symbols-outlined text-[18px]">share</span>
                         <span>Traspasar</span>
                     </button>
-                    <button onclick="confirmarDeliveryAdminSheet()" id="btn-cajera-enviar" class="w-[65%] bg-white text-black rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-xl hover:bg-gray-200">
+                    <button onclick="confirmarDeliveryAdminSheet()" id="btn-cajera-enviar" class="w-[65%] bg-[#39ff14] text-black rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_0_15px_rgba(57,255,20,0.5)] hover:shadow-[0_0_20px_rgba(57,255,20,0.7)]">
                         ENVIAR <span class="material-symbols-outlined text-[20px]">send</span>
                     </button>
                 </div>
@@ -4104,7 +4134,6 @@ function initAdminDelivery() {
         }
         if(typeof showManualLocationInput === 'function') showManualLocationInput();
         
-        // Refresco crucial: Le dice a Leaflet "hey, tu contenedor acaba de cambiar de tamaño, recalcula"
         if(typeof map !== 'undefined' && map !== null) {
             map.invalidateSize(true); 
         }
@@ -4114,8 +4143,10 @@ function initAdminDelivery() {
     setInterval(() => {
         if(!isAdminDelivery) return;
         
-        if(typeof pendingLatLng !== 'undefined' && pendingLatLng) {
-            document.getElementById('cajera-coords').value = `${pendingLatLng.lat.toFixed(5)}, ${pendingLatLng.lng.toFixed(5)}`;
+        // Solo actualiza el input de coordenadas si NO lo estás editando en ese momento
+        const coordsInput = document.getElementById('cajera-coords');
+        if(typeof pendingLatLng !== 'undefined' && pendingLatLng && document.activeElement !== coordsInput) {
+            coordsInput.value = `${pendingLatLng.lat.toFixed(5)}, ${pendingLatLng.lng.toFixed(5)}`;
         }
         
         const tarifaDiv = document.getElementById('cajera-tarifa');
@@ -4128,7 +4159,7 @@ function initAdminDelivery() {
         if(kmDiv && typeof window.distanciaOSRM !== 'undefined') kmDiv.innerText = window.distanciaOSRM;
     }, 1000);
 
-    // 6. Geocodificación inversa (Buscar nombre de calle)
+    // 6. Geocodificación inversa
     if(typeof map !== 'undefined' && map !== null) {
         map.on('dragend', async function() {
             const center = map.getCenter();

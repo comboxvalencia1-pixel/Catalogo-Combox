@@ -2453,25 +2453,32 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
     
    const activeIcon = isManualLocation ? redPinIcon : greenDotIcon;
     
-    // --- NUEVO: AUTO-SELECCIONAR SEDE MÁS CERCANA AL PIN/GPS ---
-    if (!preventAutoSelect) {
-        let distMinima = Infinity;
-        let closestSedeCalculada = checkoutSede;
-        db.sedes.forEach(s => {
-            const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
-            const dist = calcularDistanciaHaversine(lat, lng, sLat, sLng);
-            if (dist < distMinima) {
-                distMinima = dist;
-                closestSedeCalculada = s;
-            }
-        });
+    // --- NUEVO: AUTO-SELECCIONAR SEDE MÁS CERCANA (SOLO SI ESTÁ ABIERTA) ---
+    if (!preventAutoSelect) {
+        let distMinima = Infinity;
+        let closestSedeCalculada = checkoutSede;
+        db.sedes.forEach(s => {
+            const isOpen = getSchedule(s).isOpen;
+            if (isOpen) { // <-- Condición crítica añadida
+                const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+                const dist = calcularDistanciaHaversine(lat, lng, sLat, sLng);
+                if (dist < distMinima) {
+                    distMinima = dist;
+                    closestSedeCalculada = s;
+                }
+            }
+        });
 
-       if (closestSedeCalculada && closestSedeCalculada.ID_SEDE !== checkoutSede.ID_SEDE) {
-                checkoutSede = closestSedeCalculada;
-                document.querySelectorAll('.checkout-sede-select').forEach(sel => sel.value = checkoutSede.ID_SEDE);
-            }
-    }
-    // ------------------------------------------------------------
+        if (closestSedeCalculada && closestSedeCalculada.ID_SEDE !== checkoutSede.ID_SEDE) {
+            checkoutSede = closestSedeCalculada;
+            document.querySelectorAll('.checkout-sede-select').forEach(sel => sel.value = checkoutSede.ID_SEDE);
+            
+            // Actualizar también el select de la vista Cajera si existe
+            const adminSel = document.getElementById('cajera-sede');
+            if(adminSel) adminSel.value = checkoutSede.ID_SEDE;
+        }
+    }
+    // ------------------------------------------------------------
 
     if (userMarker) {
         userMarker.setLatLng([lat, lng]);
@@ -3991,81 +3998,95 @@ function renderPickupMap() {
 // =========================================================
 let isAdminDelivery = false;
 
-window.moverPinManual = function() {
-    alert("Modo Edición Activado: Toca cualquier parte del mapa para ubicar al cliente.");
-    if(typeof map !== 'undefined') {
-        // Limpiamos clics anteriores por si tocan el lápiz varias veces
-        map.off('click'); 
-        
-        map.on('click', async function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-            
-            document.getElementById('cajera-coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-            
-            // Aseguramos que haya una sede para el punto de inicio
-            if(!checkoutSede && db && db.sedes) checkoutSede = db.sedes[0];
-            
-            // Ponemos estado de carga en el UI de la cajera
-            document.getElementById('cajera-tarifa').innerText = "Calculando...";
-            document.getElementById('cajera-km').innerText = "--";
-            document.getElementById('cajera-tiempo').innerText = "--";
-            
-            // 🔥 FORZAMOS EL PIN ROJO (Manual Location)
-            isManualLocation = true;
+// --- NUEVA LÓGICA DE PINES Y ZONAS (ADMIN) ---
+let adminPendingLatLng = null;
 
-            // Usamos tu función principal para trazar la línea verde y calcular 
-            // (Esta función YA TIENE integrado el fallback de ORS a OSRM)
-            await renderMapPosition(lat, lng, true);
-            
-            // Copiamos los resultados ocultos al panel del administrador
-            document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
-            document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
-            document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
-        });
-    }
+window.cambiarSedeAdmin = function(id) {
+    if(db && db.sedes) {
+        checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || checkoutSede;
+        const coords = document.getElementById('cajera-coords').value;
+        if(coords) {
+            const [lat, lng] = coords.split(',').map(Number);
+            aceptarPinAdmin(lat, lng); // Recalcula la ruta al cambiar de sede
+        }
+    }
 };
-function renderizarSedesAdmin() {
-    if(!db || !db.sedes) return;
 
-    // Limpiamos los pines viejos si existen para no duplicar en el mapa
-    if (typeof marcadoresSedesMap !== 'undefined' && marcadoresSedesMap.length > 0) {
-        marcadoresSedesMap.forEach(m => map.removeLayer(m));
-    }
-    marcadoresSedesMap = [];
+window.activarPinAdmin = function() {
+    if(!map) return;
+    isEditingLocation = true;
+    isManualLocation = true; 
+    
+    document.getElementById('admin-pin-controls').style.display = 'flex';
+    
+    if (rutaLayer) { map.removeLayer(rutaLayer); rutaLayer = null; }
+    if (userMarker) {
+        userMarker.setIcon(redPinIcon);
+        userMarker.setLatLng(map.getCenter());
+        adminPendingLatLng = map.getCenter();
+    }
 
-    db.sedes.forEach(s => {
-        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
-        const sched = getSchedule(s);
+    map.on('move', function() {
+        if(isEditingLocation && userMarker) userMarker.setLatLng(map.getCenter());
+    });
+    map.on('moveend', function() {
+        if(isEditingLocation) adminPendingLatLng = map.getCenter();
+    });
+};
 
-        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
-        const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
+window.cancelarPinAdmin = function() {
+    isEditingLocation = false;
+    document.getElementById('admin-pin-controls').style.display = 'none';
+    map.off('move');
+    map.off('moveend');
+    
+    if(checkoutSede) {
+        const [lat, lng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+        map.setView([lat, lng], 13);
+    }
+};
 
-        let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
-        let letreroClass = sched.isOpen ? "" : "opacity-60";
+window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
+    isEditingLocation = false;
+    document.getElementById('admin-pin-controls').style.display = 'none';
+    map.off('move');
+    map.off('moveend');
+    
+    const lat = manualLat || (adminPendingLatLng ? adminPendingLatLng.lat : null);
+    const lng = manualLng || (adminPendingLatLng ? adminPendingLatLng.lng : null);
+    if(!lat || !lng) return;
+    
+    document.getElementById('cajera-coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    document.getElementById('cajera-tarifa').innerText = "Calculando...";
+    document.getElementById('cajera-zona').value = "Buscando zona...";
 
-        // Usamos el mismo diseño HTML premium del mapa de delivery
-        const iconHtml = `
-            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative z-[400]" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
-                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
-                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
-                </div>
-                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
-                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
-                    </div>
-                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
-                </div>
-            </div>`;
+    // False = Permite que el sistema busque la sede abierta más cercana automáticamente
+    await renderMapPosition(lat, lng, false); 
 
-        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
-        marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
-    });
+    document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
+    document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
+    document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
+    
+    obtenerZonaORS(lat, lng);
+};
 
-    // Ajustamos la escala de los iconos según el zoom
-    updateMarkerScales(map);
-}
+window.obtenerZonaORS = async function(lat, lng) {
+    try {
+        const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
+        const reverseUrl = `https://api.openrouteservice.org/geocode/reverse?api_key=${orsApiKey}&point.lon=${lng}&point.lat=${lat}`;
+        const res = await fetch(reverseUrl);
+        const data = await res.json();
+        if(data.features && data.features.length > 0) {
+            const props = data.features[0].properties;
+            const calle = props.name || props.street || props.locality || "Zona Desconocida";
+            document.getElementById('cajera-zona').value = calle;
+        } else {
+            document.getElementById('cajera-zona').value = "No localizada";
+        }
+    } catch(e) {
+        document.getElementById('cajera-zona').value = "Fallo de servidor";
+    }
+};
 
 function initAdminDelivery() {
     isAdminDelivery = true;
@@ -4105,46 +4126,62 @@ function initAdminDelivery() {
     adminUI.id = "admin-ui-overlay";
     adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between z-[10000]";
     
-    adminUI.innerHTML = `
-        <div class="w-full pointer-events-auto bg-[#0A0A0B]/90 backdrop-blur-md px-4 pb-4 border-b border-white/10 flex flex-col gap-3 rounded-b-3xl" style="padding-top: env(safe-area-inset-top);">
-            <div class="flex items-center gap-2 mb-1">
-                <span class="material-symbols-outlined text-primary">admin_panel_settings</span>
-                <h2 class="text-white text-sm font-bold uppercase tracking-widest">Admin Delivery</h2>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <input type="text" id="cajera-name" placeholder="Cliente" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
-                <input type="tel" id="cajera-phone" placeholder="Teléfono" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
-                <div class="relative flex items-center">
-                    <input type="text" id="cajera-coords" placeholder="Coordenadas" class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none pr-10">
-                    <button onclick="moverPinManual()" class="absolute right-2 p-1.5 bg-primary/20 rounded-lg text-primary hover:bg-primary/40">
-                        <span class="material-symbols-outlined text-[18px]">edit</span>
-                    </button>
-                </div>
-            </div>
-        </div>
+   adminUI.innerHTML = `
+        <div class="w-full pointer-events-auto bg-[#0A0A0B]/90 backdrop-blur-md px-4 pb-4 border-b border-white/10 flex flex-col gap-3 rounded-b-3xl" style="padding-top: env(safe-area-inset-top);">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-primary">admin_panel_settings</span>
+                <h2 class="text-white text-sm font-bold uppercase tracking-widest">Admin Delivery</h2>
+            </div>
+            
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <select id="cajera-sede" onchange="cambiarSedeAdmin(this.value)" class="bg-white/10 border border-white/20 rounded-xl px-2 py-3 text-white text-sm focus:outline-none uppercase font-bold text-center appearance-none"></select>
+                <input type="text" id="cajera-name" placeholder="Cliente" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
+                <input type="tel" id="cajera-phone" placeholder="Teléfono" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
+                <div class="relative flex items-center">
+                    <input type="text" id="cajera-coords" placeholder="Coordenadas" readonly class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none pr-10 cursor-not-allowed">
+                    <button onclick="activarPinAdmin()" class="absolute right-2 p-1.5 bg-primary/20 rounded-lg text-primary hover:bg-primary/40">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                </div>
+                <input type="text" id="cajera-zona" placeholder="Calle/Zona" readonly class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-[#39FF14] text-sm font-bold focus:outline-none cursor-not-allowed text-center">
+            </div>
+        </div>
 
-        <div class="w-full max-w-md mx-auto pointer-events-none px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] flex flex-col gap-3">
-            <div class="flex gap-2">
-                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
-                    <p class="text-[9px] uppercase text-gray-400">Tiempo</p>
-                    <span id="cajera-tiempo" class="text-white font-bold text-sm">--</span>
-                </div>
-                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
-                    <p class="text-[9px] uppercase text-gray-400">Distancia</p>
-                    <span id="cajera-km" class="text-white font-bold text-sm">--</span>
-                </div>
-                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
-                    <p class="text-[9px] uppercase text-gray-400">Tarifa</p>
-                    <span id="cajera-tarifa" class="text-white font-black text-sm">--</span>
-                </div>
-            </div>
-            <div class="flex gap-2 pointer-events-auto">
-                <button onclick="enviarTraspasoAdmin()" class="flex-1 bg-[#ff073a] py-4 rounded-2xl font-black text-white shadow-lg">TRASPASAR</button>
-                <button onclick="confirmarDeliveryAdminSheet()" class="flex-1 bg-[#39ff14] py-4 rounded-2xl font-black text-black shadow-lg">ENVIAR</button>
-            </div>
-        </div>
-    `;
+                <div id="admin-pin-controls" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-16 flex gap-3 pointer-events-auto" style="display:none; z-index: 10001;">
+            <button onclick="cancelarPinAdmin()" class="bg-red-600 text-white font-black px-6 py-2 rounded-full shadow-2xl active:scale-95 border border-white/20 uppercase text-[11px] tracking-widest">Cancelar</button>
+            <button onclick="aceptarPinAdmin()" class="bg-primary text-white font-black px-6 py-2 rounded-full shadow-2xl active:scale-95 border border-white/20 uppercase text-[11px] tracking-widest">Aceptar</button>
+        </div>
+
+        <div class="w-full max-w-md mx-auto pointer-events-none px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] flex flex-col gap-3">
+            <div class="flex gap-2">
+                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
+                    <p class="text-[9px] uppercase text-gray-400">Tiempo</p>
+                    <span id="cajera-tiempo" class="text-white font-bold text-sm">--</span>
+                </div>
+                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
+                    <p class="text-[9px] uppercase text-gray-400">Distancia</p>
+                    <span id="cajera-km" class="text-white font-bold text-sm">--</span>
+                </div>
+                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
+                    <p class="text-[9px] uppercase text-gray-400">Tarifa</p>
+                    <span id="cajera-tarifa" class="text-white font-black text-sm">--</span>
+                </div>
+            </div>
+            <div class="flex gap-2 pointer-events-auto">
+                <button onclick="enviarTraspasoAdmin()" class="flex-1 bg-[#ff073a] py-4 rounded-2xl font-black text-white shadow-lg">TRASPASAR</button>
+                <button onclick="confirmarDeliveryAdminSheet()" class="flex-1 bg-[#39ff14] py-4 rounded-2xl font-black text-black shadow-lg">ENVIAR</button>
+            </div>
+        </div>
+    `;
+
+    // ESTO LLENA EL SELECT DE SEDES AL INICIAR
+    setTimeout(() => {
+        const selectSedeAdmin = document.getElementById('cajera-sede');
+        if(selectSedeAdmin && db && db.sedes) {
+            selectSedeAdmin.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE.split(',')[0]}</option>`).join('');
+            if(checkoutSede) selectSedeAdmin.value = checkoutSede.ID_SEDE;
+        }
+    }, 800);
     
     document.body.appendChild(adminUI);
     

@@ -3993,27 +3993,50 @@ function renderPickupMap() {
 let isAdminDelivery = false;
 
 window.moverPinManual = function() {
-    alert("Modo Edición Activado: Mueve el pin o toca el mapa para reubicar al cliente.");
+    alert("Modo Edición Activado: Toca cualquier parte del mapa para ubicar al cliente.");
     if(typeof map !== 'undefined') {
-        map.on('click', function(e) {
-            if(typeof userMarker !== 'undefined') {
-                userMarker.setLatLng(e.latlng);
-                document.getElementById('cajera-coords').value = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
-                if(typeof calcularTarifa === 'function') calcularTarifa(e.latlng.lat, e.latlng.lng);
-            }
+        // Limpiamos clics anteriores por si tocan el lápiz varias veces
+        map.off('click'); 
+        
+        map.on('click', async function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            
+            document.getElementById('cajera-coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            
+            // Aseguramos que haya una sede para el punto de inicio
+            if(!checkoutSede && db && db.sedes) checkoutSede = db.sedes[0];
+            
+            // Ponemos estado de carga en el UI de la cajera
+            document.getElementById('cajera-tarifa').innerText = "Calculando...";
+            document.getElementById('cajera-km').innerText = "--";
+            document.getElementById('cajera-tiempo').innerText = "--";
+            
+            // Usamos tu función principal para trazar la línea verde y calcular (await espera a que termine)
+            await renderMapPosition(lat, lng, true);
+            
+            // Copiamos los resultados ocultos al panel del administrador
+            document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
+            document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
+            document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
         });
     }
 };
 
 function renderizarSedesAdmin() {
-    if(typeof sedesCombox === 'undefined') return;
-    sedesCombox.forEach(sede => {
-        const color = sede.abierto ? '#22c55e' : '#ef4444';
-        const marker = L.circleMarker([sede.lat, sede.lng], {
+    // Verificamos tu base de datos real
+    if(!db || !db.sedes) return;
+    
+    db.sedes.forEach(sede => {
+        const [lat, lng] = sede.COORDENADAS_SEDE.split(',').map(Number);
+        const sched = getSchedule(sede); // Verificamos horario
+        
+        const color = sched.isOpen ? '#39FF14' : '#ef4444'; // Verde o Rojo
+        const marker = L.circleMarker([lat, lng], {
             radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: 1
         }).addTo(map);
         
-        marker.bindTooltip(`<b>${sede.nombre}</b><br>${sede.abierto ? '🟢 Abierto' : '🔴 Cerrado'}`, {permanent: true, direction: 'top'});
+        marker.bindTooltip(`<b>${sede.NOMBRE_SEDE.split(',')[0]}</b><br>${sched.isOpen ? '🟢 Abierto' : '🔴 Cerrado'}`, {permanent: true, direction: 'top'});
     });
 }
 
@@ -4036,6 +4059,23 @@ function initAdminDelivery() {
     
     // 3. Forzamos su visualización
     mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important;";
+    
+    // --- NUEVO: Ocultar UI de cliente en la vista Admin ---
+    const btnWrongLoc = document.getElementById('btn-wrong-location');
+    if (btnWrongLoc) btnWrongLoc.style.display = 'none';
+    
+    const gpsBtn = mapWrapper.querySelector('button[onclick*="getLocation"]');
+    if (gpsBtn) gpsBtn.style.display = 'none';
+    
+    // Las cápsulas no las borramos para que los cálculos sigan funcionando, solo las hacemos invisibles
+    const routeCapsules = mapWrapper.querySelector('.bottom-3.right-3.flex-col');
+    if (routeCapsules) {
+        routeCapsules.style.visibility = 'hidden';
+        routeCapsules.style.opacity = '0';
+    }
+    // ------------------------------------------------------
+
+    const adminUI = document.createElement('div');
     
     const adminUI = document.createElement('div');
     adminUI.id = "admin-ui-overlay";

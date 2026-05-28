@@ -1762,7 +1762,12 @@ async function setupAfterDBLoad(isCached) {
 
         const productId = urlParams.get('id');
         if(productId) { setTimeout(() => openProductView(productId), 500); }
+        // ---> INYECTAR INTERCEPTOR ADMIN AQUÍ <---
+            if(urlParams.has('DeliveryAdmin8382727282891')) {
+                setTimeout(() => initAdminDelivery(), 800);
+            }
     } else {
+        
         render();
         updateOrder(); 
     }
@@ -3982,7 +3987,169 @@ function renderPickupMap() {
     }, 100);
 }
 
+// =========================================================
+// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY ---
+// =========================================================
+let isAdminDelivery = false;
 
+function initAdminDelivery() {
+    isAdminDelivery = true;
+
+    // 1. Modificar Inputs y Labels a modo Cliente
+    const nameInput = document.getElementById('checkout-name');
+    if (nameInput) {
+        nameInput.placeholder = "Ej. Juan Pérez";
+        const labelName = nameInput.previousElementSibling;
+        if (labelName) labelName.innerText = "Nombre Cliente";
+    }
+    
+    const phoneInput = document.getElementById('checkout-phone');
+    if (phoneInput) {
+        phoneInput.placeholder = "Ej. 0424...";
+        const labelPhone = phoneInput.previousElementSibling;
+        if (labelPhone) labelPhone.innerText = "Teléfono Cliente";
+    }
+
+    // 2. Ocultar Botón GPS nativo
+    const gpsBtn = document.querySelector('button[onclick*="getLocation(true)"]');
+    if (gpsBtn) gpsBtn.style.display = 'none';
+
+    // 3. Sobrescribir el botón "¿No es aquí?" por un ícono de Lápiz
+    window.resetEditLocationButton = function() {
+        const btnEdit = document.getElementById('btn-wrong-location');
+        if (btnEdit) {
+            btnEdit.style.display = 'flex';
+            btnEdit.className = "absolute bottom-3 left-3 z-[1000] w-10 h-10 bg-black/60 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 shadow-lg transition-transform";
+            btnEdit.innerHTML = '<span class="material-symbols-outlined text-[18px]">edit_location_alt</span>';
+            // Al tocar el lápiz, entra directo al modo de mover el pin manual
+            btnEdit.onclick = showManualLocationInput; 
+        }
+    };
+
+    // 4. Crear Botón "Traspasar" (Debajo del lápiz)
+    const mapWrapper = document.getElementById('map-wrapper');
+    if (mapWrapper && !document.getElementById('btn-traspasar')) {
+        const btnTraspasar = document.createElement('button');
+        btnTraspasar.id = 'btn-traspasar';
+        btnTraspasar.type = 'button';
+        btnTraspasar.className = "absolute bottom-16 left-3 z-[1000] bg-[#25D366] backdrop-blur-md border border-[#1DA851] px-3 py-1.5 rounded-xl text-white font-black shadow-lg text-[10px] uppercase flex items-center gap-1.5 active:scale-95 transition-transform";
+        btnTraspasar.innerHTML = '<span class="material-symbols-outlined text-[14px]">share</span> Traspasar';
+        btnTraspasar.onclick = enviarTraspasoAdmin;
+        mapWrapper.appendChild(btnTraspasar);
+    }
+
+    // 5. Modificar Botón Confirmar principal
+    const submitBtn = document.getElementById('checkout-submit-btn');
+    if (submitBtn) {
+        submitBtn.innerHTML = 'Confirmar Delivery <span class="material-symbols-outlined">send</span>';
+        submitBtn.onclick = confirmarDeliveryAdminSheet;
+    }
+
+    // 6. Abrir Modal de Delivery
+    openCheckoutModalLogica('delivery');
+    
+    // 7. Forzar el estado inicial del Lápiz y el modo manual
+    setTimeout(() => {
+        resetEditLocationButton();
+        document.querySelector('.checkout-sede-select').parentElement.parentElement.style.zIndex = "2000"; // Asegurar que el selector de sede se vea bien
+    }, 1000);
+}
+
+function enviarTraspasoAdmin() {
+    const name = document.getElementById('checkout-name').value.trim() || 'No indicado';
+    const phone = document.getElementById('checkout-phone').value.trim() || 'No indicado';
+    const sede = checkoutSede ? checkoutSede.NOMBRE_SEDE.split(',')[0] : 'No seleccionada';
+    let tarifa = tarifaFinalCalculada ? tarifaFinalCalculada.toFixed(2) : '0.00';
+    
+    let coords = "No fijadas";
+    let zona = "Desconocida";
+    
+    // Obtener coordenadas exactas del Pin
+    if (isManualLocation && pendingLatLng) {
+         coords = `${pendingLatLng.lat}, ${pendingLatLng.lng}`;
+         zona = calculateTariff(pendingLatLng.lat, pendingLatLng.lng);
+    } else if (userMarker) {
+         const pos = userMarker.getLatLng();
+         coords = `${pos.lat}, ${pos.lng}`;
+         zona = calculateTariff(pos.lat, pos.lng);
+    }
+
+    let telefonoSede = checkoutSede?.TELEFONO || '584244701273'; // Fallback
+    
+    let msg = `🛵 *TRASPASO DE DELIVERY (CAJA)* 🛵\n\n`;
+    msg += `🏢 *SEDE:* ${sede}\n`;
+    msg += `👤 *CLIENTE:* ${name}\n`;
+    msg += `☎️ *TELÉFONO:* ${phone}\n\n`;
+    msg += `📍 *COORDENADAS:* ${coords}\n`;
+    msg += `🗺️ *MAPA:* https://maps.google.com/?q=$${coords}\n`;
+    msg += `💵 *TARIFA:* $${tarifa}\n`;
+    msg += `📌 *ZONA:* ${zona}\n`;
+
+    window.open(`https://wa.me/${telefonoSede}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+async function confirmarDeliveryAdminSheet() {
+    const name = document.getElementById('checkout-name').value.trim();
+    const phone = document.getElementById('checkout-phone').value.trim();
+    
+    if(!name || !phone) {
+        customAlert("Debe ingresar Nombre y Teléfono del cliente.");
+        return;
+    }
+
+    let coords = "No fijadas";
+    let zona = "Desconocida";
+    
+    if (isManualLocation && pendingLatLng) {
+         coords = `${pendingLatLng.lat}, ${pendingLatLng.lng}`;
+         zona = calculateTariff(pendingLatLng.lat, pendingLatLng.lng);
+    } else if (userMarker) {
+         const pos = userMarker.getLatLng();
+         coords = `${pos.lat}, ${pos.lng}`;
+         zona = calculateTariff(pos.lat, pos.lng);
+    }
+
+    const btn = document.getElementById('checkout-submit-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Guardando...';
+    btn.disabled = true;
+
+    // Aquí usamos un payload que deberás capturar en tu Google Apps Script
+    const payload = {
+        action: 'cotizacion_cajera_delivery',
+        id_pedido: generarId(),
+        cliente: name,
+        telefono: phone,
+        sede: checkoutSede ? checkoutSede.NOMBRE_SEDE.split(',')[0] : '',
+        coordenadas: coords,
+        zona: zona,
+        tarifa: tarifaFinalCalculada || 0,
+        fecha: new Date().toLocaleString('es-VE')
+    };
+
+    try {
+        await fetch(API, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        customAlert("Delivery registrado correctamente en Google Sheets.", "Confirmado");
+        
+        // Limpiar para el siguiente cliente
+        document.getElementById('checkout-name').value = '';
+        document.getElementById('checkout-phone').value = '';
+    } catch (e) {
+        customAlert("Error al guardar. Revisa la conexión a internet.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+// =========================================================
+// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY ---
+// =========================================================
     function resetAppAndGPS() {
         alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");
         caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {

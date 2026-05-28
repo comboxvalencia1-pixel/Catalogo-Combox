@@ -4012,7 +4012,11 @@ window.moverPinManual = function() {
             document.getElementById('cajera-km').innerText = "--";
             document.getElementById('cajera-tiempo').innerText = "--";
             
-            // Usamos tu función principal para trazar la línea verde y calcular (await espera a que termine)
+            // 🔥 FORZAMOS EL PIN ROJO (Manual Location)
+            isManualLocation = true;
+
+            // Usamos tu función principal para trazar la línea verde y calcular 
+            // (Esta función YA TIENE integrado el fallback de ORS a OSRM)
             await renderMapPosition(lat, lng, true);
             
             // Copiamos los resultados ocultos al panel del administrador
@@ -4022,22 +4026,46 @@ window.moverPinManual = function() {
         });
     }
 };
-
 function renderizarSedesAdmin() {
-    // Verificamos tu base de datos real
     if(!db || !db.sedes) return;
-    
-    db.sedes.forEach(sede => {
-        const [lat, lng] = sede.COORDENADAS_SEDE.split(',').map(Number);
-        const sched = getSchedule(sede); // Verificamos horario
-        
-        const color = sched.isOpen ? '#39FF14' : '#ef4444'; // Verde o Rojo
-        const marker = L.circleMarker([lat, lng], {
-            radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: 1
-        }).addTo(map);
-        
-        marker.bindTooltip(`<b>${sede.NOMBRE_SEDE.split(',')[0]}</b><br>${sched.isOpen ? '🟢 Abierto' : '🔴 Cerrado'}`, {permanent: true, direction: 'top'});
+
+    // Limpiamos los pines viejos si existen para no duplicar en el mapa
+    if (typeof marcadoresSedesMap !== 'undefined' && marcadoresSedesMap.length > 0) {
+        marcadoresSedesMap.forEach(m => map.removeLayer(m));
+    }
+    marcadoresSedesMap = [];
+
+    db.sedes.forEach(s => {
+        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+        const sched = getSchedule(s);
+
+        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
+        const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
+
+        let iconWrapperClass = sched.isOpen ? "" : "grayscale opacity-60";
+        let letreroClass = sched.isOpen ? "" : "opacity-60";
+
+        // Usamos el mismo diseño HTML premium del mapa de delivery
+        const iconHtml = `
+            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative z-[400]" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
+                </div>
+                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
+                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
+                    </div>
+                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                </div>
+            </div>`;
+
+        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
+        marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
     });
+
+    // Ajustamos la escala de los iconos según el zoom
+    updateMarkerScales(map);
 }
 
 function initAdminDelivery() {

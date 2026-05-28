@@ -3997,7 +3997,9 @@ function initAdminDelivery() {
 
     // 1. Bloquear scroll y ocultar elementos innecesarios
     document.body.style.overflow = 'hidden';
-    const splash = document.getElementById('splash-screen');
+    
+    // CORRECCIÓN 1: El ID correcto es 'splash'
+    const splash = document.getElementById('splash');
     if (splash) splash.style.display = 'none';
     
     // Ocultar botón GPS nativo y remover punto verde si existe
@@ -4010,6 +4012,10 @@ function initAdminDelivery() {
     // 2. Extraer el mapa y ponerlo a PANTALLA COMPLETA
     const mapWrapper = document.getElementById('map-wrapper');
     if (mapWrapper) {
+        // CORRECCIÓN 2 y 3: Sacamos el mapa del modal, lo pegamos al body y forzamos su visibilidad
+        document.body.appendChild(mapWrapper);
+        mapWrapper.style.display = 'block';
+
         // Le damos clases fijas para que cubra toda la pantalla por encima de todo
         mapWrapper.className = "fixed inset-0 z-[9999] w-full h-[100dvh] bg-[#e5e3df]";
         
@@ -4074,8 +4080,13 @@ function initAdminDelivery() {
 
     // 4. Activar modo manual (el pin de edición) al cargar
     setTimeout(() => {
+        // CORRECCIÓN 4: Inicializamos el mapa si no existe para evitar el cuadro gris
+        if (typeof map === 'undefined' || map === null) {
+            initLeafletMap();
+        }
+
         if(typeof showManualLocationInput === 'function') showManualLocationInput();
-        if(typeof map !== 'undefined') map.invalidateSize(); // Refresca el mapa para que ocupe todo el espacio
+        if(typeof map !== 'undefined' && map !== null) map.invalidateSize(); 
     }, 800);
 
     // 5. Bucle Inteligente: Actualiza textos de la UI leyendo tus variables globales
@@ -4091,7 +4102,6 @@ function initAdminDelivery() {
         const tarifaDiv = document.getElementById('cajera-tarifa');
         if(tarifaDiv && typeof tarifaFinalCalculada !== 'undefined') tarifaDiv.innerText = `$${tarifaFinalCalculada.toFixed(2)}`;
 
-        // (Si tus variables de OSRM se llaman distinto, cambia 'globalDurationText' por el nombre real de tu variable de tiempo)
         const tiempoDiv = document.getElementById('cajera-tiempo');
         if(tiempoDiv && typeof window.tiempoOSRM !== 'undefined') tiempoDiv.innerText = window.tiempoOSRM; 
 
@@ -4100,7 +4110,7 @@ function initAdminDelivery() {
     }, 1000);
 
     // 6. Obtener nombre de la calle usando OpenStreetMap (Se ejecuta al soltar el mapa)
-    if(typeof map !== 'undefined') {
+    if(typeof map !== 'undefined' && map !== null) {
         map.on('dragend', async function() {
             const center = map.getCenter();
             const addressTag = document.getElementById('cajera-address');
@@ -4117,88 +4127,10 @@ function initAdminDelivery() {
         });
     }
 }
-
-function enviarTraspasoAdmin() {
-    const name = document.getElementById('cajera-name').value.trim() || 'No indicado';
-    const phone = document.getElementById('cajera-phone').value.trim() || 'No indicado';
-    const coords = document.getElementById('cajera-coords').value;
-    const direccion = document.getElementById('cajera-address').innerText.replace('location_on', '').trim();
-    
-    let tarifa = typeof tarifaFinalCalculada !== 'undefined' ? tarifaFinalCalculada.toFixed(2) : '0.00';
-    let zona = (typeof pendingLatLng !== 'undefined' && pendingLatLng) ? calculateTariff(pendingLatLng.lat, pendingLatLng.lng) : "Desconocida";
-    
-    // Obtener la sede desde tu selector global (si existe), si no asume la por defecto
-    const sede = typeof checkoutSede !== 'undefined' && checkoutSede ? checkoutSede.NOMBRE_SEDE.split(',')[0] : 'Sede Principal';
-    let telefonoSede = typeof checkoutSede !== 'undefined' && checkoutSede ? checkoutSede.TELEFONO : '584244701273';
-    
-    let msg = `🛵 *TRASPASO DE DELIVERY (CAJA)* 🛵\n\n`;
-    msg += `🏢 *SEDE:* ${sede}\n`;
-    msg += `👤 *CLIENTE:* ${name}\n`;
-    msg += `☎️ *TELÉFONO:* ${phone}\n\n`;
-    msg += `📍 *COORDENADAS:* ${coords}\n`;
-    msg += `🛣️ *CALLE:* ${direccion}\n`;
-    msg += `🗺️ *MAPA:* https://maps.google.com/?q=$$?q=${coords.replace(' ', '')}\n`;
-    msg += `💵 *TARIFA:* $${tarifa}\n`;
-    msg += `📌 *ZONA:* ${zona}\n`;
-
-    window.open(`https://wa.me/${telefonoSede}?text=${encodeURIComponent(msg)}`, '_blank');
-}
-
-async function confirmarDeliveryAdminSheet() {
-    const name = document.getElementById('cajera-name').value.trim();
-    const phone = document.getElementById('cajera-phone').value.trim();
-    const coords = document.getElementById('cajera-coords').value;
-    
-    if(!name || !phone) {
-        if(typeof customAlert === 'function') customAlert("Falta Nombre y Teléfono");
-        else alert("Debe ingresar Nombre y Teléfono del cliente.");
-        return;
-    }
-
-    const btn = document.getElementById('btn-cajera-enviar');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">sync</span>';
-    btn.disabled = true;
-
-    let zona = (typeof pendingLatLng !== 'undefined' && pendingLatLng) ? calculateTariff(pendingLatLng.lat, pendingLatLng.lng) : "Desconocida";
-    const sede = typeof checkoutSede !== 'undefined' && checkoutSede ? checkoutSede.NOMBRE_SEDE.split(',')[0] : '';
-
-    const payload = {
-        action: 'cotizacion_cajera_delivery',
-        id_pedido: typeof generarId === 'function' ? generarId() : Date.now(),
-        cliente: name,
-        telefono: phone,
-        sede: sede,
-        coordenadas: coords,
-        zona: zona,
-        tarifa: typeof tarifaFinalCalculada !== 'undefined' ? tarifaFinalCalculada : 0,
-        fecha: new Date().toLocaleString('es-VE')
-    };
-
-    try {
-        await fetch(API, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        if(typeof customAlert === 'function') customAlert("Delivery registrado correctamente.", "Éxito");
-        else alert("Delivery registrado correctamente.");
-        
-        document.getElementById('cajera-name').value = '';
-        document.getElementById('cajera-phone').value = '';
-    } catch (e) {
-        if(typeof customAlert === 'function') customAlert("Error de conexión.");
-        else alert("Error de conexión.");
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-}
 // =========================================================
 // --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN) ---
 // =========================================================
+
     function resetAppAndGPS() {
         alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");
         caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {

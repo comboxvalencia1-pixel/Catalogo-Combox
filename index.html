@@ -4028,7 +4028,7 @@ function initAdminDelivery() {
     document.body.style.cssText = "overflow: hidden; margin: 0; padding: 0; background: #e5e3df;";
     
     const mapWrapper = document.getElementById('map-wrapper');
-    mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important;";
+mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important;";
     
     const adminUI = document.createElement('div');
     adminUI.id = "admin-ui-overlay";
@@ -4077,7 +4077,11 @@ function initAdminDelivery() {
     
     document.body.appendChild(adminUI);
     
-    setTimeout(() => {
+   setTimeout(() => {
+        // 1. Forzamos la inicialización del mapa para eliminar el fondo negro
+        initLeafletMap();
+
+        // 2. Ajustamos las dimensiones y dibujamos los pines del admin
         if(typeof map !== 'undefined') {
             map.invalidateSize();
             renderizarSedesAdmin();

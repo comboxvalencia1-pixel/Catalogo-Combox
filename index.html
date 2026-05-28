@@ -4019,6 +4019,13 @@ function renderizarSedesAdmin() {
 
 function initAdminDelivery() {
     isAdminDelivery = true;
+    
+    const mapWrapper = document.getElementById('map-wrapper');
+    
+    // 1. Extraemos el mapa del modal oculto y lo pasamos a la raíz del documento
+    document.body.appendChild(mapWrapper);
+
+    // 2. Ahora sí, ocultamos el resto de la aplicación con seguridad
     Array.from(document.body.children).forEach(child => {
         if (!['map-wrapper', 'admin-ui-overlay'].includes(child.id) && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE') {
             child.style.display = 'none';
@@ -4027,8 +4034,8 @@ function initAdminDelivery() {
 
     document.body.style.cssText = "overflow: hidden; margin: 0; padding: 0; background: #e5e3df;";
     
-    const mapWrapper = document.getElementById('map-wrapper');
-mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important;";
+    // 3. Forzamos su visualización
+    mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important;";
     
     const adminUI = document.createElement('div');
     adminUI.id = "admin-ui-overlay";

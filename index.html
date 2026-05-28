@@ -3992,192 +3992,100 @@ function renderPickupMap() {
 // =========================================================
 let isAdminDelivery = false;
 
-window.moverPinDesdeCoordenadas = function() {
-    const inputCoords = document.getElementById('cajera-coords');
-    if (!inputCoords) return;
-    
-    const val = inputCoords.value.trim();
-    const parts = val.split(',');
-    
-    if(parts.length === 2 && typeof map !== 'undefined' && typeof userMarker !== 'undefined') {
-        const lat = parseFloat(parts[0]);
-        const lng = parseFloat(parts[1]);
-        
-        if(!isNaN(lat) && !isNaN(lng)) {
-            const newLatLng = new L.LatLng(lat, lng);
-            userMarker.setLatLng(newLatLng);
-            map.setView(newLatLng, 16); // Hace zoom a la nueva ubicación
-            
-            // Actualiza la variable global y fuerza el cálculo de la ruta/tarifa
-            if(typeof pendingLatLng !== 'undefined') {
-                pendingLatLng = {lat: lat, lng: lng};
+window.moverPinManual = function() {
+    alert("Modo Edición Activado: Mueve el pin o toca el mapa para reubicar al cliente.");
+    if(typeof map !== 'undefined') {
+        map.on('click', function(e) {
+            if(typeof userMarker !== 'undefined') {
+                userMarker.setLatLng(e.latlng);
+                document.getElementById('cajera-coords').value = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+                if(typeof calcularTarifa === 'function') calcularTarifa(e.latlng.lat, e.latlng.lng);
             }
-            if (typeof calcularTarifa === 'function') {
-                calcularTarifa(lat, lng); 
-            }
-        }
+        });
     }
 };
 
+function renderizarSedesAdmin() {
+    if(typeof sedesCombox === 'undefined') return;
+    sedesCombox.forEach(sede => {
+        const color = sede.abierto ? '#22c55e' : '#ef4444';
+        const marker = L.circleMarker([sede.lat, sede.lng], {
+            radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: 1
+        }).addTo(map);
+        
+        marker.bindTooltip(`<b>${sede.nombre}</b><br>${sede.abierto ? '🟢 Abierto' : '🔴 Cerrado'}`, {permanent: true, direction: 'top'});
+    });
+}
+
 function initAdminDelivery() {
     isAdminDelivery = true;
-
-    // 1. Rendimiento: Ocultar TODO el contenido de la app excepto el mapa para liberar memoria
     Array.from(document.body.children).forEach(child => {
-        if (child.id !== 'map-wrapper' && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE' && child.id !== 'admin-ui-overlay') {
+        if (!['map-wrapper', 'admin-ui-overlay'].includes(child.id) && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE') {
             child.style.display = 'none';
         }
     });
 
-    document.body.style.overflow = 'hidden';
-    document.body.style.margin = '0';
-    document.body.style.padding = '0';
-    document.body.style.backgroundColor = '#e5e3df'; // Fondo del mapa
+    document.body.style.cssText = "overflow: hidden; margin: 0; padding: 0; background: #e5e3df;";
     
-    const gpsBtn = document.querySelector('button[onclick*="getLocation(true)"]');
-    if (gpsBtn) gpsBtn.style.display = 'none';
-    if (typeof userMarker !== 'undefined' && userMarker && typeof map !== 'undefined') {
-        map.removeLayer(userMarker);
-    }
-
-    // 2. Extraer el mapa y forzar PANTALLA COMPLETA
     const mapWrapper = document.getElementById('map-wrapper');
-    if (mapWrapper) {
-        document.body.appendChild(mapWrapper);
-        
-        mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important; background: #e5e3df !important; margin: 0 !important; padding: 0 !important;";
-        
-        const mapElement = document.getElementById('map'); 
-        if (mapElement) {
-            mapElement.style.cssText = "width: 100% !important; height: 100% !important; position: absolute !important; top: 0 !important; left: 0 !important; z-index: 1 !important;";
-        }
-
-        // OCULTAR ELEMENTOS DUPLICADOS DEL MAPA NATIVO
-        const hideNativeElementsStyle = document.createElement('style');
-        hideNativeElementsStyle.innerHTML = `
-            #map-wrapper > .absolute.top-3.right-3,
-            #map-wrapper > .absolute.bottom-3.right-3,
-            #btn-wrong-location {
-                display: none !important;
-            }
-        `;
-        mapWrapper.appendChild(hideNativeElementsStyle);
-
-        // 3. Crear la Interfaz Flotante Responsiva
-        const adminUI = document.createElement('div');
-        adminUI.id = "admin-ui-overlay";
-        adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between z-[10000]";
-        
-        adminUI.innerHTML = `
-            <div class="w-full pointer-events-auto bg-[#0A0A0B]/95 backdrop-blur-xl px-4 pb-4 border-b border-white/10 shadow-2xl flex flex-col gap-3 rounded-b-3xl transition-all" style="padding-top: calc(1rem + env(safe-area-inset-top));">
-                <div class="flex items-center justify-between w-full mb-1">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary text-[20px]">admin_panel_settings</span>
-                        <h2 class="text-white text-sm font-black uppercase tracking-[0.15em]">Admin Delivery</h2>
-                    </div>
-                    </div>
-                
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <input type="text" id="cajera-name" placeholder="Nombre del Cliente" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-zinc-500">
-                    <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-zinc-500">
-                </div>
-                
-                <div class="relative flex items-center bg-black/50 border border-white/10 rounded-xl mt-1">
-                     <span class="material-symbols-outlined text-[18px] text-zinc-400 absolute left-3">my_location</span>
-                     <input type="text" id="cajera-coords" placeholder="Ej: 10.2334, -68.0123" class="w-full bg-transparent text-gray-300 text-[12px] font-mono focus:outline-none py-3 pl-10 pr-10 rounded-xl">
-                     <button onclick="moverPinDesdeCoordenadas()" class="absolute right-2 flex items-center justify-center w-7 h-7 bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer active:scale-90">
-                         <span class="material-symbols-outlined text-[16px] text-white">edit</span>
-                     </button>
-                </div>
-                
-                <p id="cajera-address" class="text-gray-300 text-[11px] font-medium flex items-start gap-1.5 leading-tight mt-1 px-1">
-                    <span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0">location_on</span> 
-                    <span class="truncate mt-0.5">Mueve el mapa o edita las coordenadas</span>
-                </p>
+    mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important;";
+    
+    const adminUI = document.createElement('div');
+    adminUI.id = "admin-ui-overlay";
+    adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between z-[10000]";
+    
+    adminUI.innerHTML = `
+        <div class="w-full pointer-events-auto bg-[#0A0A0B]/90 backdrop-blur-md px-4 pb-4 border-b border-white/10 flex flex-col gap-3 rounded-b-3xl" style="padding-top: env(safe-area-inset-top);">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-primary">admin_panel_settings</span>
+                <h2 class="text-white text-sm font-bold uppercase tracking-widest">Admin Delivery</h2>
             </div>
-
-            <div class="w-full max-w-md mx-auto pointer-events-none flex flex-col gap-3 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] transition-all">
-                <div class="flex gap-2 justify-between pointer-events-auto">
-                    <div class="flex-1 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg">
-                        <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Tiempo</span>
-                        <span id="cajera-tiempo" class="text-white font-bold text-sm">-- min</span>
-                    </div>
-                    <div class="flex-1 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg">
-                        <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Distancia</span>
-                        <span id="cajera-km" class="text-white font-bold text-sm">-- km</span>
-                    </div>
-                    <div class="flex-1 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg">
-                        <span class="text-gray-400 text-[9px] font-extrabold uppercase tracking-wider">Tarifa</span>
-                        <span id="cajera-tarifa" class="text-white font-black text-base drop-shadow-md">$0.00</span>
-                    </div>
-                </div>
-
-                <div class="flex gap-2 mt-1 pointer-events-auto">
-                    <button onclick="enviarTraspasoAdmin()" class="w-[35%] bg-[#ff073a] text-white rounded-2xl py-3.5 font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform shadow-[0_0_15px_rgba(255,7,58,0.5)] hover:shadow-[0_0_20px_rgba(255,7,58,0.7)]">
-                        <span class="material-symbols-outlined text-[18px]">share</span>
-                        <span>Traspasar</span>
-                    </button>
-                    <button onclick="confirmarDeliveryAdminSheet()" id="btn-cajera-enviar" class="w-[65%] bg-[#39ff14] text-black rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_0_15px_rgba(57,255,20,0.5)] hover:shadow-[0_0_20px_rgba(57,255,20,0.7)]">
-                        ENVIAR <span class="material-symbols-outlined text-[20px]">send</span>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <input type="text" id="cajera-name" placeholder="Cliente" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
+                <input type="tel" id="cajera-phone" placeholder="Teléfono" class="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
+                <div class="relative flex items-center">
+                    <input type="text" id="cajera-coords" placeholder="Coordenadas" class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none pr-10">
+                    <button onclick="moverPinManual()" class="absolute right-2 p-1.5 bg-primary/20 rounded-lg text-primary hover:bg-primary/40">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
                     </button>
                 </div>
             </div>
-        `;
-        
-        mapWrapper.appendChild(adminUI);
-    }
+        </div>
 
-    // 4. Inicializar mapa y forzar actualización de tamaño de Leaflet
+        <div class="w-full max-w-md mx-auto pointer-events-none px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] flex flex-col gap-3">
+            <div class="flex gap-2">
+                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
+                    <p class="text-[9px] uppercase text-gray-400">Tiempo</p>
+                    <span id="cajera-tiempo" class="text-white font-bold text-sm">--</span>
+                </div>
+                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
+                    <p class="text-[9px] uppercase text-gray-400">Distancia</p>
+                    <span id="cajera-km" class="text-white font-bold text-sm">--</span>
+                </div>
+                <div class="flex-1 bg-black/80 backdrop-blur rounded-2xl py-3 text-center border border-white/10">
+                    <p class="text-[9px] uppercase text-gray-400">Tarifa</p>
+                    <span id="cajera-tarifa" class="text-white font-black text-sm">--</span>
+                </div>
+            </div>
+            <div class="flex gap-2 pointer-events-auto">
+                <button onclick="enviarTraspasoAdmin()" class="flex-1 bg-[#ff073a] py-4 rounded-2xl font-black text-white shadow-lg">TRASPASAR</button>
+                <button onclick="confirmarDeliveryAdminSheet()" class="flex-1 bg-[#39ff14] py-4 rounded-2xl font-black text-black shadow-lg">ENVIAR</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(adminUI);
+    
     setTimeout(() => {
-        if (typeof map === 'undefined' || map === null) {
-            initLeafletMap();
+        if(typeof map !== 'undefined') {
+            map.invalidateSize();
+            renderizarSedesAdmin();
         }
-        if(typeof showManualLocationInput === 'function') showManualLocationInput();
-        
-        if(typeof map !== 'undefined' && map !== null) {
-            map.invalidateSize(true); 
-        }
-    }, 800);
-
-    // 5. Bucle de actualización de datos
-    setInterval(() => {
-        if(!isAdminDelivery) return;
-        
-        // Solo actualiza el input de coordenadas si NO lo estás editando en ese momento
-        const coordsInput = document.getElementById('cajera-coords');
-        if(typeof pendingLatLng !== 'undefined' && pendingLatLng && document.activeElement !== coordsInput) {
-            coordsInput.value = `${pendingLatLng.lat.toFixed(5)}, ${pendingLatLng.lng.toFixed(5)}`;
-        }
-        
-        const tarifaDiv = document.getElementById('cajera-tarifa');
-        if(tarifaDiv && typeof tarifaFinalCalculada !== 'undefined') tarifaDiv.innerText = `$${tarifaFinalCalculada.toFixed(2)}`;
-
-        const tiempoDiv = document.getElementById('cajera-tiempo');
-        if(tiempoDiv && typeof window.tiempoOSRM !== 'undefined') tiempoDiv.innerText = window.tiempoOSRM; 
-
-        const kmDiv = document.getElementById('cajera-km');
-        if(kmDiv && typeof window.distanciaOSRM !== 'undefined') kmDiv.innerText = window.distanciaOSRM;
-    }, 1000);
-
-    // 6. Geocodificación inversa
-    if(typeof map !== 'undefined' && map !== null) {
-        map.on('dragend', async function() {
-            const center = map.getCenter();
-            const addressTag = document.getElementById('cajera-address');
-            addressTag.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px] flex-shrink-0">sync</span> <span class="truncate mt-0.5 text-zinc-400">Buscando calle...</span>`;
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${center.lat}&lon=${center.lng}`);
-                const data = await res.json();
-                let shortAddress = data.display_name.split(',').slice(0,2).join(', ');
-                addressTag.innerHTML = `<span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0">location_on</span> <span class="truncate mt-0.5 text-white">${shortAddress}</span>`;
-            } catch(e) {
-                addressTag.innerHTML = `<span class="material-symbols-outlined text-[16px] text-red-500 flex-shrink-0">location_off</span> <span class="truncate mt-0.5">Calle desconocida</span>`;
-            }
-        });
-    }
+    }, 500);
 }
 // =========================================================
-// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN & RESPONSIVE) ---
+// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY ---
 // =========================================================
     function resetAppAndGPS() {
         alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");

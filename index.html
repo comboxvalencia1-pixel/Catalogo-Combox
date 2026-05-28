@@ -2037,7 +2037,6 @@ function nativeShare() {
     // --- FIN DEL CÓDIGO NUEVO ---
 
     function formatTimeFromIso(iso) { if(!iso) return null; return new Date(iso).toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}); }
-    function formatTimeFromIso(iso) { if(!iso) return null; return new Date(iso).toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}); }
     
     function openHorarioModal() {
         if(!currentSede || !db?.sedes) return;
@@ -4101,9 +4100,6 @@ function initAdminDelivery() {
         routeCapsules.style.visibility = 'hidden';
         routeCapsules.style.opacity = '0';
     }
-    // ------------------------------------------------------
-
-    const adminUI = document.createElement('div');
     
     const adminUI = document.createElement('div');
     adminUI.id = "admin-ui-overlay";

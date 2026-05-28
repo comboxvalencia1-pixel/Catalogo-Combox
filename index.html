@@ -4021,101 +4021,125 @@ window.cambiarSedeAdmin = async function(id) {
     }
 };
 
+// Forzamos la URL del icono rojo para asegurar que siempre cargue
+const adminRedIcon = L.icon({
+    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+});
+
+// --- 1. CONFIGURACIÓN DEL PIN ROJO ---
+const adminRedIcon = L.icon({
+    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+});
+
+// --- 2. FUNCIONES DEL PIN ---
 window.activarPinAdmin = function() {
-    if(!map) return;
-    isEditingLocation = true;
-    isManualLocation = true; 
-    
-    document.getElementById('admin-pin-controls').style.display = 'flex';
-    
-    if (rutaLayer) { map.removeLayer(rutaLayer); rutaLayer = null; }
-    if (userMarker) {
-        userMarker.setIcon(redPinIcon);
-        userMarker.setLatLng(map.getCenter());
-        adminPendingLatLng = map.getCenter();
-    }
+    if(!map) return;
+    isEditingLocation = true;
+    isManualLocation = true; 
+    
+    document.getElementById('admin-pin-controls').style.display = 'flex';
+    
+    if (typeof rutaLayer !== 'undefined' && rutaLayer) { 
+        map.removeLayer(rutaLayer); 
+        rutaLayer = null; 
+    }
+    
+    const center = map.getCenter();
+    
+    if (typeof userMarker !== 'undefined' && userMarker !== null) {
+        userMarker.setIcon(adminRedIcon);
+        userMarker.setLatLng(center);
+    } else {
+        window.userMarker = L.marker(center, {icon: adminRedIcon}).addTo(map);
+    }
+    
+    adminPendingLatLng = center;
 
-    map.on('move', function() {
-        if(isEditingLocation && userMarker) userMarker.setLatLng(map.getCenter());
-    });
-    map.on('moveend', function() {
-        if(isEditingLocation) adminPendingLatLng = map.getCenter();
-    });
-};
-
-window.cancelarPinAdmin = function() {
-    isEditingLocation = false;
-    document.getElementById('admin-pin-controls').style.display = 'none';
-    map.off('move');
-    map.off('moveend');
-    
-    if(checkoutSede) {
-        const [lat, lng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
-        map.setView([lat, lng], 13);
-    }
+    map.on('move', function() {
+        if(isEditingLocation && window.userMarker) {
+            window.userMarker.setLatLng(map.getCenter());
+        }
+    });
+    map.on('moveend', function() {
+        if(isEditingLocation) adminPendingLatLng = map.getCenter();
+    });
 };
 
 window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
-    isEditingLocation = false;
-    document.getElementById('admin-pin-controls').style.display = 'none';
-    map.off('move');
-    map.off('moveend');
-    
-    const lat = manualLat || (adminPendingLatLng ? adminPendingLatLng.lat : null);
-    const lng = manualLng || (adminPendingLatLng ? adminPendingLatLng.lng : null);
-    if(!lat || !lng) return;
-    
-    document.getElementById('cajera-coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    document.getElementById('cajera-tarifa').innerText = "Calculando...";
-    document.getElementById('cajera-zona').value = "Buscando zona...";
+    isEditingLocation = false;
+    document.getElementById('admin-pin-controls').style.display = 'none';
+    map.off('move');
+    map.off('moveend');
+    
+    const lat = manualLat || (adminPendingLatLng ? adminPendingLatLng.lat : null);
+    const lng = manualLng || (adminPendingLatLng ? adminPendingLatLng.lng : null);
+    
+    if(!lat || !lng) return;
+    
+    document.getElementById('cajera-coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    document.getElementById('cajera-tarifa').innerText = "Calculando...";
+    document.getElementById('cajera-km').innerText = "--";
+    document.getElementById('cajera-tiempo').innerText = "--";
+    document.getElementById('cajera-zona').value = "Buscando zona...";
 
-    // False = Permite que el sistema busque la sede abierta más cercana automáticamente
-    await renderMapPosition(lat, lng, false); 
+    await renderMapPosition(lat, lng, false); 
 
-    document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
-    document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
-    document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
-    
-    obtenerZonaORS(lat, lng);
+    setTimeout(() => {
+        const elmKm = document.getElementById('route-km');
+        const elmTime = document.getElementById('route-time');
+        const elmTarifa = document.getElementById('map-header-title');
+
+        document.getElementById('cajera-km').innerText = elmKm && elmKm.innerText !== "" ? elmKm.innerText : "--";
+        document.getElementById('cajera-tiempo').innerText = elmTime && elmTime.innerText !== "" ? elmTime.innerText : "--";
+        document.getElementById('cajera-tarifa').innerText = elmTarifa && elmTarifa.innerText !== "" ? elmTarifa.innerText : "--";
+    }, 1200); 
+    
+    obtenerZonaORS(lat, lng);
 };
 
+// --- 3. GEOCODIFICACIÓN (ZONA) ---
 window.obtenerZonaORS = async function(lat, lng) {
-    try {
-        const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
-        const reverseUrl = `https://api.openrouteservice.org/geocode/reverse?api_key=${orsApiKey}&point.lon=${lng}&point.lat=${lat}`;
-        const res = await fetch(reverseUrl);
-        const data = await res.json();
-        
-        if(data.features && data.features.length > 0) {
-            const props = data.features[0].properties;
-            
-            // Priorizamos Calle, Barrio y Ciudad. Evitamos nombres de comercios.
-            let partesZona = [];
-            
-            if (props.street) {
-                partesZona.push(props.street);
-            } else if (props.neighbourhood) {
-                partesZona.push(props.neighbourhood);
-            }
-            
-            if (props.locality) {
-                partesZona.push(props.locality);
-            } else if (props.county && !props.locality) {
-                partesZona.push(props.county);
-            }
+    try {
+        const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
+        const reverseUrl = `https://api.openrouteservice.org/geocode/reverse?api_key=${orsApiKey}&point.lon=${lng}&point.lat=${lat}`;
+        const res = await fetch(reverseUrl);
+        const data = await res.json();
+        
+        if(data.features && data.features.length > 0) {
+            const props = data.features[0].properties;
+            let partesZona = [];
+            
+            if (props.street) {
+                partesZona.push(props.street);
+            } else if (props.neighbourhood) {
+                partesZona.push(props.neighbourhood);
+            }
+            
+            if (props.locality) {
+                partesZona.push(props.locality);
+            } else if (props.county && !props.locality) {
+                partesZona.push(props.county);
+            }
 
-            // Si logramos extraer la calle/ciudad, lo mostramos. Si no, usamos lo que haya o "Zona Desconocida"
-            const calle = partesZona.length > 0 ? partesZona.join(', ') : (props.name || "Zona Desconocida");
-            
-            document.getElementById('cajera-zona').value = calle;
-        } else {
-            document.getElementById('cajera-zona').value = "No localizada";
-        }
-    } catch(e) {
-        document.getElementById('cajera-zona').value = "Fallo de servidor";
-    }
+            const calle = partesZona.length > 0 ? partesZona.join(', ') : (props.name || "Zona Desconocida");
+            document.getElementById('cajera-zona').value = calle;
+        } else {
+            document.getElementById('cajera-zona').value = "No localizada";
+        }
+    } catch(e) {
+        document.getElementById('cajera-zona').value = "Fallo de servidor";
+    }
 };
 
+// --- 4. INICIALIZACIÓN DE LA VISTA ADMIN ---
 function initAdminDelivery() {
     isAdminDelivery = true;
     
@@ -4136,21 +4160,18 @@ function initAdminDelivery() {
     document.body.style.cssText = "overflow: hidden; margin: 0; padding: 0; background: #e5e3df;";
     mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important;";
     
-    // --- OCULTAR UI DE CLIENTE (Incluyendo el icono de la moto arriba a la derecha) ---
     const btnWrongLoc = document.getElementById('btn-wrong-location');
     if (btnWrongLoc) btnWrongLoc.style.display = 'none';
     
     const gpsBtn = mapWrapper.querySelector('button[onclick*="getLocation"]');
     if (gpsBtn) gpsBtn.style.display = 'none';
     
-    // Ocultar cápsulas del cliente original
     const routeCapsules = mapWrapper.querySelector('.bottom-3.right-3.flex-col');
     if (routeCapsules) {
         routeCapsules.style.visibility = 'hidden';
         routeCapsules.style.opacity = '0';
     }
 
-    // Ocultar Precio/Moto superior sin romper el cálculo (opacity 0)
     const topPriceMoto = document.getElementById('map-header-title');
     if (topPriceMoto) {
         const topContainer = topPriceMoto.closest('.absolute');
@@ -4160,7 +4181,6 @@ function initAdminDelivery() {
         }
     }
     
-    // --- CREACIÓN DE LA UI DEL ADMIN ---
     const adminUI = document.createElement('div');
     adminUI.id = "admin-ui-overlay";
     adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between z-[10000]";
@@ -4220,33 +4240,36 @@ function initAdminDelivery() {
 
     document.body.appendChild(adminUI);
 
-    // --- CARGA SEGURA DE SEDES Y MAPA ---
     if (typeof map === 'undefined' || map === null) {
         initLeafletMap();
     }
 
-    // Intervalo que espera a que la DB termine de cargar antes de renderizar
     const loadDataInterval = setInterval(() => {
         if (db && db.sedes && db.sedes.length > 0) {
             
-            // 1. Llenar el select
             const selectSedeAdmin = document.getElementById('cajera-sede');
             if(selectSedeAdmin) {
                 selectSedeAdmin.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE.split(',')[0]}</option>`).join('');
                 if(checkoutSede) selectSedeAdmin.value = checkoutSede.ID_SEDE;
             }
 
-            // 2. Dibujar pines en el mapa
             if(typeof map !== 'undefined' && map !== null) {
                 map.invalidateSize();
-                renderizarSedesAdmin();
+                
+                if (checkoutSede && checkoutSede.COORDENADAS_SEDE) {
+                    const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+                    map.setView([sLat, sLng], 13);
+                }
+                
+                if (typeof renderizarSedesAdmin === "function") {
+                    renderizarSedesAdmin();
+                }
             }
 
-            clearInterval(loadDataInterval); // Detenemos el intervalo cuando ya cargó
+            clearInterval(loadDataInterval); 
         }
-    }, 300); // Revisa cada 300 milisegundos
-
-    // Parada de seguridad (Evita que el intervalo corra por siempre si hay un error de internet)
+    }, 300); 
+    
     setTimeout(() => clearInterval(loadDataInterval), 10000);
 }
 // =========================================================

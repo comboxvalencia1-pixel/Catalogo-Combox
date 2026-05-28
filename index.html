@@ -4014,48 +4014,59 @@ function initAdminDelivery() {
     if (mapWrapper) {
         document.body.appendChild(mapWrapper);
         
-        // Forzar el contenedor principal a ocupar toda la pantalla sin restricciones
         mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important; background: #e5e3df !important; margin: 0 !important; padding: 0 !important;";
         
-        // EL TRUCO PARA QUE NO SE CORTE: Forzar el div interno del mapa a expandirse
-        // (Nota: Asegúrate de que el div donde se carga Leaflet tenga id="map")
         const mapElement = document.getElementById('map'); 
         if (mapElement) {
             mapElement.style.cssText = "width: 100% !important; height: 100% !important; position: absolute !important; top: 0 !important; left: 0 !important; z-index: 1 !important;";
         }
 
-        // 3. Crear la Interfaz Flotante Responsiva (Adaptable a PC y Móvil)
+        // OCULTAR ELEMENTOS DUPLICADOS DEL MAPA NATIVO (Tarifa, sedes, km, tiempo y botón "No es aquí")
+        const hideNativeElementsStyle = document.createElement('style');
+        hideNativeElementsStyle.innerHTML = `
+            #map-wrapper > .absolute.top-3.right-3,
+            #map-wrapper > .absolute.bottom-3.right-3,
+            #btn-wrong-location {
+                display: none !important;
+            }
+        `;
+        mapWrapper.appendChild(hideNativeElementsStyle);
+
+        // 3. Crear la Interfaz Flotante Responsiva (Header Punta a Punta y Footer)
         const adminUI = document.createElement('div');
         adminUI.id = "admin-ui-overlay";
-        // En contenedor general usamos flex-col para separar arriba y abajo
-        adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-[10000]";
+        // Quitamos el p-4 global para que el header pegue arriba
+        adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between z-[10000]";
         
         adminUI.innerHTML = `
-            <div class="w-full max-w-md mx-auto pointer-events-auto bg-black/85 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl flex flex-col gap-3 mt-2 transition-all">
-                <h2 class="text-white text-xs font-black text-center uppercase tracking-[0.2em] text-[#25D366]">Cotizador COMBOX</h2>
-                
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <input type="text" id="cajera-name" placeholder="Nombre Cliente" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-[#25D366] transition-colors">
-                    <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-[#25D366] transition-colors">
-                </div>
-                
-                <input type="text" id="cajera-coords" placeholder="Coordenadas" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-gray-400 text-xs text-center font-mono focus:outline-none">
-                
-                <div class="text-center mt-1 border-t border-white/10 pt-2">
-                    <p id="cajera-address" class="text-gray-300 text-[11px] font-medium flex items-center justify-center gap-1 leading-tight min-h-[16px]">
-                        <span class="material-symbols-outlined text-[14px] text-red-500">location_on</span> Mueve el mapa para ubicar al cliente
-                    </p>
-                </div>
-            </div>
-
-            <div class="w-full max-w-md mx-auto pointer-events-none flex flex-col gap-3 mb-2 transition-all">
-                
-                <div class="flex pointer-events-auto justify-end mb-2">
-                    <button onclick="showManualLocationInput()" class="bg-black/85 backdrop-blur-md border border-white/20 w-12 h-12 rounded-full flex justify-center items-center text-white active:scale-90 transition-transform shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:bg-gray-800">
-                        <span class="material-symbols-outlined text-[20px]">edit_location_alt</span>
+            <div class="w-full pointer-events-auto bg-[#0A0A0B]/95 backdrop-blur-xl px-4 pb-4 border-b border-white/10 shadow-2xl flex flex-col gap-3 rounded-b-3xl transition-all" style="padding-top: calc(1rem + env(safe-area-inset-top));">
+                <div class="flex items-center justify-between w-full mb-1">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-[20px]">admin_panel_settings</span>
+                        <h2 class="text-white text-sm font-black uppercase tracking-[0.15em]">Admin Delivery</h2>
+                    </div>
+                    <button onclick="window.location.reload()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-90 transition-transform">
+                        <span class="material-symbols-outlined text-[18px]">close</span>
                     </button>
                 </div>
+                
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" id="cajera-name" placeholder="Nombre del Cliente" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-zinc-500">
+                    <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-zinc-500">
+                </div>
+                
+                <div class="flex items-center gap-2 bg-black/50 border border-white/10 rounded-xl px-3 py-2.5">
+                     <span class="material-symbols-outlined text-[18px] text-zinc-400">my_location</span>
+                     <input type="text" id="cajera-coords" placeholder="Coordenadas (Arrastra el pin)" readonly class="w-full bg-transparent text-gray-300 text-[11px] font-mono focus:outline-none">
+                </div>
+                
+                <p id="cajera-address" class="text-gray-300 text-[11px] font-medium flex items-start gap-1.5 leading-tight mt-1 px-1">
+                    <span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0">location_on</span> 
+                    <span class="truncate mt-0.5">Mueve el mapa para ubicar al cliente</span>
+                </p>
+            </div>
 
+            <div class="w-full max-w-md mx-auto pointer-events-none flex flex-col gap-3 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] transition-all">
                 <div class="flex gap-2 justify-between pointer-events-auto">
                     <div class="flex-1 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg">
                         <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Tiempo</span>
@@ -4065,8 +4076,8 @@ function initAdminDelivery() {
                         <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Distancia</span>
                         <span id="cajera-km" class="text-white font-bold text-sm">-- km</span>
                     </div>
-                    <div class="flex-1 bg-gradient-to-br from-[#25D366] to-[#1DA851] rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg shadow-green-900/50">
-                        <span class="text-black/70 text-[9px] font-extrabold uppercase tracking-wider">Tarifa</span>
+                    <div class="flex-1 bg-primary/20 border border-primary/50 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="text-primary text-[9px] font-extrabold uppercase tracking-wider">Tarifa</span>
                         <span id="cajera-tarifa" class="text-white font-black text-base drop-shadow-md">$0.00</span>
                     </div>
                 </div>
@@ -4122,14 +4133,14 @@ function initAdminDelivery() {
         map.on('dragend', async function() {
             const center = map.getCenter();
             const addressTag = document.getElementById('cajera-address');
-            addressTag.innerHTML = `<span class="material-symbols-outlined animate-spin text-[14px]">sync</span> Buscando calle...`;
+            addressTag.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px] flex-shrink-0">sync</span> <span class="truncate mt-0.5 text-zinc-400">Buscando calle...</span>`;
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${center.lat}&lon=${center.lng}`);
                 const data = await res.json();
                 let shortAddress = data.display_name.split(',').slice(0,2).join(', ');
-                addressTag.innerHTML = `<span class="material-symbols-outlined text-[14px] text-[#25D366]">location_on</span> ${shortAddress}`;
+                addressTag.innerHTML = `<span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0">location_on</span> <span class="truncate mt-0.5 text-white">${shortAddress}</span>`;
             } catch(e) {
-                addressTag.innerHTML = `<span class="material-symbols-outlined text-[14px] text-red-500">location_off</span> Calle desconocida`;
+                addressTag.innerHTML = `<span class="material-symbols-outlined text-[16px] text-red-500 flex-shrink-0">location_off</span> <span class="truncate mt-0.5">Calle desconocida</span>`;
             }
         });
     }
@@ -4137,7 +4148,6 @@ function initAdminDelivery() {
 // =========================================================
 // --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN & RESPONSIVE) ---
 // =========================================================
-
     function resetAppAndGPS() {
         alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");
         caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {

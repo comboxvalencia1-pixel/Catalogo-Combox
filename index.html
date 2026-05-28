@@ -3988,148 +3988,156 @@ function renderPickupMap() {
 }
 
 // =========================================================
-// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY ---
+// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN) ---
 // =========================================================
 let isAdminDelivery = false;
 
 function initAdminDelivery() {
     isAdminDelivery = true;
 
-    // 1. Abrir el modal en segundo plano para inicializar variables
-    openCheckoutModalLogica('delivery');
-
-    // 2. Ocultar el formulario original y limpiar la vista
-    const modal = document.getElementById('checkout-modal');
-    if (modal) modal.style.display = 'none'; // Ocultamos el modal blanco tradicional
+    // 1. Bloquear scroll y ocultar elementos innecesarios
+    document.body.style.overflow = 'hidden';
+    const splash = document.getElementById('splash-screen');
+    if (splash) splash.style.display = 'none';
     
-    // 3. EXPANDIR EL MAPA A TODA LA PANTALLA
+    // Ocultar botón GPS nativo y remover punto verde si existe
+    const gpsBtn = document.querySelector('button[onclick*="getLocation(true)"]');
+    if (gpsBtn) gpsBtn.style.display = 'none';
+    if (typeof userMarker !== 'undefined' && userMarker && typeof map !== 'undefined') {
+        map.removeLayer(userMarker);
+    }
+
+    // 2. Extraer el mapa y ponerlo a PANTALLA COMPLETA
     const mapWrapper = document.getElementById('map-wrapper');
     if (mapWrapper) {
-        mapWrapper.style.position = 'fixed';
-        mapWrapper.style.top = '0';
-        mapWrapper.style.left = '0';
-        mapWrapper.style.width = '100vw';
-        mapWrapper.style.height = '100vh';
-        mapWrapper.style.zIndex = '9999'; // Por encima de toda la web
-        mapWrapper.style.borderRadius = '0';
-        document.body.appendChild(mapWrapper); // Lo sacamos del contenedor al body
+        // Le damos clases fijas para que cubra toda la pantalla por encima de todo
+        mapWrapper.className = "fixed inset-0 z-[9999] w-full h-[100dvh] bg-[#e5e3df]";
         
-        setTimeout(() => map.invalidateSize(), 500); // Refrescar render del mapa
+        // 3. Crear la Interfaz Flotante de la Cajera
+        const adminUI = document.createElement('div');
+        adminUI.id = "admin-ui-overlay";
+        adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between px-4 py-6 z-[10000]";
+        
+        adminUI.innerHTML = `
+            <div class="pointer-events-auto bg-black/85 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl flex flex-col gap-3">
+                <h2 class="text-white text-xs font-black text-center uppercase tracking-[0.2em] text-[#25D366]">Cotizador Delivery</h2>
+                <div class="flex gap-2">
+                    <input type="text" id="cajera-name" placeholder="Nombre Cliente" class="w-1/2 bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-[#25D366] transition-colors">
+                    <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-1/2 bg-white/10 border border-white/20 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-[#25D366] transition-colors">
+                </div>
+                <input type="text" id="cajera-coords" placeholder="Coordenadas" readonly class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-gray-400 text-xs text-center font-mono focus:outline-none">
+                
+                <div class="text-center mt-1 border-t border-white/10 pt-2">
+                    <p id="cajera-address" class="text-gray-300 text-[11px] font-medium flex items-center justify-center gap-1 leading-tight min-h-[16px]">
+                        <span class="material-symbols-outlined text-[14px] text-red-500">location_on</span> Mueve el mapa para ubicar al cliente
+                    </p>
+                </div>
+            </div>
+
+            <div class="pointer-events-auto flex flex-col gap-3 pb-2">
+                
+                <div class="flex">
+                    <button onclick="showManualLocationInput()" class="bg-black/85 backdrop-blur-md border border-white/20 w-12 h-12 rounded-full flex justify-center items-center text-white active:scale-90 transition-transform shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+                        <span class="material-symbols-outlined text-[20px]">edit_location_alt</span>
+                    </button>
+                </div>
+
+                <div class="flex gap-2 justify-between">
+                    <div class="flex-1 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg">
+                        <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Tiempo</span>
+                        <span id="cajera-tiempo" class="text-white font-bold text-sm">-- min</span>
+                    </div>
+                    <div class="flex-1 bg-black/85 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg">
+                        <span class="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Distancia</span>
+                        <span id="cajera-km" class="text-white font-bold text-sm">-- km</span>
+                    </div>
+                    <div class="flex-1 bg-gradient-to-br from-[#25D366] to-[#1DA851] rounded-2xl py-2.5 flex flex-col items-center justify-center shadow-lg shadow-green-900/50">
+                        <span class="text-black/70 text-[9px] font-extrabold uppercase tracking-wider">Tarifa</span>
+                        <span id="cajera-tarifa" class="text-white font-black text-base drop-shadow-md">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-1">
+                    <button onclick="enviarTraspasoAdmin()" class="w-[35%] bg-[#1f2328] border border-white/10 rounded-2xl py-3.5 text-white font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform shadow-xl">
+                        <span class="material-symbols-outlined text-[18px] text-gray-400">share</span>
+                        <span>Traspasar</span>
+                    </button>
+                    <button onclick="confirmarDeliveryAdminSheet()" id="btn-cajera-enviar" class="w-[65%] bg-white text-black rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-xl">
+                        ENVIAR <span class="material-symbols-outlined text-[20px]">send</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        mapWrapper.appendChild(adminUI);
     }
 
-    // 4. CREAR PANEL SUPERIOR FLOTANTE CON INPUTS (Dentro del mapa)
-    const nameInputOriginal = document.getElementById('checkout-name');
-    const phoneInputOriginal = document.getElementById('checkout-phone');
-    const sedeSelectOriginal = document.querySelector('.checkout-sede-select');
-    
-    if (mapWrapper && !document.getElementById('admin-overlay-top')) {
-        const topOverlay = document.createElement('div');
-        topOverlay.id = 'admin-overlay-top';
-        topOverlay.className = "absolute top-4 left-4 right-4 z-[10000] bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] flex flex-col gap-3 border border-gray-200";
-        
-        // Mover y estilizar Inputs originales
-        if (nameInputOriginal) {
-            nameInputOriginal.placeholder = "👤 Nombre del Cliente";
-            nameInputOriginal.className = "w-full p-3 bg-gray-100/80 rounded-xl outline-none text-[15px] font-semibold text-black placeholder:text-gray-500 border border-gray-300 focus:border-black transition-colors";
-            topOverlay.appendChild(nameInputOriginal);
-        }
-        if (phoneInputOriginal) {
-            phoneInputOriginal.placeholder = "☎️ Teléfono del Cliente";
-            phoneInputOriginal.className = "w-full p-3 bg-gray-100/80 rounded-xl outline-none text-[15px] font-semibold text-black placeholder:text-gray-500 border border-gray-300 focus:border-black transition-colors";
-            topOverlay.appendChild(phoneInputOriginal);
-        }
-        // Mover Selector de Sede (si existe)
-        if (sedeSelectOriginal) {
-            const sedeWrapper = sedeSelectOriginal.parentElement; 
-            topOverlay.appendChild(sedeWrapper);
-        }
-
-        // Visor de Coordenadas
-        const coordsDisplay = document.createElement('div');
-        coordsDisplay.id = 'admin-coords-display';
-        coordsDisplay.className = "text-[13px] font-mono text-gray-700 bg-blue-50 p-2.5 rounded-xl text-center border border-blue-200 font-bold tracking-tight";
-        coordsDisplay.innerText = "📍 Ubica el mapa para ver coordenadas";
-        topOverlay.appendChild(coordsDisplay);
-
-        mapWrapper.appendChild(topOverlay);
-    }
-
-    // 5. ELIMINAR PUNTO VERDE (GPS ACTUAL) Y FORZAR MODO MANUAL
+    // 4. Activar modo manual (el pin de edición) al cargar
     setTimeout(() => {
-        // Matar proceso de lectura de GPS del navegador
-        if (window.watchPositionId) navigator.geolocation.clearWatch(window.watchPositionId);
-        
-        // Destruir el marcador de ubicación del usuario agresivamente (por si se genera tarde)
-        setInterval(() => {
-            if (typeof userMarker !== 'undefined' && userMarker !== null) {
-                map.removeLayer(userMarker);
-                userMarker = null; 
-            }
-        }, 300); // Revisa cada 300ms y lo borra
-
-        // Ocultar botón nativo de "centrar en mi ubicación" y botón del lápiz
-        const gpsBtn = document.querySelector('button[onclick*="getLocation(true)"]');
-        if (gpsBtn) gpsBtn.style.display = 'none';
-        const btnEdit = document.getElementById('btn-wrong-location');
-        if (btnEdit) btnEdit.style.display = 'none';
-
-        // Activar la cruz central para modo manual
-        showManualLocationInput(); 
-        
-        // Evento que actualiza los números de coordenadas al mover el mapa
-        map.on('move', function() {
-            if(isAdminDelivery && isManualLocation) {
-                const center = map.getCenter();
-                const coordText = document.getElementById('admin-coords-display');
-                if(coordText) coordText.innerText = `📍 Coordenadas: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`;
-            }
-        });
+        if(typeof showManualLocationInput === 'function') showManualLocationInput();
+        if(typeof map !== 'undefined') map.invalidateSize(); // Refresca el mapa para que ocupe todo el espacio
     }, 800);
 
-    // 6. CREAR BOTONES INFERIORES FLOTANTES (Traspasar y Confirmar)
-    if (mapWrapper && !document.getElementById('admin-bottom-buttons')) {
-        const bottomContainer = document.createElement('div');
-        bottomContainer.id = 'admin-bottom-buttons';
-        bottomContainer.className = "absolute bottom-6 left-4 right-4 z-[10000] flex gap-3";
+    // 5. Bucle Inteligente: Actualiza textos de la UI leyendo tus variables globales
+    setInterval(() => {
+        if(!isAdminDelivery) return;
+        
+        // Coordenadas
+        if(typeof pendingLatLng !== 'undefined' && pendingLatLng) {
+            document.getElementById('cajera-coords').value = `${pendingLatLng.lat.toFixed(5)}, ${pendingLatLng.lng.toFixed(5)}`;
+        }
+        
+        // Indicadores (Asume que usas OSRM y estas variables existen en tu código)
+        const tarifaDiv = document.getElementById('cajera-tarifa');
+        if(tarifaDiv && typeof tarifaFinalCalculada !== 'undefined') tarifaDiv.innerText = `$${tarifaFinalCalculada.toFixed(2)}`;
 
-        // Botón Traspasar
-        const btnTraspasar = document.createElement('button');
-        btnTraspasar.className = "flex-1 bg-[#25D366] text-white py-4 rounded-2xl font-black shadow-[0_10px_20px_rgba(37,211,102,0.3)] flex items-center justify-center gap-2 active:scale-95 transition-transform text-[14px] uppercase";
-        btnTraspasar.innerHTML = '<span class="material-symbols-outlined text-[22px]">share</span> Traspasar';
-        btnTraspasar.onclick = enviarTraspasoAdmin;
-        bottomContainer.appendChild(btnTraspasar);
+        // (Si tus variables de OSRM se llaman distinto, cambia 'globalDurationText' por el nombre real de tu variable de tiempo)
+        const tiempoDiv = document.getElementById('cajera-tiempo');
+        if(tiempoDiv && typeof window.tiempoOSRM !== 'undefined') tiempoDiv.innerText = window.tiempoOSRM; 
 
-        // Botón Confirmar a Google Sheets
-        const btnConfirmar = document.createElement('button');
-        btnConfirmar.id = 'admin-checkout-submit-btn'; // ID nuevo para no chocar
-        btnConfirmar.className = "flex-1 bg-black text-white py-4 rounded-2xl font-black shadow-[0_10px_20px_rgba(0,0,0,0.3)] flex items-center justify-center gap-2 active:scale-95 transition-transform text-[14px] uppercase border border-white/20";
-        btnConfirmar.innerHTML = 'Confirmar <span class="material-symbols-outlined text-[22px]">send</span>';
-        btnConfirmar.onclick = confirmarDeliveryAdminSheet;
-        bottomContainer.appendChild(btnConfirmar);
+        const kmDiv = document.getElementById('cajera-km');
+        if(kmDiv && typeof window.distanciaOSRM !== 'undefined') kmDiv.innerText = window.distanciaOSRM;
+    }, 1000);
 
-        mapWrapper.appendChild(bottomContainer);
+    // 6. Obtener nombre de la calle usando OpenStreetMap (Se ejecuta al soltar el mapa)
+    if(typeof map !== 'undefined') {
+        map.on('dragend', async function() {
+            const center = map.getCenter();
+            const addressTag = document.getElementById('cajera-address');
+            addressTag.innerHTML = `<span class="material-symbols-outlined animate-spin text-[14px]">sync</span> Buscando calle...`;
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${center.lat}&lon=${center.lng}`);
+                const data = await res.json();
+                // Toma solo las 2 primeras partes de la dirección para no hacerlo tan largo
+                let shortAddress = data.display_name.split(',').slice(0,2).join(', ');
+                addressTag.innerHTML = `<span class="material-symbols-outlined text-[14px] text-[#25D366]">location_on</span> ${shortAddress}`;
+            } catch(e) {
+                addressTag.innerHTML = `<span class="material-symbols-outlined text-[14px] text-red-500">location_off</span> Calle desconocida`;
+            }
+        });
     }
 }
 
 function enviarTraspasoAdmin() {
-    const name = document.getElementById('checkout-name').value.trim() || 'No indicado';
-    const phone = document.getElementById('checkout-phone').value.trim() || 'No indicado';
-    const sede = checkoutSede ? checkoutSede.NOMBRE_SEDE.split(',')[0] : 'No seleccionada';
-    let tarifa = tarifaFinalCalculada ? tarifaFinalCalculada.toFixed(2) : '0.00';
+    const name = document.getElementById('cajera-name').value.trim() || 'No indicado';
+    const phone = document.getElementById('cajera-phone').value.trim() || 'No indicado';
+    const coords = document.getElementById('cajera-coords').value;
+    const direccion = document.getElementById('cajera-address').innerText.replace('location_on', '').trim();
     
-    // Obtener coordenadas del centro del mapa
-    const center = map.getCenter();
-    const coords = `${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`;
-    const zona = calculateTariff(center.lat, center.lng); 
-
-    let telefonoSede = checkoutSede?.TELEFONO || '584244701273';
+    let tarifa = typeof tarifaFinalCalculada !== 'undefined' ? tarifaFinalCalculada.toFixed(2) : '0.00';
+    let zona = (typeof pendingLatLng !== 'undefined' && pendingLatLng) ? calculateTariff(pendingLatLng.lat, pendingLatLng.lng) : "Desconocida";
+    
+    // Obtener la sede desde tu selector global (si existe), si no asume la por defecto
+    const sede = typeof checkoutSede !== 'undefined' && checkoutSede ? checkoutSede.NOMBRE_SEDE.split(',')[0] : 'Sede Principal';
+    let telefonoSede = typeof checkoutSede !== 'undefined' && checkoutSede ? checkoutSede.TELEFONO : '584244701273';
     
     let msg = `🛵 *TRASPASO DE DELIVERY (CAJA)* 🛵\n\n`;
     msg += `🏢 *SEDE:* ${sede}\n`;
     msg += `👤 *CLIENTE:* ${name}\n`;
     msg += `☎️ *TELÉFONO:* ${phone}\n\n`;
     msg += `📍 *COORDENADAS:* ${coords}\n`;
-    msg += `🗺️ *MAPA:* https://maps.google.com/?q=$$${coords}\n`;
+    msg += `🛣️ *CALLE:* ${direccion}\n`;
+    msg += `🗺️ *MAPA:* https://maps.google.com/?q=$$?q=${coords.replace(' ', '')}\n`;
     msg += `💵 *TARIFA:* $${tarifa}\n`;
     msg += `📌 *ZONA:* ${zona}\n`;
 
@@ -4137,32 +4145,33 @@ function enviarTraspasoAdmin() {
 }
 
 async function confirmarDeliveryAdminSheet() {
-    const name = document.getElementById('checkout-name').value.trim();
-    const phone = document.getElementById('checkout-phone').value.trim();
+    const name = document.getElementById('cajera-name').value.trim();
+    const phone = document.getElementById('cajera-phone').value.trim();
+    const coords = document.getElementById('cajera-coords').value;
     
     if(!name || !phone) {
-        customAlert("Debe ingresar Nombre y Teléfono del cliente.");
+        if(typeof customAlert === 'function') customAlert("Falta Nombre y Teléfono");
+        else alert("Debe ingresar Nombre y Teléfono del cliente.");
         return;
     }
 
-    const center = map.getCenter();
-    const coords = `${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`;
-    const zona = calculateTariff(center.lat, center.lng);
-
-    const btn = document.getElementById('admin-checkout-submit-btn');
+    const btn = document.getElementById('btn-cajera-enviar');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[22px]">sync</span> Guardando...';
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">sync</span>';
     btn.disabled = true;
+
+    let zona = (typeof pendingLatLng !== 'undefined' && pendingLatLng) ? calculateTariff(pendingLatLng.lat, pendingLatLng.lng) : "Desconocida";
+    const sede = typeof checkoutSede !== 'undefined' && checkoutSede ? checkoutSede.NOMBRE_SEDE.split(',')[0] : '';
 
     const payload = {
         action: 'cotizacion_cajera_delivery',
-        id_pedido: generarId(),
+        id_pedido: typeof generarId === 'function' ? generarId() : Date.now(),
         cliente: name,
         telefono: phone,
-        sede: checkoutSede ? checkoutSede.NOMBRE_SEDE.split(',')[0] : '',
+        sede: sede,
         coordenadas: coords,
         zona: zona,
-        tarifa: tarifaFinalCalculada || 0,
+        tarifa: typeof tarifaFinalCalculada !== 'undefined' ? tarifaFinalCalculada : 0,
         fecha: new Date().toLocaleString('es-VE')
     };
 
@@ -4174,18 +4183,21 @@ async function confirmarDeliveryAdminSheet() {
             body: JSON.stringify(payload)
         });
         
-        customAlert("Delivery registrado en Sheets.", "Confirmado");
-        document.getElementById('checkout-name').value = '';
-        document.getElementById('checkout-phone').value = '';
+        if(typeof customAlert === 'function') customAlert("Delivery registrado correctamente.", "Éxito");
+        else alert("Delivery registrado correctamente.");
+        
+        document.getElementById('cajera-name').value = '';
+        document.getElementById('cajera-phone').value = '';
     } catch (e) {
-        customAlert("Error al guardar. Revisa tu conexión.");
+        if(typeof customAlert === 'function') customAlert("Error de conexión.");
+        else alert("Error de conexión.");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
 }
 // =========================================================
-// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY ---
+// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY (FULL SCREEN) ---
 // =========================================================
     function resetAppAndGPS() {
         alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");

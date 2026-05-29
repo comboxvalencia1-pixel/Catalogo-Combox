@@ -4395,7 +4395,21 @@ window.cancelarPinAdmin = async function() {
         window.dibujarSedesEnMapa();
     }
 };
-
+// 6.5 LEER COORDENADAS PEGADAS MANUALMENTE EN EL INPUT DE CAJERA
+window.actualizarCoordenadasManualAdmin = async function(val) {
+    // Busca si el texto pegado tiene formato de coordenadas (ej: 10.254, -68.010)
+    const coincidencia = val.match(/[(]?\s*(-?\d+\.\d+)\s*[,;\s]+\s*(-?\d+\.\d+)\s*[)]?/);
+    if(coincidencia) {
+        const lat = parseFloat(coincidencia[1]);
+        const lng = parseFloat(coincidencia[2]);
+        
+        // Quitamos el foco (cierra el teclado en móviles)
+        document.getElementById('cajera-coords').blur(); 
+        
+        // Enviamos las coordenadas al sistema de pin inteligente que ya tienes armado
+        await window.aceptarPinAdmin(lat, lng); 
+    }
+};
 // 7. GEOCODIFICACIÓN DE LA ZONA (Actualizado con doble respaldo para Admin)
 window.obtenerZonaORS = async function(lat, lng) {
     const inputZona = document.getElementById('cajera-zona');
@@ -4504,7 +4518,7 @@ function initAdminDelivery() {
                     </button>
                     <select id="cajera-sede" onchange="cambiarSedeAdmin(this.value)" class="flex-1 bg-white/10 border border-white/20 rounded-xl px-2 py-2.5 text-white text-[11px] md:text-sm focus:outline-none uppercase font-bold text-center appearance-none truncate"></select>
                     <div class="relative flex items-center flex-1">
-                        <input type="text" id="cajera-coords" placeholder="Coordenadas" readonly class="w-full bg-white/10 border border-white/20 rounded-xl pl-2 pr-8 py-2.5 text-white text-[11px] md:text-sm focus:outline-none cursor-not-allowed truncate">
+                        <input type="text" id="cajera-coords" placeholder="Pegar coordenadas..." oninput="actualizarCoordenadasManualAdmin(this.value)" class="w-full bg-white/10 border border-white/20 rounded-xl pl-2 pr-8 py-2.5 text-white text-[11px] md:text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary truncate transition-all">
                         <button onclick="activarPinAdmin()" class="absolute right-1 p-1.5 bg-primary/20 rounded-lg text-primary hover:bg-primary/40 active:scale-95 transition-all">
                             <span class="material-symbols-outlined text-[16px] md:text-[20px] block">edit</span>
                         </button>

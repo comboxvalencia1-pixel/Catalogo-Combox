@@ -3994,7 +3994,7 @@ function renderPickupMap() {
 }
 
 // =========================================================
-// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (100% CORREGIDA) ---
+// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (PRO) ---
 // =========================================================
 let isAdminDelivery = false;
 let adminPendingLatLng = null;
@@ -4029,7 +4029,62 @@ setInterval(() => {
     }
 }, 150);
 
-// 2. RECÁLCULO AL CAMBIAR DE SEDE (Selector o Clic en Mapa - CORREGIDO INICIO LIMPIO)
+// 2. FUNCIÓN PARA REDIBUJAR SEDES CUANDO NO HAY COORDENADAS DE CLIENTE
+window.dibujarSedesEnMapa = function() {
+    if (!map || !db || !db.sedes) return;
+    
+    if (typeof marcadoresSedesMap !== 'undefined' && marcadoresSedesMap) {
+        marcadoresSedesMap.forEach(m => { try { map.removeLayer(m); } catch(e){} });
+    }
+    marcadoresSedesMap = [];
+
+    db.sedes.forEach(s => {
+        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+        const isSelected = checkoutSede && (String(s.ID_SEDE) === String(checkoutSede.ID_SEDE));
+        const sched = typeof getSchedule === 'function' ? getSchedule(s) : { isOpen: true };
+        
+        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
+        const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
+        
+        let iconWrapperClass = "";
+        let letreroClass = "";
+        
+        let isClosest = (typeof sedeMasCercanaCalculada !== 'undefined' && sedeMasCercanaCalculada && String(sedeMasCercanaCalculada.ID_SEDE) === String(s.ID_SEDE));
+        let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
+
+        if (!isSelected) {
+            if (sched.isOpen) {
+                iconWrapperClass = "scale-[0.85] brightness-75 opacity-95"; 
+                letreroClass = "opacity-80 scale-[0.95]";
+            } else {
+                iconWrapperClass = "scale-[0.85] grayscale opacity-60 brightness-75"; 
+                letreroClass = "opacity-60 scale-[0.95]";
+            }
+        }
+
+        const iconHtml = `
+            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative ${isSelected ? 'selected-sede z-[500]' : 'z-[400]'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+                ${badgeCerca}
+                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
+                </div>
+                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
+                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
+                    </div>
+                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                </div>
+            </div>`;
+            
+        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
+        marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
+    });
+
+    if (typeof updateMarkerScales === "function") updateMarkerScales(map);
+};
+
+// 3. RECÁLCULO AL CAMBIAR DE SEDE (Selector o Clic en Mapa)
 window.cambiarSedeAdmin = async function(id) {
     if(db && db.sedes) {
         checkoutSede = db.sedes.find(s => String(s.ID_SEDE) === String(id)) || checkoutSede;
@@ -4045,7 +4100,6 @@ window.cambiarSedeAdmin = async function(id) {
             isManualLocation = true;
             await renderMapPosition(lat, lng, true); 
         } else {
-            // SOLUCIÓN: Si no hay coordenadas de cliente, limpiamos el mapa de residuos y centramos en la sede
             if (checkoutSede && checkoutSede.COORDENADAS_SEDE && map) {
                 const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
                 map.setView([sLat, sLng], 13);
@@ -4056,12 +4110,14 @@ window.cambiarSedeAdmin = async function(id) {
                 document.getElementById('cajera-tarifa').innerText = "--";
                 document.getElementById('cajera-tiempo').innerText = "--";
                 document.getElementById('cajera-km').innerText = "--";
+                
+                window.dibujarSedesEnMapa();
             }
         }
     }
 };
 
-// 3. ACTIVAR EL MODO PIN MANUAL (CORREGIDO: Sincronización fluida con userMarker global)
+// 4. ACTIVAR EL MODO PIN MANUAL (Usa ÚNICAMENTE tu pin 'redPinIcon')
 window.activarPinAdmin = function() {
     if(!map) return;
     isEditingLocation = true;
@@ -4079,7 +4135,6 @@ window.activarPinAdmin = function() {
 
     const center = map.getCenter();
     
-    // Corregido: apuntamos a la variable del scope del script principal
     if (typeof userMarker !== 'undefined' && userMarker !== null) {
         userMarker.setIcon(redPinIcon);
         userMarker.setLatLng(center);
@@ -4102,7 +4157,7 @@ window.activarPinAdmin = function() {
     map.on('moveend', window.adminMapMoveEndEvent);
 };
 
-// 4. ACEPTAR POSICIÓN DEL PIN MANUAL
+// 5. ACEPTAR POSICIÓN DEL PIN MANUAL (Auto-selección inteligente Abiertas vs Cerradas)
 window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
     window.isEditingLocation = false;
     isManualLocation = true; 
@@ -4117,14 +4172,49 @@ window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
     if(!lat || !lng) return;
     
     document.getElementById('cajera-coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    
     if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = "CALCULANDO...";
+    
+    // FILTRO DINÁMICO: Evaluamos la sede ideal según disponibilidad y cercanía absoluta
+    if (db && db.sedes) {
+        let distMinimaAbierta = Infinity;
+        let sedeAbiertaMasCercana = null;
+        
+        let distMinimaCerrada = Infinity;
+        let sedeCerradaMasCercana = null;
+
+        db.sedes.forEach(s => {
+            const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+            const dist = typeof calcularDistanciaHaversine === 'function' ? calcularDistanciaHaversine(lat, lng, sLat, sLng) : Infinity;
+            const sched = typeof getSchedule === 'function' ? getSchedule(s) : { isOpen: true };
+
+            if (sched.isOpen) {
+                if (dist < distMinimaAbierta) {
+                    distMinimaAbierta = dist;
+                    sedeAbiertaMasCercana = s;
+                }
+            } else {
+                if (dist < distMinimaCerrada) {
+                    distMinimaCerrada = dist;
+                    sedeCerradaMasCercana = s;
+                }
+            }
+        });
+
+        // Selección: Sede abierta más cercana; si no hay abiertas, la cerrada más cercana
+        let mejorSede = sedeAbiertaMasCercana || sedeCerradaMasCercana;
+        if (mejorSede) {
+            checkoutSede = mejorSede;
+            const selectSedeAdmin = document.getElementById('cajera-sede');
+            if(selectSedeAdmin) selectSedeAdmin.value = checkoutSede.ID_SEDE;
+            document.querySelectorAll('.checkout-sede-select').forEach(sel => sel.value = checkoutSede.ID_SEDE);
+        }
+    }
     
     await renderMapPosition(lat, lng, true);
     await obtenerZonaORS(lat, lng);
 };
 
-// 5. CANCELAR MODIFICACIÓN DEL PIN
+// 6. CANCELAR MODIFICACIÓN DEL PIN
 window.cancelarPinAdmin = async function() {
     window.isEditingLocation = false;
     isManualLocation = true;
@@ -4140,10 +4230,11 @@ window.cancelarPinAdmin = async function() {
     } else {
         if (typeof userMarker !== 'undefined' && userMarker) { try { map.removeLayer(userMarker); } catch(e){} userMarker = null; }
         if (typeof rutaLayer !== 'undefined' && rutaLayer) { try { map.removeLayer(rutaLayer); } catch(e){} rutaLayer = null; }
+        window.dibujarSedesEnMapa();
     }
 };
 
-// 6. GEOCODIFICACIÓN DE LA ZONA
+// 7. GEOCODIFICACIÓN DE LA ZONA
 window.obtenerZonaORS = async function(lat, lng) {
     try {
         const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
@@ -4171,7 +4262,7 @@ window.obtenerZonaORS = async function(lat, lng) {
     }
 };
 
-// 7. INICIALIZACIÓN COMPLETA DE LA VISTA ADMIN (CORREGIDA SIN LOGS PARÁSITOS)
+// 8. INICIALIZACIÓN COMPLETA DE LA VISTA ADMIN
 function initAdminDelivery() {
     isAdminDelivery = true;
     isManualLocation = true; 
@@ -4301,16 +4392,17 @@ function initAdminDelivery() {
                         const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
                         map.setView([sLat, sLng], 13);
                         
-                        // SOLUCIÓN: Solo corre el ruteo si el input ya posee coordenadas vigentes (por ej, al recargar)
                         const currentCoords = document.getElementById('cajera-coords').value;
                         if (currentCoords) {
                             const [cLat, cLng] = currentCoords.split(',').map(Number);
                             isManualLocation = true;
                             await renderMapPosition(cLat, cLng, true);
                         } else {
-                            // Si abre por primera vez desde cero, limpia marcadores parásitos sobre la sede física
                             if (typeof userMarker !== 'undefined' && userMarker) { try { map.removeLayer(userMarker); } catch(e){} userMarker = null; }
                             if (typeof rutaLayer !== 'undefined' && rutaLayer) { try { map.removeLayer(rutaLayer); } catch(e){} rutaLayer = null; }
+                            
+                            // Muestra todas las sedes del mapa desde el arranque inicial limpio
+                            window.dibujarSedesEnMapa();
                         }
                     }
                 }, 100);

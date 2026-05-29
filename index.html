@@ -5,7 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
     <title>Combox - Menú</title>
     
-    <link rel="manifest" href="manifest.json">
+    <link id="pwa-manifest" rel="manifest" href="manifest.json">
     
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -37,6 +37,42 @@
 
     <!-- 3. LUEGO TU LOCALFORAGE -->
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+
+    <script>
+        function configurarManifiestoPWA() {
+            const manifestLink = document.getElementById('pwa-manifest');
+            if (!manifestLink) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            // Detectamos si el usuario ingresó con la clave secreta
+            const isModoAdmin = urlParams.has('DeliveryAdmin8382727282891');
+
+            if (isModoAdmin) {
+                // MANIFIESTO OSCURO EXCLUSIVO PARA LA CAJERA / ADMIN
+                const adminManifest = {
+                    "name": "COMBOX Admin Delivery",
+                    "short_name": "Admin COMBOX",
+                    "description": "Panel de administración y ruteo de COMBOX.",
+                    "start_url": "./index.html?DeliveryAdmin8382727282891", 
+                    "display": "standalone",
+                    "background_color": "#0A0A0B",
+                    "theme_color": "#ff073a",
+                    "orientation": "portrait",
+                    "icons": [
+                        { "src": "logo_white.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+                        { "src": "logo_white.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+                    ]
+                };
+
+                const blob = new Blob([JSON.stringify(adminManifest)], { type: 'application/json' });
+                manifestLink.setAttribute('href', URL.createObjectURL(blob));
+            }
+        }
+        configurarManifiestoPWA();
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <!-- Librerías de Leaflet para el Mapa Gratuito -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -3390,6 +3426,10 @@ function triggerFoodRain() {
     }
     
     function renderCatalog() {
+        // 🔥 FILTRO ADMIN: Si es la cajera, bloqueamos la carga del catálogo
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('DeliveryAdmin8382727282891')) return;
+    
         const search = document.getElementById('global-search').value.trim();
         
         let items = search !== '' ? getAllSourceData() : getSourceData();
@@ -3514,6 +3554,11 @@ function triggerFoodRain() {
         grid.appendChild(fragment); 
     }
     function appendCatalogItems() {
+        // 🔥 FILTRO ADMIN: Si es la cajera, bloqueamos también la paginación/scroll
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('DeliveryAdmin8382727282891')) return;
+    
+    
     const search = document.getElementById('global-search').value.trim();
     let items = search !== '' ? getAllSourceData() : getSourceData();
     
@@ -4416,13 +4461,25 @@ function initAdminDelivery() {
 // =========================================================
 // --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY ---
 // =========================================================
-    function resetAppAndGPS() {
+function resetAppAndGPS() {
         alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");
         caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
             window.location.reload(true);
         });
     }
+    
     init();
+
+    // =========================================================
+    // NUEVO: INTERCEPTOR DE ARRANQUE PARA EL PANEL ADMIN
+    // =========================================================
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        // Si el enlace tiene la clave secreta, abre la vista Cajera
+        if (urlParams.has('DeliveryAdmin8382727282891')) {
+            setTimeout(() => initAdminDelivery(), 800);
+        }
+    });
 </script>
 <div class="modal" id="scanner-modal">
     <div class="modal-overlay" onclick="closeScannerModal()"></div>

@@ -1175,6 +1175,59 @@ const redPinIcon = L.divIcon({
     html: `<span class="material-symbols-outlined text-[40px] text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,1)]" style="font-variation-settings: 'FILL' 1;">location_on</span>`,
     iconSize: [40, 40], iconAnchor: [20, 40]
 });
+
+
+// --- NUEVA FUNCIÓN DE GEOCODIFICACIÓN (CLIENTE) ---
+async function actualizarInputDireccion(lat, lng) {
+    const inputUbicacion = document.getElementById('checkout-location');
+    if (!inputUbicacion) return;
+
+    if (!inputUbicacion.value || inputUbicacion.value.match(/[(]?\s*(-?\d+\.\d+)/)) {
+        inputUbicacion.value = "Buscando dirección...";
+    }
+
+    try {
+        const urlNominatim = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+        const resNom = await fetch(urlNominatim, { signal: AbortSignal.timeout(4000) });
+        if (resNom.ok) {
+            const data = await resNom.json();
+            if (data && data.address) {
+                const addr = data.address;
+                let partes = [];
+                if (addr.road) partes.push(addr.road);
+                else if (addr.neighbourhood) partes.push(addr.neighbourhood);
+                const ciudad = addr.city || addr.town || addr.village || addr.municipality;
+                if (ciudad) partes.push(ciudad);
+                if (partes.length > 0) {
+                    inputUbicacion.value = partes.join(', ');
+                    return;
+                }
+            }
+        }
+    } catch(e) {} // Falla silenciosa, pasa al intento 2
+
+    try {
+        const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
+        const urlORS = `https://api.openrouteservice.org/geocode/reverse?api_key=${orsApiKey}&point.lon=${lng}&point.lat=${lat}`;
+        const resORS = await fetch(urlORS, { signal: AbortSignal.timeout(4000) });
+        if (resORS.ok) {
+            const data = await resORS.json();
+            if (data.features && data.features.length > 0) {
+                const props = data.features[0].properties;
+                let partes = [];
+                if (props.street) partes.push(props.street);
+                if (props.locality) partes.push(props.locality);
+                else if (props.county) partes.push(props.county);
+                inputUbicacion.value = partes.length > 0 ? partes.join(', ') : (props.name || "Ubicación en mapa");
+                return;
+            }
+        }
+    } catch(e) {}
+
+    inputUbicacion.value = "Ubicación fijada en mapa";
+}
+
+
 function applyModalColor(imgElement, id) {
     const modalBg = document.getElementById('modal-bg-color');
     if (!modalBg) return;
@@ -2416,7 +2469,56 @@ function calculateTariff(lat, lng) {
     return foundTariff;
 }
 
- 
+ // --- NUEVA FUNCIÓN DE GEOCODIFICACIÓN (CLIENTE) ---
+async function actualizarInputDireccion(lat, lng) {
+    const inputUbicacion = document.getElementById('checkout-location');
+    if (!inputUbicacion) return;
+
+    if (!inputUbicacion.value || inputUbicacion.value.match(/[(]?\s*(-?\d+\.\d+)/)) {
+        inputUbicacion.value = "Buscando dirección...";
+    }
+
+    try {
+        const urlNominatim = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+        const resNom = await fetch(urlNominatim, { signal: AbortSignal.timeout(4000) });
+        if (resNom.ok) {
+            const data = await resNom.json();
+            if (data && data.address) {
+                const addr = data.address;
+                let partes = [];
+                if (addr.road) partes.push(addr.road);
+                else if (addr.neighbourhood) partes.push(addr.neighbourhood);
+                const ciudad = addr.city || addr.town || addr.village || addr.municipality;
+                if (ciudad) partes.push(ciudad);
+                if (partes.length > 0) {
+                    inputUbicacion.value = partes.join(', ');
+                    return;
+                }
+            }
+        }
+    } catch(e) {} // Falla silenciosa, pasa al intento 2
+
+    try {
+        const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
+        const urlORS = `https://api.openrouteservice.org/geocode/reverse?api_key=${orsApiKey}&point.lon=${lng}&point.lat=${lat}`;
+        const resORS = await fetch(urlORS, { signal: AbortSignal.timeout(4000) });
+        if (resORS.ok) {
+            const data = await resORS.json();
+            if (data.features && data.features.length > 0) {
+                const props = data.features[0].properties;
+                let partes = [];
+                if (props.street) partes.push(props.street);
+                if (props.locality) partes.push(props.locality);
+                else if (props.county) partes.push(props.county);
+                inputUbicacion.value = partes.length > 0 ? partes.join(', ') : (props.name || "Ubicación en mapa");
+                return;
+            }
+        }
+    } catch(e) {}
+
+    inputUbicacion.value = "Ubicación fijada en mapa";
+}
+
 function initLeafletMap() {
     if (map) { setTimeout(() => map.invalidateSize(), 100); return; }
     
@@ -2573,14 +2675,18 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
 
     updateMarkerScales(map); 
 
-    // 🔥 FIX APLICADO: Borramos la ruta vieja inmediatamente y mostramos que estamos calculando
+   // 🔥 FIX APLICADO: Borramos la ruta vieja inmediatamente y mostramos que estamos calculando
     if (rutaLayer && map) {
         map.removeLayer(rutaLayer);
         rutaLayer = null;
     }
     document.getElementById('map-header-title').innerText = `CALCULANDO...`;
 
+    // 👇 NUEVA LÍNEA AÑADIDA AQUÍ 👇
+    actualizarInputDireccion(lat, lng);
+
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+    
    // --- URLs DE AMBOS SERVICIOS (PRINCIPAL Y RESPALDO) ---
     const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; // IMPORTANTE: Pega tu API de ORS aquí
     const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${orsApiKey}&start=${sedeLng},${sedeLat}&end=${lng},${lat}`;
@@ -4288,32 +4394,56 @@ window.cancelarPinAdmin = async function() {
     }
 };
 
-// 7. GEOCODIFICACIÓN DE LA ZONA
+// 7. GEOCODIFICACIÓN DE LA ZONA (Actualizado con doble respaldo para Admin)
 window.obtenerZonaORS = async function(lat, lng) {
+    const inputZona = document.getElementById('cajera-zona');
+    if (inputZona) inputZona.value = "Buscando...";
+
+    // --- INTENTO 1: Nominatim ---
+    try {
+        const urlNominatim = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+        const resNom = await fetch(urlNominatim, { signal: AbortSignal.timeout(4000) });
+        if (resNom.ok) {
+            const data = await resNom.json();
+            if (data && data.address) {
+                const addr = data.address;
+                let partes = [];
+                if (addr.road) partes.push(addr.road);
+                else if (addr.neighbourhood) partes.push(addr.neighbourhood);
+                
+                const ciudad = addr.city || addr.town || addr.village || addr.municipality;
+                if (ciudad) partes.push(ciudad);
+                
+                if (partes.length > 0) {
+                    if (inputZona) inputZona.value = partes.join(', ');
+                    return; 
+                }
+            }
+        }
+    } catch(e) {}
+
+    // --- INTENTO 2: OpenRouteService ---
     try {
         const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
-        const reverseUrl = `https://api.openrouteservice.org/geocode/reverse?api_key=${orsApiKey}&point.lon=${lng}&point.lat=${lat}`;
-        const res = await fetch(reverseUrl);
-        const data = await res.json();
-        
-        if(data.features && data.features.length > 0) {
-            const props = data.features[0].properties;
-            let partesZona = [];
-            
-            if (props.street) partesZona.push(props.street);
-            else if (props.neighbourhood) partesZona.push(props.neighbourhood);
-            
-            if (props.locality) partesZona.push(props.locality);
-            else if (props.county && !props.locality) partesZona.push(props.county);
-
-            const calle = partesZona.length > 0 ? partesZona.join(', ') : (props.name || "Zona Desconocida");
-            document.getElementById('cajera-zona').value = calle;
-        } else {
-            document.getElementById('cajera-zona').value = "No localizada";
+        const urlORS = `https://api.openrouteservice.org/geocode/reverse?api_key=${orsApiKey}&point.lon=${lng}&point.lat=${lat}`;
+        const resORS = await fetch(urlORS, { signal: AbortSignal.timeout(4000) });
+        if (resORS.ok) {
+            const data = await resORS.json();
+            if (data.features && data.features.length > 0) {
+                const props = data.features[0].properties;
+                let partes = [];
+                if (props.street) partes.push(props.street);
+                if (props.locality) partes.push(props.locality);
+                else if (props.county) partes.push(props.county);
+                
+                if (inputZona) inputZona.value = partes.length > 0 ? partes.join(', ') : (props.name || "Zona Desconocida");
+                return; 
+            }
         }
-    } catch(e) {
-        document.getElementById('cajera-zona').value = "Fallo de servidor";
-    }
+    } catch(e) {}
+
+    // --- INTENTO 3: Fallo general ---
+    if (inputZona) inputZona.value = "Ubicación fijada";
 };
 
 // 8. INICIALIZACIÓN COMPLETA DE LA VISTA ADMIN

@@ -4519,21 +4519,39 @@ function initAdminDelivery() {
         <div class="w-full pointer-events-auto bg-[#0A0A0B]/90 backdrop-blur-md px-3 pb-3 border-b border-white/10 flex flex-col gap-2 rounded-b-3xl shadow-2xl shadow-black/50" style="padding-top: env(safe-area-inset-top);">
             <div class="flex flex-col md:flex-row gap-2 w-full mt-1">
                 <div class="flex flex-row gap-2 w-full md:w-[40%] items-center">
-                    <button onclick="document.getElementById('extra-inputs').classList.toggle('hidden')" class="md:hidden p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white active:scale-95 transition-all">
+                    <button onclick="document.getElementById('extra-inputs').classList.toggle('hidden')" class="md:hidden p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white active:scale-95 transition-all flex-shrink-0">
                         <span class="material-symbols-outlined text-[20px] block">menu</span>
                     </button>
-                    <select id="cajera-sede" onchange="cambiarSedeAdmin(this.value)" class="flex-1 bg-white/10 border border-white/20 rounded-xl px-2 py-2.5 text-white text-[11px] md:text-sm focus:outline-none uppercase font-bold text-center appearance-none truncate"></select>
+                    
                     <div class="relative flex items-center flex-1">
-                        <input type="text" id="cajera-coords" placeholder="Coordenadas + Enter" onkeydown="if(event.key === 'Enter') actualizarCoordenadasManualAdmin(this.value)" class="w-full bg-white/10 border border-white/20 rounded-xl pl-2 pr-8 py-2.5 text-white text-[11px] md:text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary truncate transition-all">
-                        <button onclick="activarPinAdmin()" class="absolute right-1 p-1.5 bg-primary/20 rounded-lg text-primary hover:bg-primary/40 active:scale-95 transition-all">
+                        <span class="material-symbols-outlined absolute left-2 text-white text-[16px] pointer-events-none z-10">storefront</span>
+                        <select id="cajera-sede" onchange="cambiarSedeAdmin(this.value)" class="w-full bg-white/10 border border-white/20 rounded-xl pl-8 pr-2 py-2.5 text-white text-[11px] md:text-sm focus:outline-none uppercase font-bold appearance-none truncate"></select>
+                    </div>
+
+                    <div class="relative flex items-center flex-1">
+                        <span class="material-symbols-outlined absolute left-2 text-white text-[16px] pointer-events-none z-10">explore</span>
+                        <input type="text" id="cajera-coords" placeholder="Coord + Enter" onkeydown="if(event.key === 'Enter') actualizarCoordenadasManualAdmin(this.value)" class="w-full bg-white/10 border border-white/20 rounded-xl pl-8 pr-8 py-2.5 text-white text-[11px] md:text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary truncate transition-all">
+                        <button onclick="activarPinAdmin()" class="absolute right-1 p-1.5 bg-primary/20 rounded-lg text-primary hover:bg-primary/40 active:scale-95 transition-all z-20">
                             <span class="material-symbols-outlined text-[16px] md:text-[20px] block">edit</span>
                         </button>
                     </div>
                 </div>
+
                 <div id="extra-inputs" class="hidden md:flex flex-col md:flex-row gap-2 w-full md:w-[60%]">
-                    <input type="text" id="cajera-name" placeholder="Nombre de Cliente" class="w-full md:w-1/3 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-[11px] md:text-sm focus:outline-none">
-                    <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-full md:w-1/3 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-[11px] md:text-sm focus:outline-none">
-                    <input type="text" id="cajera-zona" placeholder="Zona" readonly class="w-full md:w-1/3 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-[#39FF14] text-[11px] md:text-sm font-bold focus:outline-none cursor-not-allowed text-center truncate">
+                    <div class="relative flex items-center w-full md:w-1/3">
+                        <span class="material-symbols-outlined absolute left-2.5 text-white text-[16px] pointer-events-none">person</span>
+                        <input type="text" id="cajera-name" placeholder="Nombre de Cliente" class="w-full bg-white/10 border border-white/20 rounded-xl pl-9 pr-3 py-2.5 text-white text-[11px] md:text-sm focus:outline-none">
+                    </div>
+
+                    <div class="relative flex items-center w-full md:w-1/3">
+                        <span class="material-symbols-outlined absolute left-2.5 text-white text-[16px] pointer-events-none">call</span>
+                        <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-full bg-white/10 border border-white/20 rounded-xl pl-9 pr-3 py-2.5 text-white text-[11px] md:text-sm focus:outline-none">
+                    </div>
+
+                    <div class="relative flex items-center w-full md:w-1/3">
+                        <span class="material-symbols-outlined absolute left-2.5 text-[#39FF14] text-[16px] pointer-events-none">location_on</span>
+                        <input type="text" id="cajera-zona" placeholder="Zona" readonly class="w-full bg-white/10 border border-white/20 rounded-xl pl-9 pr-3 py-2.5 text-[#39FF14] text-[11px] md:text-sm font-bold focus:outline-none cursor-not-allowed text-center truncate">
+                    </div>
                 </div>
             </div>
         </div>

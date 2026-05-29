@@ -3994,88 +3994,20 @@ function renderPickupMap() {
 }
 
 // =========================================================
-// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (CORREGIDA COMPLETA) ---
+// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (100% OPTIMIZADA) ---
 // =========================================================
 let isAdminDelivery = false;
 let adminPendingLatLng = null;
 
-// 1. CONFIGURACIÓN DEL PIN ROJO DE ADMIN
-const adminRedIcon = L.divIcon({
-    className: 'custom-pin-admin',
-    html: `<svg width="34" height="46" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 0C6.7157 0 0 6.7157 0 15C0 26.25 15 42 15 42C15 42 30 26.25 30 15C30 6.7157 23.2843 0 15 0ZM15 22.5C10.8579 22.5 7.5 19.1421 7.5 15C7.5 10.8579 10.8579 7.5 15 7.5C19.1421 7.5 22.5 10.8579 22.5 15C22.5 19.1421 19.1421 22.5 15 22.5Z" fill="#ff073a"/>
-           </svg>`,
-    iconSize: [34, 46],
-    iconAnchor: [17, 46],
-    popupAnchor: [0, -40]
-});
-
-// 2. REFRESCO VISUAL EXCLUSIVO DE SEDES EN EL MAPA (Apaga y prende la iluminación de selección)
-window.actualizarMarcadoresSedesAdmin = function() {
-    if (!map || !db || !db.sedes || !checkoutSede) return;
-    
-    if (typeof marcadoresSedesMap !== 'undefined' && marcadoresSedesMap) {
-        marcadoresSedesMap.forEach(m => { try { map.removeLayer(m); } catch(e){} });
-    }
-    window.marcadoresSedesMap = [];
-    
-    db.sedes.forEach(s => {
-        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
-        const isSelected = (String(s.ID_SEDE) === String(checkoutSede.ID_SEDE));
-        const sched = typeof getSchedule === 'function' ? getSchedule(s) : { isOpen: true };
-        
-        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
-        const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
-        
-        let iconWrapperClass = "";
-        let letreroClass = "";
-        
-        let isClosest = (typeof sedeMasCercanaCalculada !== 'undefined' && sedeMasCercanaCalculada && String(sedeMasCercanaCalculada.ID_SEDE) === String(s.ID_SEDE));
-        let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
-
-        if (!isSelected) {
-            if (sched.isOpen) {
-                iconWrapperClass = "scale-[0.85] brightness-75 opacity-95"; 
-                letreroClass = "opacity-80 scale-[0.95]";
-            } else {
-                iconWrapperClass = "scale-[0.85] grayscale opacity-60 brightness-75"; 
-                letreroClass = "opacity-60 scale-[0.95]";
-            }
-        }
-
-        const iconHtml = `
-            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative ${isSelected ? 'selected-sede z-[500]' : 'z-[400]'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
-                ${badgeCerca}
-                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
-                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
-                </div>
-                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
-                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
-                    </div>
-                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
-                </div>
-            </div>`;
-            
-        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
-        window.marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
-    });
-
-    if (typeof updateMarkerScales === "function") {
-        updateMarkerScales(map); 
-    }
-};
-
-// 3. RECÁLCULO AL CAMBIAR DE SEDE (Desde selector o desde clic en mapa)
+// 1. RECÁLCULO AL CAMBIAR DE SEDE (Selector o Clic en Mapa)
 window.cambiarSedeAdmin = async function(id) {
     if(db && db.sedes) {
+        // Garantizamos la compatibilidad de tipo (String vs Number)
         checkoutSede = db.sedes.find(s => String(s.ID_SEDE) === String(id)) || checkoutSede;
         
-        if (checkoutSede && checkoutSede.COORDENADAS_SEDE && map) {
-            const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
-            map.setView([sLat, sLng], 13);
-        }
+        // Actualizamos visualmente el selector superior por si el cambio vino desde un clic en el mapa
+        const selectSedeAdmin = document.getElementById('cajera-sede');
+        if(selectSedeAdmin) selectSedeAdmin.value = checkoutSede.ID_SEDE;
 
         const coords = document.getElementById('cajera-coords').value;
         if(coords) {
@@ -4085,104 +4017,25 @@ window.cambiarSedeAdmin = async function(id) {
             document.getElementById('cajera-tiempo').innerText = "--";
             document.getElementById('cajera-km').innerText = "--";
             
-            await renderAdminRoute(lat, lng); 
+            // Forzamos el recálculo usando TU función nativa perfecta
+            await renderMapPosition(lat, lng, true); 
+            
+            // Sincronizamos las pantallas de la cajera con los valores calculados por tu mapa
+            document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
+            document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
+            document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
         } else {
-            // Si no hay coordenadas de cliente aún, igual refresca marcas en el mapa
-            window.actualizarMarcadoresSedesAdmin();
-        }
-    }
-};
-
-// 4. RENDERIZADO DE RUTA ADMIN (Limpieza absoluta y trazado verde único)
-window.renderAdminRoute = async function(lat, lng) {
-    if(!checkoutSede) return false;
-    const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
-    
-    // CORRECCIÓN LOGÍSTICA: Remueve de raíz capas anteriores para evitar acumulación
-    if (window.rutaLayer) {
-        try { map.removeLayer(window.rutaLayer); } catch(e){}
-        window.rutaLayer = null;
-    }
-    if (typeof rutaLayer !== 'undefined' && rutaLayer) {
-        try { map.removeLayer(rutaLayer); } catch(e){}
-        rutaLayer = null;
-    }
-
-    // Sincronizar marcas de sedes en el mapa con la selección vigente
-    window.actualizarMarcadoresSedesAdmin();
-
-    const activeIcon = typeof redPinIcon !== 'undefined' ? redPinIcon : adminRedIcon;
-    if (typeof userMarker !== 'undefined' && userMarker !== null) {
-        userMarker.setLatLng([lat, lng]);
-        userMarker.setIcon(activeIcon);
-    } else {
-        window.userMarker = L.marker([lat, lng], { draggable: false, icon: activeIcon }).addTo(map);
-    }
-
-    const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0=';
-    const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${orsApiKey}&start=${sedeLng},${sedeLat}&end=${lng},${lat}`;
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson`;
-
-    let routeInfo = null;
-
-    try {
-        try {
-            const resOrs = await fetch(orsUrl);
-            if (!resOrs.ok) throw new Error("ORS falló");
-            const dataOrs = await resOrs.json();
-            if (dataOrs.features && dataOrs.features.length > 0) {
-                const route = dataOrs.features[0];
-                routeInfo = {
-                    distanceKm: route.properties.summary.distance / 1000,
-                    durationMin: Math.ceil(route.properties.summary.duration / 60),
-                    geometry: route.geometry
-                };
-            } else throw new Error("Sin features");
-        } catch(errorOrs) {
-            console.warn("⚠️ ORS inactivo, recurriendo a OSRM...");
-            const resOsrm = await fetch(osrmUrl);
-            const dataOsrm = await resOsrm.json();
-            if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
-                const route = dataOsrm.routes[0];
-                routeInfo = {
-                    distanceKm: route.distance / 1000,
-                    durationMin: Math.ceil(route.duration / 60),
-                    geometry: route.geometry
-                };
+            // Si aún no hay cliente, posicionamos el mapa en la sede elegida usando tu lógica base
+            if (checkoutSede && checkoutSede.COORDENADAS_SEDE && map) {
+                const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+                map.setView([sLat, sLng], 13);
+                await renderMapPosition(sLat, sLng, true);
             }
         }
-
-        if (routeInfo) {
-            if (window.rutaLayer) { try { map.removeLayer(window.rutaLayer); } catch(e){} }
-            
-            // Renderizado de la vía verde unificada brillante (#39FF14)
-            window.rutaLayer = L.geoJSON(routeInfo.geometry, {
-                style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
-            }).addTo(map);
-
-            map.fitBounds(window.rutaLayer.getBounds(), { padding: [40, 40] });
-
-            const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5;
-            let rawPrice = routeInfo.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
-            let decimalPart = rawPrice % 1;
-            let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
-            let tarifaFinal = Math.max(min, roundedPrice);
-            let displayPrice = (tarifaFinal % 1 === 0) ? tarifaFinal.toString() : tarifaFinal.toFixed(2);
-
-            document.getElementById('cajera-km').innerText = `${routeInfo.distanceKm.toFixed(1)} km`;
-            document.getElementById('cajera-tiempo').innerText = `${routeInfo.durationMin} min`;
-            document.getElementById('cajera-tarifa').innerText = `${displayPrice}$`;
-            
-            return true;
-        }
-    } catch(e) {
-        console.error("Error al estructurar ruta de admin:", e);
-        document.getElementById('cajera-tarifa').innerText = "ERROR";
-        return false;
     }
 };
 
-// 5. MANEJO EXCLUSIVO DEL PIN EN MOVIMIENTO
+// 2. ACTIVAR EL MODO PIN MANUAL (Usa estrictamente tu pin hueco original)
 window.activarPinAdmin = function() {
     if(!map) return;
     isEditingLocation = true;
@@ -4190,32 +4043,32 @@ window.activarPinAdmin = function() {
     
     document.getElementById('admin-pin-controls').style.display = 'flex';
     
-    if (window.rutaLayer) { 
-        try { map.removeLayer(window.rutaLayer); } catch(e){}
-        window.rutaLayer = null; 
-    }
-    if (typeof rutaLayer !== 'undefined' && rutaLayer) {
+    // Limpiamos la ruta actual del mapa para mover el pin libremente
+    if (typeof rutaLayer !== 'undefined' && rutaLayer) { 
         try { map.removeLayer(rutaLayer); } catch(e){}
-        rutaLayer = null;
+        rutaLayer = null; 
     }
     
+    // Desvinculamos listeners antiguos para evitar que se acumulen eventos
     map.off('move', window.adminMapMoveEvent);
     map.off('moveend', window.adminMapMoveEndEvent);
 
     const center = map.getCenter();
     
+    // Usamos estrictamente tu marcador 'userMarker' y tu ícono hueco 'redPinIcon'
     if (typeof userMarker !== 'undefined' && userMarker !== null) {
-        userMarker.setIcon(adminRedIcon);
+        userMarker.setIcon(redPinIcon);
         userMarker.setLatLng(center);
     } else {
-        window.userMarker = L.marker(center, {icon: adminRedIcon}).addTo(map);
+        userMarker = L.marker(center, {icon: redPinIcon}).addTo(map);
     }
     
     adminPendingLatLng = center;
 
+    // Control dinámico del pin centrado en pantalla
     window.adminMapMoveEvent = function() {
-        if(isEditingLocation && window.userMarker) {
-            window.userMarker.setLatLng(map.getCenter());
+        if(isEditingLocation && userMarker) {
+            userMarker.setLatLng(map.getCenter());
         }
     };
     window.adminMapMoveEndEvent = function() {
@@ -4226,12 +4079,13 @@ window.activarPinAdmin = function() {
     map.on('moveend', window.adminMapMoveEndEvent);
 };
 
+// 3. ACEPTAR POSICIÓN DEL PIN MANUAL
 window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
     window.isEditingLocation = false;
     document.getElementById('admin-pin-controls').style.display = 'none';
     
-    if (window.adminMapMoveEvent) map.off('move', window.adminMapMoveEvent);
-    if (window.adminMapMoveEndEvent) map.off('moveend', window.adminMapMoveEndEvent);
+    map.off('move', window.adminMapMoveEvent);
+    map.off('moveend', window.adminMapMoveEndEvent);
     
     const lat = manualLat || (adminPendingLatLng ? adminPendingLatLng.lat : null);
     const lng = manualLng || (adminPendingLatLng ? adminPendingLatLng.lng : null);
@@ -4239,27 +4093,42 @@ window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
     if(!lat || !lng) return;
     
     document.getElementById('cajera-coords').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    
     document.getElementById('cajera-tarifa').innerText = "Calculando...";
+    document.getElementById('cajera-tiempo').innerText = "--";
+    document.getElementById('cajera-km').innerText = "--";
 
-    await renderAdminRoute(lat, lng);
+    // Ejecuta tu función nativa que dibuja la ruta verde limpia y actualiza las sedes
+    await renderMapPosition(lat, lng, true);
+    
+    // Sincroniza las métricas de la cajera de inmediato
+    document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
+    document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
+    document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
+
     await obtenerZonaORS(lat, lng);
 };
 
-window.cancelarPinAdmin = function() {
+// 4. CANCELAR MODIFICACIÓN DEL PIN
+window.cancelarPinAdmin = async function() {
     window.isEditingLocation = false;
     document.getElementById('admin-pin-controls').style.display = 'none';
     
-    if (window.adminMapMoveEvent) map.off('move', window.adminMapMoveEvent);
-    if (window.adminMapMoveEndEvent) map.off('moveend', window.adminMapMoveEndEvent);
+    map.off('move', window.adminMapMoveEvent);
+    map.off('moveend', window.adminMapMoveEndEvent);
     
     const coords = document.getElementById('cajera-coords').value;
     if(coords) {
         const [lat, lng] = coords.split(',').map(Number);
-        renderAdminRoute(lat, lng);
+        await renderMapPosition(lat, lng, true);
+        
+        document.getElementById('cajera-km').innerText = document.getElementById('route-km').innerText;
+        document.getElementById('cajera-tiempo').innerText = document.getElementById('route-time').innerText;
+        document.getElementById('cajera-tarifa').innerText = document.getElementById('map-header-title').innerText;
     }
 };
 
-// 6. GEOCODIFICACIÓN REVERSA DE ZONAS
+// 5. GEOCODIFICACIÓN DE LA ZONA (DIRECCIÓN)
 window.obtenerZonaORS = async function(lat, lng) {
     try {
         const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
@@ -4287,7 +4156,7 @@ window.obtenerZonaORS = async function(lat, lng) {
     }
 };
 
-// 7. INICIALIZACIÓN DE LA VISTA EN PANTALLA COMPLETA
+// 6. INICIALIZACIÓN COMPLETA DE LA VISTA ADMIN
 function initAdminDelivery() {
     isAdminDelivery = true;
     
@@ -4391,13 +4260,11 @@ function initAdminDelivery() {
         if (db && db.sedes && db.sedes.length > 0) {
             if (!checkoutSede) checkoutSede = currentSede || db.sedes[0];
             
-            // 🔥 CONTROL CRÍTICO: Interceptamos dinámicamente el clic de los marcadores del mapa
+            // INTERCEPTOR SEGURO: Si hacen clic en una sede física del mapa estando en Admin, corre nuestra función limpia
             if (typeof window.updateCheckoutSede === 'function' && !window.updateCheckoutSede.isIntercepted) {
                 const originalUpdate = window.updateCheckoutSede;
                 window.updateCheckoutSede = async function(id) {
                     if (isAdminDelivery) {
-                        const selectSedeAdmin = document.getElementById('cajera-sede');
-                        if(selectSedeAdmin) selectSedeAdmin.value = id;
                         await window.cambiarSedeAdmin(id);
                     } else {
                         originalUpdate(id);
@@ -4413,14 +4280,14 @@ function initAdminDelivery() {
             }
 
             if(typeof map !== 'undefined' && map !== null) {
-                setTimeout(() => {
+                setTimeout(async () => {
                     map.invalidateSize();
                     if (checkoutSede && checkoutSede.COORDENADAS_SEDE) {
                         const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
                         map.setView([sLat, sLng], 13);
                         
-                        // Renderizado inicial seguro sin colisión de rutas
-                        window.actualizarMarcadoresSedesAdmin();
+                        // Inicialización limpia delegada en tu función perfecta
+                        await renderMapPosition(sLat, sLng, true);
                     }
                 }, 100);
             }

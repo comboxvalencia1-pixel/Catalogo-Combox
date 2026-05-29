@@ -2600,9 +2600,16 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
 
     try {
         if (!routeInfo) {
-            // INTENTO 1: OPENROUTESERVICE (Principal)
+            // INTENTO 1: OPENROUTESERVICE (Principal con Timeout de 4 segundos)
             try {
-                const resOrs = await fetch(orsUrl);
+                // Creamos un cronómetro para abortar la petición si ORS se queda colgado
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 segundos de límite máximo
+
+                // Añadimos el { signal } al fetch
+                const resOrs = await fetch(orsUrl, { signal: controller.signal });
+                clearTimeout(timeoutId); // Si responde rápido, cancelamos el cronómetro
+
                 if (!resOrs.ok) throw new Error("ORS falló o llegó al límite");
                 const dataOrs = await resOrs.json();
                 
@@ -2618,7 +2625,7 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
                     throw new Error("ORS no devolvió rutas válidas");
                 }
             } catch (errorOrs) {
-                console.warn("⚠️ ORS falló, activando protocolo de respaldo con OSRM...");
+                console.warn("⚠️ ORS colgado o fallido, activando protocolo de respaldo con OSRM...");
                 
                 // INTENTO 2: OSRM (Respaldo)
                 const resOsrm = await fetch(osrmUrl);
@@ -2834,8 +2841,10 @@ function confirmManualPin() {
     let headerTitle = document.getElementById('map-header-title');
     if(headerTitle) headerTitle.innerText = "CALCULANDO...";
 
-    if(pendingLatLng) {
-        renderMapPosition(pendingLatLng.lat, pendingLatLng.lng);
+    // Garantizamos que si pendingLatLng está vacío, forzamos a tomar el centro actual
+    let latlngFinal = pendingLatLng || map.getCenter();
+    if(latlngFinal) {
+        renderMapPosition(latlngFinal.lat, latlngFinal.lng);
     }
 
     if (typeof map !== 'undefined' && map !== null) {

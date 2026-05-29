@@ -3994,7 +3994,7 @@ function renderPickupMap() {
 }
 
 // =========================================================
-// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (CORREGIDA, SIN ACUMULACIÓN) ---
+// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (CORREGIDA COMPLETA) ---
 // =========================================================
 let isAdminDelivery = false;
 let adminPendingLatLng = null;
@@ -4010,13 +4010,68 @@ const adminRedIcon = L.divIcon({
     popupAnchor: [0, -40]
 });
 
-// 2. RECÁLCULO AL CAMBIAR DE SEDE (CORREGIDO: Comparación robusta String vs Number)
+// 2. REFRESCO VISUAL EXCLUSIVO DE SEDES EN EL MAPA (Apaga y prende la iluminación de selección)
+window.actualizarMarcadoresSedesAdmin = function() {
+    if (!map || !db || !db.sedes || !checkoutSede) return;
+    
+    if (typeof marcadoresSedesMap !== 'undefined' && marcadoresSedesMap) {
+        marcadoresSedesMap.forEach(m => { try { map.removeLayer(m); } catch(e){} });
+    }
+    window.marcadoresSedesMap = [];
+    
+    db.sedes.forEach(s => {
+        const [sLat, sLng] = s.COORDENADAS_SEDE.split(',').map(Number);
+        const isSelected = (String(s.ID_SEDE) === String(checkoutSede.ID_SEDE));
+        const sched = typeof getSchedule === 'function' ? getSchedule(s) : { isOpen: true };
+        
+        const dotColor = sched.isOpen ? '#39FF14' : '#ff0000';
+        const dotShadow = sched.isOpen ? 'rgba(57,255,20,0.8)' : 'rgba(255,0,0,0.8)';
+        
+        let iconWrapperClass = "";
+        let letreroClass = "";
+        
+        let isClosest = (typeof sedeMasCercanaCalculada !== 'undefined' && sedeMasCercanaCalculada && String(sedeMasCercanaCalculada.ID_SEDE) === String(s.ID_SEDE));
+        let badgeCerca = isClosest ? `<div class="absolute -top-5 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded border border-blue-300 uppercase shadow-[0_0_10px_rgba(59,130,246,0.8)] whitespace-nowrap z-50 animate-bounce">¡MÁS CERCA!</div>` : '';
+
+        if (!isSelected) {
+            if (sched.isOpen) {
+                iconWrapperClass = "scale-[0.85] brightness-75 opacity-95"; 
+                letreroClass = "opacity-80 scale-[0.95]";
+            } else {
+                iconWrapperClass = "scale-[0.85] grayscale opacity-60 brightness-75"; 
+                letreroClass = "opacity-60 scale-[0.95]";
+            }
+        }
+
+        const iconHtml = `
+            <div class="sede-marker-content flex flex-col items-center justify-center cursor-pointer relative ${isSelected ? 'selected-sede z-[500]' : 'z-[400]'}" onclick="event.stopPropagation(); updateCheckoutSede('${s.ID_SEDE}')">
+                ${badgeCerca}
+                <div class="w-10 h-10 rounded-full border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/60 flex items-center justify-center mb-1 ${iconWrapperClass}">
+                    <span class="material-symbols-outlined text-white" style="font-size: 22px; font-variation-settings: 'FILL' 1;">storefront</span>
+                </div>
+                <div class="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1.5 rounded-xl flex flex-col items-center shadow-lg ${letreroClass}">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style="background-color: ${dotColor}; box-shadow: 0 0 8px ${dotShadow};"></span>
+                        <span class="text-[9px] font-black text-white uppercase leading-none tracking-widest">COMBOX</span>
+                    </div>
+                    <span class="text-[7.5px] font-bold text-zinc-300 uppercase leading-none mt-1 truncate max-w-[80px] text-center">${s.NOMBRE_SEDE.split(',')[0]}</span>
+                </div>
+            </div>`;
+            
+        const icon = L.divIcon({ html: iconHtml, className: 'bg-transparent', iconSize: [90, 90], iconAnchor:[45, 45] });
+        window.marcadoresSedesMap.push(L.marker([sLat, sLng], { icon }).addTo(map));
+    });
+
+    if (typeof updateMarkerScales === "function") {
+        updateMarkerScales(map); 
+    }
+};
+
+// 3. RECÁLCULO AL CAMBIAR DE SEDE (Desde selector o desde clic en mapa)
 window.cambiarSedeAdmin = async function(id) {
     if(db && db.sedes) {
-        // SOLUCIÓN: Casteamos ambos a String para romper el conflicto de tipos (String vs Number)
         checkoutSede = db.sedes.find(s => String(s.ID_SEDE) === String(id)) || checkoutSede;
         
-        // Enfocar el mapa de inmediato en la nueva sede elegida
         if (checkoutSede && checkoutSede.COORDENADAS_SEDE && map) {
             const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
             map.setView([sLat, sLng], 13);
@@ -4030,18 +4085,20 @@ window.cambiarSedeAdmin = async function(id) {
             document.getElementById('cajera-tiempo').innerText = "--";
             document.getElementById('cajera-km').innerText = "--";
             
-            // Forzamos el recálculo de la ruta desde el nuevo origen
             await renderAdminRoute(lat, lng); 
+        } else {
+            // Si no hay coordenadas de cliente aún, igual refresca marcas en el mapa
+            window.actualizarMarcadoresSedesAdmin();
         }
     }
 };
 
-// 3. RENDERIZADO DE RUTA ADMIN (CORREGIDO: Limpieza absoluta de trazados anteriores)
+// 4. RENDERIZADO DE RUTA ADMIN (Limpieza absoluta y trazado verde único)
 window.renderAdminRoute = async function(lat, lng) {
     if(!checkoutSede) return false;
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     
-    // SOLUCIÓN AL BUG DE ACUMULACIÓN: Se limpian ambas referencias de capa rigurosamente
+    // CORRECCIÓN LOGÍSTICA: Remueve de raíz capas anteriores para evitar acumulación
     if (window.rutaLayer) {
         try { map.removeLayer(window.rutaLayer); } catch(e){}
         window.rutaLayer = null;
@@ -4051,7 +4108,9 @@ window.renderAdminRoute = async function(lat, lng) {
         rutaLayer = null;
     }
 
-    // Sincronización del marcador único de usuario
+    // Sincronizar marcas de sedes en el mapa con la selección vigente
+    window.actualizarMarcadoresSedesAdmin();
+
     const activeIcon = typeof redPinIcon !== 'undefined' ? redPinIcon : adminRedIcon;
     if (typeof userMarker !== 'undefined' && userMarker !== null) {
         userMarker.setLatLng([lat, lng]);
@@ -4067,7 +4126,6 @@ window.renderAdminRoute = async function(lat, lng) {
     let routeInfo = null;
 
     try {
-        // Red de Rutas Principal (ORS)
         try {
             const resOrs = await fetch(orsUrl);
             if (!resOrs.ok) throw new Error("ORS falló");
@@ -4082,7 +4140,6 @@ window.renderAdminRoute = async function(lat, lng) {
             } else throw new Error("Sin features");
         } catch(errorOrs) {
             console.warn("⚠️ ORS inactivo, recurriendo a OSRM...");
-            // Red de Respaldo (OSRM)
             const resOsrm = await fetch(osrmUrl);
             const dataOsrm = await resOsrm.json();
             if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
@@ -4096,17 +4153,15 @@ window.renderAdminRoute = async function(lat, lng) {
         }
 
         if (routeInfo) {
-            // Validación de última hora para evitar duplicados asíncronos antes de inyectar la nueva línea
             if (window.rutaLayer) { try { map.removeLayer(window.rutaLayer); } catch(e){} }
             
-            // Renderizado de la ruta verde unificada (#39FF14)
+            // Renderizado de la vía verde unificada brillante (#39FF14)
             window.rutaLayer = L.geoJSON(routeInfo.geometry, {
                 style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
             }).addTo(map);
 
             map.fitBounds(window.rutaLayer.getBounds(), { padding: [40, 40] });
 
-            // Gestión de costos e incrementos basados en umbral de 0.6
             const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5;
             let rawPrice = routeInfo.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
             let decimalPart = rawPrice % 1;
@@ -4114,7 +4169,6 @@ window.renderAdminRoute = async function(lat, lng) {
             let tarifaFinal = Math.max(min, roundedPrice);
             let displayPrice = (tarifaFinal % 1 === 0) ? tarifaFinal.toString() : tarifaFinal.toFixed(2);
 
-            // Vinculación al DOM de la cajera
             document.getElementById('cajera-km').innerText = `${routeInfo.distanceKm.toFixed(1)} km`;
             document.getElementById('cajera-tiempo').innerText = `${routeInfo.durationMin} min`;
             document.getElementById('cajera-tarifa').innerText = `${displayPrice}$`;
@@ -4128,7 +4182,7 @@ window.renderAdminRoute = async function(lat, lng) {
     }
 };
 
-// 4. MANEJO EXCLUSIVO DEL PIN EN MOVIMIENTO
+// 5. MANEJO EXCLUSIVO DEL PIN EN MOVIMIENTO
 window.activarPinAdmin = function() {
     if(!map) return;
     isEditingLocation = true;
@@ -4136,7 +4190,6 @@ window.activarPinAdmin = function() {
     
     document.getElementById('admin-pin-controls').style.display = 'flex';
     
-    // Al mover el pin, borramos visualmente la línea verde para recalcular de cero al soltarlo
     if (window.rutaLayer) { 
         try { map.removeLayer(window.rutaLayer); } catch(e){}
         window.rutaLayer = null; 
@@ -4206,7 +4259,7 @@ window.cancelarPinAdmin = function() {
     }
 };
 
-// 5. GEOCODIFICACIÓN REVERSA DE ZONAS
+// 6. GEOCODIFICACIÓN REVERSA DE ZONAS
 window.obtenerZonaORS = async function(lat, lng) {
     try {
         const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
@@ -4234,7 +4287,7 @@ window.obtenerZonaORS = async function(lat, lng) {
     }
 };
 
-// 6. INICIALIZACIÓN DE LA VISTA EN PANTALLA COMPLETA
+// 7. INICIALIZACIÓN DE LA VISTA EN PANTALLA COMPLETA
 function initAdminDelivery() {
     isAdminDelivery = true;
     
@@ -4338,6 +4391,21 @@ function initAdminDelivery() {
         if (db && db.sedes && db.sedes.length > 0) {
             if (!checkoutSede) checkoutSede = currentSede || db.sedes[0];
             
+            // 🔥 CONTROL CRÍTICO: Interceptamos dinámicamente el clic de los marcadores del mapa
+            if (typeof window.updateCheckoutSede === 'function' && !window.updateCheckoutSede.isIntercepted) {
+                const originalUpdate = window.updateCheckoutSede;
+                window.updateCheckoutSede = async function(id) {
+                    if (isAdminDelivery) {
+                        const selectSedeAdmin = document.getElementById('cajera-sede');
+                        if(selectSedeAdmin) selectSedeAdmin.value = id;
+                        await window.cambiarSedeAdmin(id);
+                    } else {
+                        originalUpdate(id);
+                    }
+                };
+                window.updateCheckoutSede.isIntercepted = true;
+            }
+
             const selectSedeAdmin = document.getElementById('cajera-sede');
             if(selectSedeAdmin) {
                 selectSedeAdmin.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE.split(',')[0]}</option>`).join('');
@@ -4351,9 +4419,8 @@ function initAdminDelivery() {
                         const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
                         map.setView([sLat, sLng], 13);
                         
-                        if (typeof renderMapPosition === "function") {
-                            renderMapPosition(sLat, sLng, true);
-                        }
+                        // Renderizado inicial seguro sin colisión de rutas
+                        window.actualizarMarcadoresSedesAdmin();
                     }
                 }, 100);
             }

@@ -3994,12 +3994,12 @@ function renderPickupMap() {
 }
 
 // =========================================================
-// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY CORREGIDA ---
+// --- INICIO LÓGICA VISTA ADMIN CAJERA DELIVERY (CORREGIDA & COMPLETA) ---
 // =========================================================
 let isAdminDelivery = false;
 let adminPendingLatLng = null;
 
-// 1. ICONO ROJO DEL ADMIN
+// 1. CONFIGURACIÓN DEL PIN ROJO DE ADMIN (Evita duplicados usando la misma estructura)
 const adminRedIcon = L.divIcon({
     className: 'custom-pin-admin',
     html: `<svg width="34" height="46" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -4010,38 +4010,36 @@ const adminRedIcon = L.divIcon({
     popupAnchor: [0, -40]
 });
 
-// 2. RECÁLCULO AL CAMBIAR DE SEDE
+// 2. RECÁLCULO AL CAMBIAR DE SEDE (Forzado inmediato)
 window.cambiarSedeAdmin = async function(id) {
     if(db && db.sedes) {
         checkoutSede = db.sedes.find(s => s.ID_SEDE === id) || checkoutSede;
         const coords = document.getElementById('cajera-coords').value;
-        
         if(coords) {
             const [lat, lng] = coords.split(',').map(Number);
             
-            // Actualizamos la UI inmediatamente a modo "Carga"
             document.getElementById('cajera-tarifa').innerText = "Calculando...";
             document.getElementById('cajera-tiempo').innerText = "--";
             document.getElementById('cajera-km').innerText = "--";
             
-            // Forzamos el renderizado de la ruta con la nueva sede
+            // Forzamos el trazo de la ruta limpia desde la nueva sede seleccionada
             await renderAdminRoute(lat, lng); 
         }
     }
 };
 
-// 3. RENDERIZADO DE RUTA ADMIN (Basado en tu código robusto ORS/OSRM)
+// 3. RENDERIZADO DE RUTA ADMIN (Usa la misma lógica e iconografía verde que el mapa de tus clientes)
 window.renderAdminRoute = async function(lat, lng) {
     if(!checkoutSede) return false;
     const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
     
-    // LIMPIEZA ESTRICTA: Borramos la ruta anterior para evitar duplicados
+    // Limpieza estricta de capas previas para evitar múltiples rutas encimadas
     if (typeof rutaLayer !== 'undefined' && rutaLayer) {
         map.removeLayer(rutaLayer);
         rutaLayer = null;
     }
 
-    // GESTIÓN DEL PIN: Usamos un único userMarker global
+    // Control estricto del marcador de usuario para evitar duplicación de pines
     const activeIcon = typeof redPinIcon !== 'undefined' ? redPinIcon : adminRedIcon;
     if (typeof userMarker !== 'undefined' && userMarker !== null) {
         userMarker.setLatLng([lat, lng]);
@@ -4057,12 +4055,11 @@ window.renderAdminRoute = async function(lat, lng) {
     let routeInfo = null;
 
     try {
-        // INTENTO 1: ORS
+        // Intento Principal con OpenRouteService
         try {
             const resOrs = await fetch(orsUrl);
             if (!resOrs.ok) throw new Error("ORS falló");
             const dataOrs = await resOrs.json();
-            
             if (dataOrs.features && dataOrs.features.length > 0) {
                 const route = dataOrs.features[0];
                 routeInfo = {
@@ -4070,11 +4067,10 @@ window.renderAdminRoute = async function(lat, lng) {
                     durationMin: Math.ceil(route.properties.summary.duration / 60),
                     geometry: route.geometry
                 };
-            } else throw new Error("Sin ruta válida ORS");
+            } else throw new Error("Sin features válidas");
         } catch(errorOrs) {
-            console.warn("ORS falló en Admin, activando respaldo OSRM...");
-            
-            // INTENTO 2: OSRM
+            console.warn("⚠️ ORS falló en vista de Admin, usando respaldo OSRM...");
+            // Respaldo alternativo con OSRM directo
             const resOsrm = await fetch(osrmUrl);
             const dataOsrm = await resOsrm.json();
             if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
@@ -4088,25 +4084,22 @@ window.renderAdminRoute = async function(lat, lng) {
         }
 
         if (routeInfo) {
-            // Dibujar la ruta VERDE asegurándonos de que es la única
-            if (window.rutaLayer) map.removeLayer(window.rutaLayer);
+            // Dibujar la ruta con el verde brillante unificado (#39FF14)
             window.rutaLayer = L.geoJSON(routeInfo.geometry, {
-                style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' } // RUTA VERDE
+                style: { color: '#39FF14', weight: 4, opacity: 0.8, dashArray: '8, 8' }
             }).addTo(map);
 
-            // Ajustar el zoom para ver la ruta completa
             map.fitBounds(window.rutaLayer.getBounds(), { padding: [40, 40] });
 
-            // Calcular Tarifa
+            // Lógica exacta de cálculo de tarifa y redondeo a partir de 0.6
             const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5;
             let rawPrice = routeInfo.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
             let decimalPart = rawPrice % 1;
             let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
             let tarifaFinal = Math.max(min, roundedPrice);
-            
             let displayPrice = (tarifaFinal % 1 === 0) ? tarifaFinal.toString() : tarifaFinal.toFixed(2);
 
-            // Actualizar DOM Admin
+            // Actualización del panel de administración
             document.getElementById('cajera-km').innerText = `${routeInfo.distanceKm.toFixed(1)} km`;
             document.getElementById('cajera-tiempo').innerText = `${routeInfo.durationMin} min`;
             document.getElementById('cajera-tarifa').innerText = `${displayPrice}$`;
@@ -4114,13 +4107,13 @@ window.renderAdminRoute = async function(lat, lng) {
             return true;
         }
     } catch(e) {
-        console.error("Colapso en ruta admin:", e);
+        console.error("Error crítico al trazar ruta de admin:", e);
         document.getElementById('cajera-tarifa').innerText = "ERROR";
         return false;
     }
 };
 
-// 4. FUNCIONES DEL PIN (Solución a múltiples eventos y duplicados)
+// 4. MANEJO EXCLUSIVO DEL PIN EN MOVIMIENTO (Previene acumulación de eventos de mapa)
 window.activarPinAdmin = function() {
     if(!map) return;
     isEditingLocation = true;
@@ -4133,13 +4126,12 @@ window.activarPinAdmin = function() {
         rutaLayer = null; 
     }
     
-    // Remover listeners anteriores para evitar que se acumulen bugs de movimiento
+    // Apagamos eventos previos para evitar ejecuciones múltiples en bucle
     map.off('move', window.adminMapMoveEvent);
     map.off('moveend', window.adminMapMoveEndEvent);
 
     const center = map.getCenter();
     
-    // Forzamos uso de un único marcador
     if (typeof userMarker !== 'undefined' && userMarker !== null) {
         userMarker.setIcon(adminRedIcon);
         userMarker.setLatLng(center);
@@ -4149,13 +4141,11 @@ window.activarPinAdmin = function() {
     
     adminPendingLatLng = center;
 
-    // Asignar funciones nominales para poder apagarlas después
     window.adminMapMoveEvent = function() {
         if(isEditingLocation && window.userMarker) {
             window.userMarker.setLatLng(map.getCenter());
         }
     };
-    
     window.adminMapMoveEndEvent = function() {
         if(isEditingLocation) adminPendingLatLng = map.getCenter();
     };
@@ -4168,7 +4158,6 @@ window.aceptarPinAdmin = async function(manualLat = null, manualLng = null) {
     window.isEditingLocation = false;
     document.getElementById('admin-pin-controls').style.display = 'none';
     
-    // Apagar eventos del mapa limpiamente
     if (window.adminMapMoveEvent) map.off('move', window.adminMapMoveEvent);
     if (window.adminMapMoveEndEvent) map.off('moveend', window.adminMapMoveEndEvent);
     
@@ -4188,11 +4177,9 @@ window.cancelarPinAdmin = function() {
     window.isEditingLocation = false;
     document.getElementById('admin-pin-controls').style.display = 'none';
     
-    // Apagar eventos del mapa limpiamente
     if (window.adminMapMoveEvent) map.off('move', window.adminMapMoveEvent);
     if (window.adminMapMoveEndEvent) map.off('moveend', window.adminMapMoveEndEvent);
     
-    // Restaurar a la ruta anterior calculada si existe
     const coords = document.getElementById('cajera-coords').value;
     if(coords) {
         const [lat, lng] = coords.split(',').map(Number);
@@ -4200,7 +4187,7 @@ window.cancelarPinAdmin = function() {
     }
 };
 
-// 5. GEOCODIFICACIÓN (ZONA)
+// 5. GEOCODIFICACIÓN REVERSA DE ZONAS
 window.obtenerZonaORS = async function(lat, lng) {
     try {
         const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0='; 
@@ -4227,8 +4214,139 @@ window.obtenerZonaORS = async function(lat, lng) {
         document.getElementById('cajera-zona').value = "Fallo de servidor";
     }
 };
+
+// 6. INICIALIZACIÓN DE LA VISTA EN PANTALLA COMPLETA (Mantenida intacta y vinculada)
+function initAdminDelivery() {
+    isAdminDelivery = true;
+    
+    const mapWrapper = document.getElementById('map-wrapper');
+    if (!mapWrapper) return;
+    
+    const existingUI = document.getElementById('admin-ui-overlay');
+    if (existingUI) existingUI.remove();
+    
+    document.body.appendChild(mapWrapper);
+
+    Array.from(document.body.children).forEach(child => {
+        if (!['map-wrapper', 'admin-ui-overlay'].includes(child.id) && child.tagName !== 'SCRIPT' && child.tagName !== 'STYLE') {
+            child.style.display = 'none';
+        }
+    });
+
+    document.body.style.cssText = "overflow: hidden; margin: 0; padding: 0; background: #e5e3df;";
+    mapWrapper.style.cssText = "position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 9999 !important; display: block !important;";
+    
+    const btnWrongLoc = document.getElementById('btn-wrong-location');
+    if (btnWrongLoc) btnWrongLoc.style.display = 'none';
+    
+    const gpsBtn = mapWrapper.querySelector('button[onclick*="getLocation"]');
+    if (gpsBtn) gpsBtn.style.display = 'none';
+    
+    const routeCapsules = mapWrapper.querySelector('.bottom-3.right-3.flex-col');
+    if (routeCapsules) {
+        routeCapsules.style.visibility = 'hidden';
+        routeCapsules.style.opacity = '0';
+    }
+
+    const topPriceMoto = document.getElementById('map-header-title');
+    if (topPriceMoto) {
+        const topContainer = topPriceMoto.closest('.absolute');
+        if (topContainer) {
+            topContainer.style.visibility = 'hidden';
+            topContainer.style.opacity = '0';
+        }
+    }
+    
+    const adminUI = document.createElement('div');
+    adminUI.id = "admin-ui-overlay";
+    adminUI.className = "absolute inset-0 pointer-events-none flex flex-col justify-between z-[10000]";
+    
+    adminUI.innerHTML = `
+        <div class="w-full pointer-events-auto bg-[#0A0A0B]/90 backdrop-blur-md px-3 pb-3 border-b border-white/10 flex flex-col gap-2 rounded-b-3xl shadow-2xl shadow-black/50" style="padding-top: env(safe-area-inset-top);">
+            <div class="flex flex-col md:flex-row gap-2 w-full mt-1">
+                <div class="flex flex-row gap-2 w-full md:w-[40%] items-center">
+                    <button onclick="document.getElementById('extra-inputs').classList.toggle('hidden')" class="md:hidden p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white active:scale-95 transition-all">
+                        <span class="material-symbols-outlined text-[20px] block">menu</span>
+                    </button>
+                    <select id="cajera-sede" onchange="cambiarSedeAdmin(this.value)" class="flex-1 bg-white/10 border border-white/20 rounded-xl px-2 py-2.5 text-white text-[11px] md:text-sm focus:outline-none uppercase font-bold text-center appearance-none truncate"></select>
+                    <div class="relative flex items-center flex-1">
+                        <input type="text" id="cajera-coords" placeholder="Coordenadas" readonly class="w-full bg-white/10 border border-white/20 rounded-xl pl-2 pr-8 py-2.5 text-white text-[11px] md:text-sm focus:outline-none cursor-not-allowed truncate">
+                        <button onclick="activarPinAdmin()" class="absolute right-1 p-1.5 bg-primary/20 rounded-lg text-primary hover:bg-primary/40 active:scale-95 transition-all">
+                            <span class="material-symbols-outlined text-[16px] md:text-[20px] block">edit</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="extra-inputs" class="hidden md:flex flex-col md:flex-row gap-2 w-full md:w-[60%]">
+                    <input type="text" id="cajera-name" placeholder="Nombre de Cliente" class="w-full md:w-1/3 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-[11px] md:text-sm focus:outline-none">
+                    <input type="tel" id="cajera-phone" placeholder="Teléfono" class="w-full md:w-1/3 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-[11px] md:text-sm focus:outline-none">
+                    <input type="text" id="cajera-zona" placeholder="Zona" readonly class="w-full md:w-1/3 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-[#39FF14] text-[11px] md:text-sm font-bold focus:outline-none cursor-not-allowed text-center truncate">
+                </div>
+            </div>
+        </div>
+        <div id="admin-pin-controls" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-16 flex gap-3 pointer-events-auto" style="display:none; z-index: 10001;">
+            <button onclick="cancelarPinAdmin()" class="bg-red-600 text-white font-black px-6 py-2 md:py-3 md:px-8 rounded-full shadow-2xl active:scale-95 border border-white/20 uppercase text-[11px] md:text-sm tracking-widest">Cancelar</button>
+            <button onclick="aceptarPinAdmin()" class="bg-primary text-white font-black px-6 py-2 md:py-3 md:px-8 rounded-full shadow-2xl active:scale-95 border border-white/20 uppercase text-[11px] md:text-sm tracking-widest">Aceptar</button>
+        </div>
+        <div class="absolute bottom-0 w-full pointer-events-none px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] flex flex-col gap-2 md:gap-4 md:mb-4">
+            <div class="flex gap-2 mx-auto w-full max-w-[340px] md:max-w-2xl">
+                <div class="w-1/3 bg-[#0A0A0B]/95 backdrop-blur-md rounded-xl py-1.5 md:py-3 text-center border border-white/10 shadow-lg">
+                    <p class="text-[8px] md:text-[10px] uppercase text-gray-400 font-bold tracking-wider">Tiempo</p>
+                    <span id="cajera-tiempo" class="text-white font-bold text-[11px] md:text-base truncate block px-1">--</span>
+                </div>
+                <div class="w-1/3 bg-[#0A0A0B]/95 backdrop-blur-md rounded-xl py-1.5 md:py-3 text-center border border-white/10 shadow-lg">
+                    <p class="text-[8px] md:text-[10px] uppercase text-gray-400 font-bold tracking-wider">Distancia</p>
+                    <span id="cajera-km" class="text-white font-bold text-[11px] md:text-base truncate block px-1">--</span>
+                </div>
+                <div class="w-1/3 bg-[#0A0A0B]/95 backdrop-blur-md rounded-xl py-1.5 md:py-3 text-center border border-[#39ff14]/30 shadow-lg">
+                    <p class="text-[8px] md:text-[10px] uppercase text-[#39ff14] font-bold tracking-wider">Tarifa</p>
+                    <span id="cajera-tarifa" class="text-white font-black text-[11px] md:text-base truncate block px-1">--</span>
+                </div>
+            </div>
+            <div class="flex gap-2 pointer-events-auto mx-auto w-full max-w-[340px] md:max-w-2xl">
+                <button onclick="enviarTraspasoAdmin()" class="w-1/2 bg-[#ff073a] py-3 md:py-4 md:text-sm rounded-xl font-black text-white shadow-lg active:scale-95 transition-transform text-[11px] uppercase tracking-wider">Traspasar</button>
+                <button onclick="confirmarDeliveryAdminSheet()" class="w-1/2 bg-[#39ff14] py-3 md:py-4 md:text-sm rounded-xl font-black text-black shadow-lg active:scale-95 transition-transform text-[11px] uppercase tracking-wider">Enviar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(adminUI);
+
+    if (typeof map === 'undefined' || map === null) {
+        initLeafletMap();
+    }
+
+    const loadDataInterval = setInterval(() => {
+        if (db && db.sedes && db.sedes.length > 0) {
+            if (!checkoutSede) checkoutSede = currentSede || db.sedes[0];
+            
+            const selectSedeAdmin = document.getElementById('cajera-sede');
+            if(selectSedeAdmin) {
+                selectSedeAdmin.innerHTML = db.sedes.map(s => `<option value="${s.ID_SEDE}">${s.NOMBRE_SEDE.split(',')[0]}</option>`).join('');
+                selectSedeAdmin.value = checkoutSede.ID_SEDE;
+            }
+
+            if(typeof map !== 'undefined' && map !== null) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                    if (checkoutSede && checkoutSede.COORDENADAS_SEDE) {
+                        const [sLat, sLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+                        map.setView([sLat, sLng], 13);
+                        
+                        // Renderizar las posiciones iniciales de tus sedes de forma idéntica
+                        if (typeof renderMapPosition === "function") {
+                            renderMapPosition(sLat, sLng, true);
+                        }
+                    }
+                }, 100);
+            }
+            clearInterval(loadDataInterval); 
+        }
+    }, 300);
+    
+    setTimeout(() => clearInterval(loadDataInterval), 10000);
+}
 // =========================================================
-// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY CORREGIDA ---
+// --- FIN LÓGICA VISTA ADMIN CAJERA DELIVERY ---
 // =========================================================
     function resetAppAndGPS() {
         alert("Instrucciones para reactivar el GPS:\n1. Toca el candado o ícono de ajustes en la barra de direcciones del navegador.\n2. Ve a 'Permisos' y activa la 'Ubicación' exacta.\n3. La página se recargará a continuación.");

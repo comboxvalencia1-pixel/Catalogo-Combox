@@ -3101,8 +3101,10 @@ const iconHtml = `
                 const lat = userMarker.getLatLng().lat;
                 const lng = userMarker.getLatLng().lng;
                 
-                // Usamos la variable global calculada por OSRM
-                locationData = `📍 GPS: https://maps.google.com/?q=${lat},${lng}\n💰 TARIFA DELIVERY: $${tarifaFinalCalculada.toFixed(2)}`;
+                // Tomamos el nombre de la calle que se autocompletó en el input
+                const nombreCalleGPS = document.getElementById('checkout-location').value || "Ubicación en mapa";
+                
+                locationData = `📝 Ref: ${nombreCalleGPS}\n📍 GPS: http://googleusercontent.com/maps.google.com/?q=${lat},${lng}\n💰 TARIFA DELIVERY: $${tarifaFinalCalculada.toFixed(2)}`;
             } else {
                 locationData = "Ubicación no especificada (Contactar al cliente)";
             }

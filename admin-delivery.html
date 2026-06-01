@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>COMBOX Cajera - Delivery</title>
+    
+    <link rel="manifest" href="admin-manifest.json">
+    <meta name="theme-color" content="#ff073a">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    
+    <style>
+        body { overflow: hidden; margin: 0; padding: 0; background: #e5e3df; font-family: sans-serif; }
+        .glass-panel { background: rgba(10, 10, 11, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .leaflet-container { background: #0A0A0B; outline: none; }
+    </style>
+</head>
+<body class="relative w-full h-[100dvh]">
+
+    <div id="map-wrapper" class="absolute inset-0 w-full h-full z-0">
+        <div id="map-preview" class="w-full h-full z-0"></div>
+    </div>
+
+    <div class="absolute top-0 w-full pointer-events-auto glass-panel px-3 pb-3 flex flex-col gap-2 rounded-b-3xl shadow-2xl z-[10000]" style="padding-top: env(safe-area-inset-top);">
+        </div>
+
+    <div id="admin-pin-controls" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-16 flex gap-3 pointer-events-auto z-[10001]" style="display:none;">
+        <button onclick="cancelarPinAdmin()" class="bg-red-600 text-white font-black px-6 py-2 rounded-full shadow-2xl active:scale-95 uppercase text-[11px] tracking-widest">Cancelar</button>
+        <button onclick="aceptarPinAdmin()" class="bg-[#ff073a] text-white font-black px-6 py-2 rounded-full shadow-2xl active:scale-95 uppercase text-[11px] tracking-widest">Aceptar</button>
+    </div>
+
+    <div class="absolute bottom-0 w-full pointer-events-none px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] flex flex-col gap-2 z-[10000]">
+        </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    
+    <script src="js/admin.js"></script>
+
+</body>
+</html>

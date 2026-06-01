@@ -1,0 +1,35 @@
+/* css/admin-styles.css */
+
+/* Reset básico para asegurar que el mapa ocupe toda la pantalla */
+body { 
+    overflow: hidden; 
+    margin: 0; 
+    padding: 0; 
+    background: #e5e3df; 
+    font-family: sans-serif; 
+}
+
+/* Panel con efecto cristal (Glassmorphism) */
+.glass-panel { 
+    background: rgba(10, 10, 11, 0.9); 
+    backdrop-filter: blur(12px); 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+}
+
+/* Asegurar que Leaflet se vea bien en modo oscuro */
+.leaflet-container { 
+    background: #0A0A0B; 
+    outline: none; 
+}
+
+/* Clases de utilidad para los estados del mapa */
+.sede-marker-content {
+    transition: transform 0.2s ease;
+}
+
+/* Ajuste para que el input de coordenadas se vea bien */
+#cajera-coords:focus {
+    outline: none;
+    border-color: #ff073a;
+    box-shadow: 0 0 0 1px #ff073a;
+}

@@ -2707,48 +2707,40 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
     try {
         if (!routeInfo) {
             // INTENTO 1: OPENROUTESERVICE (Principal con Timeout de 4 segundos)
-            try {
-                // Creamos un cronómetro para abortar la petición si ORS se queda colgado
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 segundos de límite máximo
-
-                // Añadimos el { signal } al fetch
-                const resOrs = await fetch(orsUrl, { signal: controller.signal });
-                clearTimeout(timeoutId); // Si responde rápido, cancelamos el cronómetro
-
-                if (!resOrs.ok) throw new Error("ORS falló o llegó al límite");
-                const dataOrs = await resOrs.json();
-                
-                if (dataOrs.features && dataOrs.features.length > 0) {
-                    const route = dataOrs.features[0];
-                    routeInfo = {
-                        distanceKm: route.properties.summary.distance / 1000,
-                        durationMin: Math.ceil(route.properties.summary.duration / 60),
-                        geometry: route.geometry,
-                        proveedor: 'ORS'
-                    };
-                } else {
-                    throw new Error("ORS no devolvió rutas válidas");
-                }
+if (dataOrs.features && dataOrs.features.length > 0) {
+    // Ordenamos las rutas por distancia (summary.distance)
+    const rutasOrdenadas = dataOrs.features.sort((a, b) => 
+        a.properties.summary.distance - b.properties.summary.distance
+    );
+    const route = rutasOrdenadas[0]; // Seleccionamos la más corta
+    
+    routeInfo = {
+        distanceKm: route.properties.summary.distance / 1000,
+        durationMin: Math.ceil(route.properties.summary.duration / 60),
+        geometry: route.geometry,
+        proveedor: 'ORS'
+    };
+} else {
+    throw new Error("ORS no devolvió rutas válidas");
+}
             } catch (errorOrs) {
                 console.warn("⚠️ ORS colgado o fallido, activando protocolo de respaldo con OSRM...");
                 
-                // INTENTO 2: OSRM (Respaldo)
-                const resOsrm = await fetch(osrmUrl);
-                if (!resOsrm.ok) throw new Error("OSRM también falló");
-                const dataOsrm = await resOsrm.json();
-                
-                if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
-                    const route = dataOsrm.routes[0];
-                    routeInfo = {
-                        distanceKm: route.distance / 1000,
-                        durationMin: Math.ceil(route.duration / 60),
-                        geometry: route.geometry,
-                        proveedor: 'OSRM'
-                    };
-                } else {
-                    throw new Error("OSRM no devolvió rutas válidas");
-                }
+             // --- SUSTITUYE EL PROCESAMIENTO DE OSRM POR ESTE BLOQUE ---
+if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
+    // Ordenamos todas las rutas recibidas por distancia (metros)
+    const rutasOrdenadas = dataOsrm.routes.sort((a, b) => a.distance - b.distance);
+    const route = rutasOrdenadas[0]; // Seleccionamos la más corta
+    
+    routeInfo = {
+        distanceKm: route.distance / 1000,
+        durationMin: Math.ceil(route.duration / 60),
+        geometry: route.geometry,
+        proveedor: 'OSRM'
+    };
+} else {
+    throw new Error("OSRM no devolvió rutas válidas");
+}
             }
             
             // Si sobrevivimos y tenemos datos, guardamos en caché

@@ -4467,6 +4467,102 @@ window.obtenerZonaORS = async function(lat, lng) {
     // --- INTENTO 3: Fallo general ---
     if (inputZona) inputZona.value = "Ubicación fijada";
 };
+// =========================================================
+// --- FUNCIÓN: CALCULAR RUTA ALTERNATIVA (OSRM / ORS) ---
+// =========================================================
+window.calcularRutaAlternativaAdmin = async function() {
+    const coords = document.getElementById('cajera-coords').value;
+    if (!coords || !checkoutSede) {
+        alert("Por favor, fija una ubicación en el mapa primero.");
+        return;
+    }
+
+    const [lat, lng] = coords.split(',').map(Number);
+    const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+
+    document.getElementById('cajera-tarifa').innerText = "Calculando...";
+    if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = "R. ALTERNA...";
+
+    let routeInfoAlt = null;
+    const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0=';
+    
+    // OSRM acepta &alternatives=true directo en la URL por GET
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson&alternatives=true`;
+
+    try {
+        // INTENTO 1: OSRM Alternativo
+        const resOsrm = await fetch(osrmUrl);
+        if (!resOsrm.ok) throw new Error("OSRM Caído");
+        const dataOsrm = await resOsrm.json();
+
+        if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
+            // Si hay ruta alternativa (routes[1]), la tomamos. Si no, tomamos la única que devolvió.
+            const routeAlt = dataOsrm.routes.length > 1 ? dataOsrm.routes[1] : dataOsrm.routes[0];
+            routeInfoAlt = {
+                distanceKm: routeAlt.distance / 1000,
+                durationMin: Math.ceil(routeAlt.duration / 60),
+                geometry: routeAlt.geometry
+            };
+        } else {
+            throw new Error("No hay rutas OSRM");
+        }
+    } catch (e) {
+        console.warn("OSRM falló. Buscando alternativa en ORS...");
+        
+        // INTENTO 2: Respaldo ORS (Usamos driving-hgv para forzar un mapeo por calles distintas/principales)
+        const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-hgv?api_key=${orsApiKey}&start=${sedeLng},${sedeLat}&end=${lng},${lat}`;
+        
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            const resOrs = await fetch(orsUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (resOrs.ok) {
+                const dataOrs = await resOrs.json();
+                if (dataOrs.features && dataOrs.features.length > 0) {
+                    const route = dataOrs.features[0];
+                    routeInfoAlt = {
+                        distanceKm: route.properties.summary.distance / 1000,
+                        durationMin: Math.ceil(route.properties.summary.duration / 60),
+                        geometry: route.geometry
+                    };
+                }
+            }
+        } catch (errorOrs) {
+            if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = "ERROR DE RUTAS";
+            document.getElementById('cajera-tarifa').innerText = "Error";
+            return;
+        }
+    }
+
+    // --- RENDERIZADO Y CÁLCULO DE LA ALTERNATIVA ---
+    if (routeInfoAlt) {
+        const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
+        let rawPrice = routeInfoAlt.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
+        let decimalPart = rawPrice % 1;
+        let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
+
+        tarifaFinalCalculada = Math.max(min, roundedPrice);
+        let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
+
+        if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = `${displayPrice}$`;
+        if(document.getElementById('route-km')) document.getElementById('route-km').innerText = `${routeInfoAlt.distanceKm.toFixed(1)} km`;
+        if(document.getElementById('route-time')) document.getElementById('route-time').innerText = `${routeInfoAlt.durationMin} min`;
+
+        // Dibujamos la línea de otro color (Naranja) para distinguirla visualmente
+        if (typeof rutaLayer !== 'undefined' && rutaLayer && map) {
+            map.removeLayer(rutaLayer);
+        }
+        
+        rutaLayer = L.geoJSON(routeInfoAlt.geometry, {
+            style: { color: '#FF8C00', weight: 4, opacity: 0.9, dashArray: '8, 8' }
+        }).addTo(map);
+
+        map.fitBounds(rutaLayer.getBounds(), { padding: [40, 40] });
+        setTimeout(() => { if(map) map.invalidateSize(); }, 300);
+    }
+};
 
 // 8. INICIALIZACIÓN COMPLETA DE LA VISTA ADMIN
 function initAdminDelivery() {
@@ -4576,7 +4672,7 @@ function initAdminDelivery() {
                 </div>
             </div>
             <div class="flex gap-2 pointer-events-auto mx-auto w-full max-w-[340px] md:max-w-2xl">
-                <button onclick="enviarTraspasoAdmin()" class="w-1/2 bg-[#ff073a] py-3 md:py-4 md:text-sm rounded-xl font-black text-white shadow-lg active:scale-95 transition-transform text-[11px] uppercase tracking-wider">Traspasar</button>
+                <button onclick="calcularRutaAlternativaAdmin()" class="w-1/2 bg-[#FF8C00] py-3 md:py-4 md:text-sm rounded-xl font-black text-white shadow-lg active:scale-95 transition-transform text-[11px] uppercase tracking-wider">Ruta Alterna</button>
                 <button onclick="confirmarDeliveryAdminSheet()" class="w-1/2 bg-[#39ff14] py-3 md:py-4 md:text-sm rounded-xl font-black text-black shadow-lg active:scale-95 transition-transform text-[11px] uppercase tracking-wider">Enviar</button>
             </div>
         </div>

@@ -2706,48 +2706,53 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
 
     try {
         if (!routeInfo) {
-            // INTENTO 1: OPENROUTESERVICE (Principal con Timeout de 4 segundos)
-if (dataOrs.features && dataOrs.features.length > 0) {
-    // Ordenamos las rutas por distancia (summary.distance)
-    const rutasOrdenadas = dataOrs.features.sort((a, b) => 
-        a.properties.summary.distance - b.properties.summary.distance
-    );
-    const route = rutasOrdenadas[0]; // Seleccionamos la más corta
-    
-    routeInfo = {
-        distanceKm: route.properties.summary.distance / 1000,
-        durationMin: Math.ceil(route.properties.summary.duration / 60),
-        geometry: route.geometry,
-        proveedor: 'ORS'
-    };
-} else {
-    throw new Error("ORS no devolvió rutas válidas");
-}
-            } catch (errorOrs) {
-                console.warn("⚠️ ORS colgado o fallido, activando protocolo de respaldo con OSRM...");
+            // --- INTENTO 1: OPENROUTESERVICE ---
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const resOrs = await fetch(orsUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!resOrs.ok) throw new Error("ORS falló");
+                const dataOrs = await resOrs.json(); // <--- AQUÍ OBTENEMOS LOS DATOS
                 
-             // --- SUSTITUYE EL PROCESAMIENTO DE OSRM POR ESTE BLOQUE ---
-if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
-    // Ordenamos todas las rutas recibidas por distancia (metros)
-    const rutasOrdenadas = dataOsrm.routes.sort((a, b) => a.distance - b.distance);
-    const route = rutasOrdenadas[0]; // Seleccionamos la más corta
-    
-    routeInfo = {
-        distanceKm: route.distance / 1000,
-        durationMin: Math.ceil(route.duration / 60),
-        geometry: route.geometry,
-        proveedor: 'OSRM'
-    };
-} else {
-    throw new Error("OSRM no devolvió rutas válidas");
-}
+                if (dataOrs.features && dataOrs.features.length > 0) {
+                    const rutasOrdenadas = dataOrs.features.sort((a, b) => 
+                        a.properties.summary.distance - b.properties.summary.distance
+                    );
+                    const route = rutasOrdenadas[0];
+                    routeInfo = {
+                        distanceKm: route.properties.summary.distance / 1000,
+                        durationMin: Math.ceil(route.properties.summary.duration / 60),
+                        geometry: route.geometry,
+                        proveedor: 'ORS'
+                    };
+                }
+            } catch (errorOrs) {
+                console.warn("⚠️ ORS fallido, usando OSRM...");
+                
+                // --- INTENTO 2: OSRM ---
+                const resOsrm = await fetch(osrmUrl);
+                if (!resOsrm.ok) throw new Error("OSRM falló");
+                const dataOsrm = await resOsrm.json(); // <--- AQUÍ OBTENEMOS LOS DATOS
+                
+                if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
+                    const rutasOrdenadas = dataOsrm.routes.sort((a, b) => a.distance - b.distance);
+                    const route = rutasOrdenadas[0];
+                    routeInfo = {
+                        distanceKm: route.distance / 1000,
+                        durationMin: Math.ceil(route.duration / 60),
+                        geometry: route.geometry,
+                        proveedor: 'OSRM'
+                    };
+                }
             }
             
-            // Si sobrevivimos y tenemos datos, guardamos en caché
             if (routeInfo) {
                 localStorage.setItem(cacheKey, JSON.stringify({ time: Date.now(), data: routeInfo }));
             }
         }
+ 
 
         // --- RENDERIZADO VISUAL Y CÁLCULO DE TARIFAS ---
         if (routeInfo) {

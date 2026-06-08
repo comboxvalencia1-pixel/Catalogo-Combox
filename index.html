@@ -4468,8 +4468,14 @@ window.obtenerZonaORS = async function(lat, lng) {
     if (inputZona) inputZona.value = "Ubicación fijada";
 };
 // =========================================================
-// --- FUNCIÓN: CALCULAR RUTA ALTERNATIVA (OSRM / ORS) ---
+// --- FUNCIÓN: TOGGLE RUTA ALTERNATIVA (CON CACHÉ) ---
 // =========================================================
+
+// Variables globales para recordar el estado y el caché
+window.estadoRutaAlterna = false;
+window.cacheRutaAlterna = null;
+window.coordenadasRutaActual = "";
+
 window.calcularRutaAlternativaAdmin = async function() {
     const coords = document.getElementById('cajera-coords').value;
     if (!coords || !checkoutSede) {
@@ -4478,92 +4484,143 @@ window.calcularRutaAlternativaAdmin = async function() {
     }
 
     const [lat, lng] = coords.split(',').map(Number);
-    const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+    // Creamos una llave única con las coordenadas actuales para saber si el pin se movió
+    const coordsKey = `${lat.toFixed(4)}_${lng.toFixed(4)}`;
+    
+    // Si el pin se movió a otro lado, reseteamos nuestro caché de la ruta alternativa
+    if (window.coordenadasRutaActual !== coordsKey) {
+        window.estadoRutaAlterna = false;
+        window.cacheRutaAlterna = null;
+        window.coordenadasRutaActual = coordsKey;
+    }
 
+    const btn = document.querySelector('button[onclick="calcularRutaAlternativaAdmin()"]');
+
+    if (window.estadoRutaAlterna) {
+        // ==========================================
+        // VOLVER A LA RUTA ORIGINAL (Verde)
+        // ==========================================
+        document.getElementById('cajera-tarifa').innerText = "Restaurando...";
+        if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = "CALCULANDO...";
+
+        // Leemos la ruta original que tu app ya guarda en localStorage por defecto
+        const cacheKeyOriginal = `ruta_unificada_${checkoutSede.ID_SEDE}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
+        const cachedOriginalStr = localStorage.getItem(cacheKeyOriginal);
+        
+        let routeInfoOriginal = null;
+        if (cachedOriginalStr) {
+            routeInfoOriginal = JSON.parse(cachedOriginalStr).data;
+        }
+
+        if (routeInfoOriginal) {
+            renderizarRutaCalculada(routeInfoOriginal, '#39FF14'); // Dibujamos en verde
+            window.estadoRutaAlterna = false;
+            if(btn) {
+                btn.innerText = "Ruta Alterna";
+                btn.classList.replace('bg-[#39ff14]', 'bg-[#FF8C00]'); // Volvemos el botón naranja
+                btn.classList.replace('text-black', 'text-white');
+            }
+        } else {
+            // Si por alguna razón extraña se borró el caché original, forzamos recálculo nativo
+            window.estadoRutaAlterna = false;
+            if(btn) btn.innerText = "Ruta Alterna";
+            await renderMapPosition(lat, lng, true);
+        }
+        return;
+    }
+
+    // ==========================================
+    // MOSTRAR RUTA ALTERNATIVA (Naranja)
+    // ==========================================
     document.getElementById('cajera-tarifa').innerText = "Calculando...";
     if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = "R. ALTERNA...";
 
-    let routeInfoAlt = null;
-    const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0=';
-    
-    // OSRM acepta &alternatives=true directo en la URL por GET
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson&alternatives=true`;
+    let routeInfoAlt = window.cacheRutaAlterna;
 
-    try {
-        // INTENTO 1: OSRM Alternativo
-        const resOsrm = await fetch(osrmUrl);
-        if (!resOsrm.ok) throw new Error("OSRM Caído");
-        const dataOsrm = await resOsrm.json();
+    // Si NO tenemos la alternativa en caché, consultamos las APIs
+    if (!routeInfoAlt) {
+        const [sedeLat, sedeLng] = checkoutSede.COORDENADAS_SEDE.split(',').map(Number);
+        const orsApiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZmY2VkMzZhOTM4YjQ1MTliZjg4Y2M3ZTk3N2E5ZmQ4IiwiaCI6Im11cm11cjY0In0=';
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sedeLng},${sedeLat};${lng},${lat}?overview=full&geometries=geojson&alternatives=true`;
 
-        if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
-            // Si hay ruta alternativa (routes[1]), la tomamos. Si no, tomamos la única que devolvió.
-            const routeAlt = dataOsrm.routes.length > 1 ? dataOsrm.routes[1] : dataOsrm.routes[0];
-            routeInfoAlt = {
-                distanceKm: routeAlt.distance / 1000,
-                durationMin: Math.ceil(routeAlt.duration / 60),
-                geometry: routeAlt.geometry
-            };
-        } else {
-            throw new Error("No hay rutas OSRM");
-        }
-    } catch (e) {
-        console.warn("OSRM falló. Buscando alternativa en ORS...");
-        
-        // INTENTO 2: Respaldo ORS (Usamos driving-hgv para forzar un mapeo por calles distintas/principales)
-        const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-hgv?api_key=${orsApiKey}&start=${sedeLng},${sedeLat}&end=${lng},${lat}`;
-        
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
-            const resOrs = await fetch(orsUrl, { signal: controller.signal });
-            clearTimeout(timeoutId);
+            const resOsrm = await fetch(osrmUrl);
+            if (!resOsrm.ok) throw new Error("OSRM Caído");
+            const dataOsrm = await resOsrm.json();
 
-            if (resOrs.ok) {
-                const dataOrs = await resOrs.json();
-                if (dataOrs.features && dataOrs.features.length > 0) {
-                    const route = dataOrs.features[0];
-                    routeInfoAlt = {
-                        distanceKm: route.properties.summary.distance / 1000,
-                        durationMin: Math.ceil(route.properties.summary.duration / 60),
-                        geometry: route.geometry
-                    };
+            if (dataOsrm.code === 'Ok' && dataOsrm.routes && dataOsrm.routes.length > 0) {
+                const routeAlt = dataOsrm.routes.length > 1 ? dataOsrm.routes[1] : dataOsrm.routes[0];
+                routeInfoAlt = { distanceKm: routeAlt.distance / 1000, durationMin: Math.ceil(routeAlt.duration / 60), geometry: routeAlt.geometry };
+            } else { throw new Error("No hay rutas OSRM"); }
+        } catch (e) {
+            console.warn("OSRM falló. Buscando alternativa en ORS...");
+            const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-hgv?api_key=${orsApiKey}&start=${sedeLng},${sedeLat}&end=${lng},${lat}`;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const resOrs = await fetch(orsUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (resOrs.ok) {
+                    const dataOrs = await resOrs.json();
+                    if (dataOrs.features && dataOrs.features.length > 0) {
+                        const route = dataOrs.features[0];
+                        routeInfoAlt = { distanceKm: route.properties.summary.distance / 1000, durationMin: Math.ceil(route.properties.summary.duration / 60), geometry: route.geometry };
+                    }
                 }
+            } catch (errorOrs) {
+                if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = "ERROR DE RUTAS";
+                document.getElementById('cajera-tarifa').innerText = "Error";
+                return;
             }
-        } catch (errorOrs) {
-            if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = "ERROR DE RUTAS";
-            document.getElementById('cajera-tarifa').innerText = "Error";
-            return;
         }
+
+        // Guardamos exitosamente la nueva ruta en la memoria RAM temporal
+        window.cacheRutaAlterna = routeInfoAlt;
     }
 
-    // --- RENDERIZADO Y CÁLCULO DE LA ALTERNATIVA ---
+    // Renderizamos la ruta alternativa cargada (sea de la API o del caché)
     if (routeInfoAlt) {
-        const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
-        let rawPrice = routeInfoAlt.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
-        let decimalPart = rawPrice % 1;
-        let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
-
-        tarifaFinalCalculada = Math.max(min, roundedPrice);
-        let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
-
-        if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = `${displayPrice}$`;
-        if(document.getElementById('route-km')) document.getElementById('route-km').innerText = `${routeInfoAlt.distanceKm.toFixed(1)} km`;
-        if(document.getElementById('route-time')) document.getElementById('route-time').innerText = `${routeInfoAlt.durationMin} min`;
-
-        // Dibujamos la línea de otro color (Naranja) para distinguirla visualmente
-        if (typeof rutaLayer !== 'undefined' && rutaLayer && map) {
-            map.removeLayer(rutaLayer);
+        renderizarRutaCalculada(routeInfoAlt, '#FF8C00'); // Dibujamos en naranja
+        window.estadoRutaAlterna = true;
+        if(btn) {
+            btn.innerText = "Ruta Original";
+            btn.classList.replace('bg-[#FF8C00]', 'bg-[#39ff14]'); // Cambiamos el botón a verde para indicar cómo volver
+            btn.classList.replace('text-white', 'text-black');
         }
-        
-        rutaLayer = L.geoJSON(routeInfoAlt.geometry, {
-            style: { color: '#FF8C00', weight: 4, opacity: 0.9, dashArray: '8, 8' }
-        }).addTo(map);
-
-        map.fitBounds(rutaLayer.getBounds(), { padding: [40, 40] });
-        setTimeout(() => { if(map) map.invalidateSize(); }, 300);
     }
 };
 
+// =========================================================
+// --- FUNCIÓN AUXILIAR DE RENDERIZADO VISUAL ---
+// =========================================================
+function renderizarRutaCalculada(routeData, colorHex) {
+    const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
+    let rawPrice = routeData.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
+    let decimalPart = rawPrice % 1;
+    let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
+
+    // Se asigna a la variable global para que tu sistema de cobros de WhatsApp lo tome
+    tarifaFinalCalculada = Math.max(min, roundedPrice);
+    let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
+
+    if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = `${displayPrice}$`;
+    if(document.getElementById('route-km')) document.getElementById('route-km').innerText = `${routeData.distanceKm.toFixed(1)} km`;
+    if(document.getElementById('route-time')) document.getElementById('route-time').innerText = `${routeData.durationMin} min`;
+
+    // Borramos el dibujo de la ruta anterior en Leaflet
+    if (typeof rutaLayer !== 'undefined' && rutaLayer && map) {
+        map.removeLayer(rutaLayer);
+    }
+    
+    // Trazamos la nueva línea
+    rutaLayer = L.geoJSON(routeData.geometry, {
+        style: { color: colorHex, weight: 4, opacity: 0.9, dashArray: '8, 8' }
+    }).addTo(map);
+
+    map.fitBounds(rutaLayer.getBounds(), { padding: [40, 40] });
+    setTimeout(() => { if(map) map.invalidateSize(); }, 300);
+}
 // 8. INICIALIZACIÓN COMPLETA DE LA VISTA ADMIN
 function initAdminDelivery() {
     isAdminDelivery = true;

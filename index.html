@@ -85,7 +85,16 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <!-- 4. TU BLOQUE DE ESTILOS CSS (Aquí metemos la animación de comida y tus estilos globales) -->
-    <style>
+   
+    
+    
+    
+    
+    
+    
+    
+    
+     <style>
       
       
 /* Animation framework para la lluvia de comida 3D OPTIMIZADO */
@@ -4844,6 +4853,90 @@ function accionCoordenadas() {
         window.activarPinAdmin();
     }
 }
+
+// =========================================================
+// --- FUNCIÓN: ENVIAR DATOS A GOOGLE SHEETS ---
+// =========================================================
+window.confirmarDeliveryAdminSheet = function() {
+    // URL de tu Web App de Apps Script
+    const url = "https://script.google.com/macros/s/AKfycbzwgIjTN5FePgS04iaqdwRPB-ZKQgpvo_F1_xAtYY2yIM6DSHKWgryYqiplkIEJ4LUVwA/exec";
+
+    // Evitar dobles clics
+    const btnEnviar = document.querySelector('button[onclick="confirmarDeliveryAdminSheet()"]');
+    const textoOriginal = btnEnviar.innerText;
+    btnEnviar.innerText = "ENVIANDO...";
+    btnEnviar.disabled = true;
+
+    // 1. Capturar los inputs de texto
+    const coords = document.getElementById('cajera-coords').value || "Sin coordenadas";
+    const nombre = document.getElementById('cajera-name').value || "Cliente Mostrador";
+    const telefono = document.getElementById('cajera-phone').value || "Sin teléfono";
+    
+    // 2. Capturar los valores calculados limpiando textos innecesarios (ej. quitar " km", " min", "$")
+    const tarifaBruta = document.getElementById('cajera-tarifa').innerText;
+    const tarifaLimpia = tarifaBruta.replace('$', '').replace('Calculando...', '0').trim();
+    
+    const kmBruto = document.getElementById('cajera-km').innerText;
+    const kmLimpio = kmBruto.replace('km', '').trim();
+    
+    const tiempoBruto = document.getElementById('cajera-tiempo').innerText;
+    const tiempoLimpio = tiempoBruto.replace('min', '').trim();
+
+    // 3. Capturar el nombre de la sede real desde tu objeto global checkoutSede
+    let nombreSede = "Combox";
+    if (typeof checkoutSede !== 'undefined' && checkoutSede && checkoutSede.NOMBRE_SEDE) {
+        nombreSede = checkoutSede.NOMBRE_SEDE;
+    } else {
+        const selectSede = document.getElementById('cajera-sede');
+        if (selectSede && selectSede.options.length > 0) {
+            nombreSede = selectSede.options[selectSede.selectedIndex].text;
+        }
+    }
+
+    // 4. Generar la fecha de hoy automáticamente en formato DD/MM/YYYY
+    const hoy = new Date();
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const anio = hoy.getFullYear();
+    const fechaActual = `${dia}/${mes}/${anio}`;
+
+    // 5. Estructurar los datos exactos que espera tu Apps Script
+    const datos = {
+        fecha: fechaActual,
+        ubicacion: coords,
+        nombre: nombre,
+        telefono: telefono,
+        tarifa: tarifaLimpia,
+        distancia: kmLimpio,
+        tiempo: tiempoLimpio,
+        sede: nombreSede
+    };
+
+    // 6. Enviar a Google Sheets
+    fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+    })
+    .then(() => {
+        alert("¡Delivery registrado exitosamente en tu base de datos!");
+        
+        // Restaurar botón
+        btnEnviar.innerText = textoOriginal;
+        btnEnviar.disabled = false;
+        
+        // Opcional: Limpiar inputs para el siguiente cliente
+        document.getElementById('cajera-name').value = '';
+        document.getElementById('cajera-phone').value = '';
+    })
+    .catch(error => {
+        console.error("Error en el fetch de Sheets:", error);
+        alert("Hubo un error de conexión, verifica la consola.");
+        btnEnviar.innerText = textoOriginal;
+        btnEnviar.disabled = false;
+    });
+};
 
 </script>
 <div class="modal" id="scanner-modal">

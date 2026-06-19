@@ -4871,7 +4871,8 @@ window.confirmarDeliveryAdminSheet = function() {
     const coords = document.getElementById('cajera-coords').value || "Sin coordenadas";
     const nombre = document.getElementById('cajera-name').value || "Cliente Mostrador";
     const telefono = document.getElementById('cajera-phone').value || "Sin teléfono";
-    
+   const elementoZona = document.getElementById('cajera-zona');
+const zonaValue = elementoZona ? (elementoZona.value || elementoZona.innerText || "Sin zona").trim() : "Sin zona";
     // 2. Capturar los valores calculados limpiando textos innecesarios (ej. quitar " km", " min", "$")
     const tarifaBruta = document.getElementById('cajera-tarifa').innerText;
     const tarifaLimpia = tarifaBruta.replace('$', '').replace('Calculando...', '0').trim();
@@ -4909,7 +4910,8 @@ window.confirmarDeliveryAdminSheet = function() {
         tarifa: tarifaLimpia,
         distancia: kmLimpio,
         tiempo: tiempoLimpio,
-        sede: nombreSede
+        sede: nombreSede,
+        zona: zonaValue,
     };
 
     // 6. Enviar a Google Sheets

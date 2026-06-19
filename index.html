@@ -4917,36 +4917,28 @@ const zonaValue = elementoZona ? (elementoZona.value || elementoZona.innerText |
     // 6. Enviar a Google Sheets
     fetch(url, {
         method: 'POST',
-        // ¡OJO! Eliminamos la línea mode: 'no-cors'
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Cambiamos a text/plain
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datos)
     })
-    .then(response => response.json()) // Ahora sí leemos la respuesta del servidor
-    .then(data => {
-        // Verificamos qué nos respondió Google Apps Script
-        if (data.status === "success") {
-            alert("¡Delivery registrado exitosamente! ID de orden: " + data.id);
-            
-            // Opcional: Limpiar inputs solo si fue exitoso
-            document.getElementById('cajera-name').value = '';
-            document.getElementById('cajera-phone').value = '';
-        } else {
-            alert("Error al guardar en la hoja: " + data.message);
-        }
+    .then(() => {
+        alert("¡Delivery registrado exitosamente en tu base de datos!");
         
-        // Restaurar botón siempre al terminar
+        // Restaurar botón
         btnEnviar.innerText = textoOriginal;
         btnEnviar.disabled = false;
+        
+        // Opcional: Limpiar inputs para el siguiente cliente
+        document.getElementById('cajera-name').value = '';
+        document.getElementById('cajera-phone').value = '';
     })
     .catch(error => {
         console.error("Error en el fetch de Sheets:", error);
-        alert("Hubo un error de conexión, verifica tu internet.");
-        
-        // Restaurar botón si hay falla de red para que no quede pegado
+        alert("Hubo un error de conexión, verifica la consola.");
         btnEnviar.innerText = textoOriginal;
         btnEnviar.disabled = false;
     });
-
+};
 
 </script>
 <div class="modal" id="scanner-modal">

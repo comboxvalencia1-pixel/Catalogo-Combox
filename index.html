@@ -2788,6 +2788,19 @@ if (condicionRedondeo === "no") {
 
 // Se asigna a la variable global comparando contra la TARIFA_MINIMA
 tarifaFinalCalculada = Math.max(min, precioCalculado);
+
+// 👇 TODAS ESTAS SON LAS LÍNEAS NUEVAS AÑADIDAS 👇
+let descuentoRaw = parseFloat(
+    checkoutSede.DESCUENTO_PORCENTAJE || 
+    checkoutSede.descuento_porcentaje || 
+    checkoutSede.DESCUENTO_PORCENTAGE || 
+    checkoutSede.descuento_porcentage
+);
+
+if (!isNaN(descuentoRaw) && descuentoRaw > 0) {
+    tarifaFinalCalculada = tarifaFinalCalculada * (1 - (descuentoRaw / 100));
+    tarifaFinalCalculada = parseFloat(tarifaFinalCalculada.toFixed(2));
+}
             let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
 
             document.getElementById('map-header-title').innerText = `${displayPrice}$`;
@@ -4615,27 +4628,49 @@ window.calcularRutaAlternativaAdmin = async function() {
 // --- FUNCIÓN AUXILIAR DE RENDERIZADO VISUAL ---
 // =========================================================
 function renderizarRutaCalculada(routeData, colorHex) {
- // CÓDIGO NUEVO (Respeta si pones un 0 real)
-let tarifaMinimaRaw = parseFloat(checkoutSede.TARIFA_MINIMA);
-const min = isNaN(tarifaMinimaRaw) ? 1.5 : tarifaMinimaRaw;
-    let rawPrice = routeData.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
-    // Leemos la columna de la API (soporta mayúsculas, minúsculas o si viene vacía asume "si")
-let condicionRedondeo = (checkoutSede.REDONDEAR_TARIFA || checkoutSede.redondear_tarifa || "si").toString().trim().toLowerCase();
-
-let precioCalculado;
-
-if (condicionRedondeo === "no") {
-    // Si AppScript dice "no", tomamos el precio crudo exacto (limitado a 2 decimales para limpieza visual)
-    precioCalculado = parseFloat(rawPrice.toFixed(2));
-} else {
-    // Si dice "si" (o cualquier otra cosa), aplicamos la regla de redondeo del 0.60
-    let decimalPart = rawPrice % 1;
-    precioCalculado = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
-}
-
-// Se asigna a la variable global comparando contra la TARIFA_MINIMA
-tarifaFinalCalculada = Math.max(min, precioCalculado);
+    // Evitamos el operador || para que si es 0, se mantenga como 0 y no salte a 1.5
+    let tarifaMinimaRaw = parseFloat(checkoutSede.TARIFA_MINIMA);
+    const min = isNaN(tarifaMinimaRaw) ? 1.5 : tarifaMinimaRaw; 
     
+    let rawPrice = routeData.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
+    
+    // Leemos la columna de la API (soporta mayúsculas, minúsculas o si viene vacía asume "si")
+    let condicionRedondeo = (checkoutSede.REDONDEAR_TARIFA || checkoutSede.redondear_tarifa || "si").toString().trim().toLowerCase();
+
+    let precioCalculado;
+
+    if (condicionRedondeo === "no") {
+        // Si AppScript dice "no", tomamos el precio crudo exacto (limitado a 2 decimales para limpieza visual)
+        precioCalculado = parseFloat(rawPrice.toFixed(2));
+    } else {
+        // Si dice "si" (o cualquier otra cosa), aplicamos la regla de redondeo del 0.60
+        let decimalPart = rawPrice % 1;
+        precioCalculado = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
+    }
+
+    // Se asigna a la variable global comparando contra la TARIFA_MINIMA
+    tarifaFinalCalculada = Math.max(min, precioCalculado);
+    
+    // ==========================================
+    // NUEVA LÓGICA: DESCUENTO POR PORCENTAJE
+    // ==========================================
+    // Buscamos el porcentaje en la API soportando errores de escritura (con J, con G, Mayúsculas o Minúsculas)
+    let descuentoRaw = parseFloat(
+        checkoutSede.DESCUENTO_PORCENTAJE || 
+        checkoutSede.descuento_porcentaje || 
+        checkoutSede.DESCUENTO_PORCENTAGE || 
+        checkoutSede.descuento_porcentage
+    );
+
+    // Si es un número válido y es mayor a 0, aplicamos la rebaja
+    if (!isNaN(descuentoRaw) && descuentoRaw > 0) {
+        // Ejemplo: si el descuento es 10, multiplica por 0.90 (1 - 0.10)
+        tarifaFinalCalculada = tarifaFinalCalculada * (1 - (descuentoRaw / 100));
+        // Redondeamos el resultado final a 2 decimales para evitar problemas de flotantes en JS
+        tarifaFinalCalculada = parseFloat(tarifaFinalCalculada.toFixed(2));
+    }
+    // ==========================================
+        
     let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
 
     if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = `${displayPrice}$`;

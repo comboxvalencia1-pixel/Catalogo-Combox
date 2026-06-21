@@ -2768,7 +2768,9 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
             const distanceKm = routeInfo.distanceKm;
             const durationMin = routeInfo.durationMin;
 
-            const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
+            // CÓDIGO NUEVO (Respeta si pones un 0 real)
+let tarifaMinimaRaw = parseFloat(checkoutSede.TARIFA_MINIMA);
+const min = isNaN(tarifaMinimaRaw) ? 1.5 : tarifaMinimaRaw;
             let rawPrice = distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
 // Leemos la columna de la API (soporta mayúsculas, minúsculas o si viene vacía asume "si")
 let condicionRedondeo = (checkoutSede.REDONDEAR_TARIFA || checkoutSede.redondear_tarifa || "si").toString().trim().toLowerCase();
@@ -4613,7 +4615,9 @@ window.calcularRutaAlternativaAdmin = async function() {
 // --- FUNCIÓN AUXILIAR DE RENDERIZADO VISUAL ---
 // =========================================================
 function renderizarRutaCalculada(routeData, colorHex) {
-    const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
+ // CÓDIGO NUEVO (Respeta si pones un 0 real)
+let tarifaMinimaRaw = parseFloat(checkoutSede.TARIFA_MINIMA);
+const min = isNaN(tarifaMinimaRaw) ? 1.5 : tarifaMinimaRaw;
     let rawPrice = routeData.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
     // Leemos la columna de la API (soporta mayúsculas, minúsculas o si viene vacía asume "si")
 let condicionRedondeo = (checkoutSede.REDONDEAR_TARIFA || checkoutSede.redondear_tarifa || "si").toString().trim().toLowerCase();

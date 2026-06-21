@@ -2770,10 +2770,22 @@ map.fitBounds([[lat, lng], [sedeLatFocus, sedeLngFocus]], { padding: [50, 50], m
 
             const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
             let rawPrice = distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
-            let decimalPart = rawPrice % 1;
-            let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
+// Leemos la columna de la API (soporta mayúsculas, minúsculas o si viene vacía asume "si")
+let condicionRedondeo = (checkoutSede.REDONDEAR_TARIFA || checkoutSede.redondear_tarifa || "si").toString().trim().toLowerCase();
 
-            tarifaFinalCalculada = Math.max(min, roundedPrice);
+let precioCalculado;
+
+if (condicionRedondeo === "no") {
+    // Si AppScript dice "no", tomamos el precio crudo exacto (limitado a 2 decimales para limpieza visual)
+    precioCalculado = parseFloat(rawPrice.toFixed(2));
+} else {
+    // Si dice "si" (o cualquier otra cosa), aplicamos la regla de redondeo del 0.60
+    let decimalPart = rawPrice % 1;
+    precioCalculado = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
+}
+
+// Se asigna a la variable global comparando contra la TARIFA_MINIMA
+tarifaFinalCalculada = Math.max(min, precioCalculado);
             let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
 
             document.getElementById('map-header-title').innerText = `${displayPrice}$`;
@@ -4603,11 +4615,23 @@ window.calcularRutaAlternativaAdmin = async function() {
 function renderizarRutaCalculada(routeData, colorHex) {
     const min = parseFloat(checkoutSede.TARIFA_MINIMA) || 1.5; 
     let rawPrice = routeData.distanceKm * (parseFloat(checkoutSede.TARIFA_POR_KM) || 1);
-    let decimalPart = rawPrice % 1;
-    let roundedPrice = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
+    // Leemos la columna de la API (soporta mayúsculas, minúsculas o si viene vacía asume "si")
+let condicionRedondeo = (checkoutSede.REDONDEAR_TARIFA || checkoutSede.redondear_tarifa || "si").toString().trim().toLowerCase();
 
-    // Se asigna a la variable global para que tu sistema de cobros de WhatsApp lo tome
-    tarifaFinalCalculada = Math.max(min, roundedPrice);
+let precioCalculado;
+
+if (condicionRedondeo === "no") {
+    // Si AppScript dice "no", tomamos el precio crudo exacto (limitado a 2 decimales para limpieza visual)
+    precioCalculado = parseFloat(rawPrice.toFixed(2));
+} else {
+    // Si dice "si" (o cualquier otra cosa), aplicamos la regla de redondeo del 0.60
+    let decimalPart = rawPrice % 1;
+    precioCalculado = Math.floor(rawPrice) + (decimalPart >= 0.6 ? 1 : 0);
+}
+
+// Se asigna a la variable global comparando contra la TARIFA_MINIMA
+tarifaFinalCalculada = Math.max(min, precioCalculado);
+    
     let displayPrice = (tarifaFinalCalculada % 1 === 0) ? tarifaFinalCalculada.toString() : tarifaFinalCalculada.toFixed(2);
 
     if(document.getElementById('map-header-title')) document.getElementById('map-header-title').innerText = `${displayPrice}$`;

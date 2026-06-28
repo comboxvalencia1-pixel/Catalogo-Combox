@@ -376,32 +376,13 @@
             background: linear-gradient(145deg, #951717ff, #981313ff) !important;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 10px rgba(145, 2, 2, 0.4) !important;
         }
-                /* === INICIO CSS CARRUSEL ONGS === */
-        .carrusel-contenedor {
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-        }
-        .carrusel-pista {
-            display: flex;
-            align-items: center;
-            gap: 30px; 
-            width: max-content;
-            animation: desplazamiento 20s linear infinite;
-        }
-        .carrusel-pista img {
-            height: 35px; /* Altura ideal para móviles */
-            width: auto;
-            object-fit: contain;
-            /* El siguiente filtro convierte PNGs negros en blancos y les da opacidad para que luzcan elegantes */
-            filter: brightness(0) invert(1); 
-            opacity: 0.6;
-        }
-        @keyframes desplazamiento {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        /* === FIN CSS CARRUSEL ONGS === */
+/* === INICIO ESTILOS CARRUSEL === */
+.carrusel-contenedor { width: 100%; overflow: hidden; position: relative; padding: 10px 0; }
+.carrusel-pista { display: flex; align-items: center; gap: 40px; width: max-content; animation: desplazamiento 25s linear infinite; }
+.carrusel-pista img { height: 80px; width: auto; object-fit: contain; filter: none; opacity: 1; }
+@keyframes desplazamiento { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+/* === FIN ESTILOS CARRUSEL === */
+
 
     </style>
 </head>
@@ -536,13 +517,16 @@
 </div>
     </div>
 </div>
+
+
 <div class="mt-10 px-4 max-content-width overflow-hidden">
-    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 px-1">Alianzas y ONGs</p>
-    <div class="carrusel-contenedor rounded-3xl bg-white/5 border border-white/10 glass-contour-thin p-3">
+    <h2 class="text-[12px] font-black text-white uppercase tracking-widest mb-6 px-1 text-center">Nuestros aliados comerciales!</h2>
+    <div class="carrusel-contenedor">
         <div class="carrusel-pista" id="pista-logos">
             </div>
     </div>
 </div>
+
 
 <section class="mt-10 px-4 max-content-width hidden" id="promo-section">
     <div class="flex items-center justify-between mb-6 px-1">
@@ -1004,33 +988,31 @@
     const API = 'https://script.google.com/macros/s/AKfycbw3G94u3EZR6kyOKKn-7RgIVJROgkKYvG95dw3l7yfVqpIiqW8Wj5k4NsY-_ltEPPzDNg/exec';
     const DEFAULT_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' style='background-color:%230A0A0B;'%3E%3Ctext fill='%23666666' x='50%25' y='50%25' font-family='sans-serif' font-size='24' font-weight='900' text-anchor='middle' dominant-baseline='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
 
-    // === INICIO JS CARRUSEL ONGS ===
-    document.addEventListener("DOMContentLoaded", () => {
-        const pista = document.getElementById('pista-logos');
-        if(!pista) return;
-        const cantidadLogos = 20;
+// === INICIO JS CARRUSEL ===
+document.addEventListener("DOMContentLoaded", () => {
+    const pista = document.getElementById('pista-logos');
+    if(!pista) return;
+    const cantidadLogos = 20;
 
-        for (let i = 1; i <= cantidadLogos; i++) {
-            const img = document.createElement('img');
-            
-            // 1. Escribimos el nombre respetando la "C" mayúscula y los espacios
-            let nombreArchivo = `Cambiar banderín a color negro - ${i}.png`;
-            
-            // 2. Traducimos la "í" al formato exacto de Apple (NFD)
-            nombreArchivo = nombreArchivo.normalize("NFD");
-            
-            // 3. Traducimos los espacios para que el navegador los lea (encodeURI)
-            img.src = encodeURI(nombreArchivo); 
-            
-            img.alt = `ONG ${i}`;
-            img.loading = "eager";
-            pista.appendChild(img);
-        }
+    for (let i = 1; i <= cantidadLogos; i++) {
+        const img = document.createElement('img');
+        
+        // Mantenemos tu nombre de archivo exacto
+        let nombreArchivo = `Cambiar banderín a color negro - ${i}.png`;
+        
+        // Normalizamos para que detecte la "í" y codificamos espacios
+        img.src = encodeURI(nombreArchivo.normalize("NFD"));
+        img.alt = `ONG ${i}`;
+        img.loading = "eager"; // Carga inmediata para que no haya cuadros grises
+        
+        pista.appendChild(img);
+    }
 
-        // Duplicamos para el ciclo infinito
-        pista.innerHTML += pista.innerHTML;
-    });
-    // === FIN JS CARRUSEL ONGS ===
+    // Duplicamos para que el carrusel sea infinito
+    pista.innerHTML += pista.innerHTML;
+});
+// === FIN JS CARRUSEL ===
+
 
  // --- INICIO DE LA CORRECCIÓN DE ESTRUCTURA ---
     if ('serviceWorker' in navigator) {
